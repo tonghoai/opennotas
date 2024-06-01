@@ -1,0 +1,74 @@
+{
+  "id": "/app",
+  "name": "OpenNotas",
+  "short_name": "Notas",
+  "start_url": "/app",
+  "display": "fullscreen",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#ffffff",
+  "lang": "en",
+  "scope": "/",
+  "theme_color": "#003566",
+  "description": "The best personal note-taking app, fast, secure, and free",
+  "icons": [
+    {
+      "src": "pwa-128x128.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "pwa-256x256.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "img/screenshots/mobile-1.jpg",
+      "type": "image/jpeg",
+      "sizes": "1080x1920",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "img/screenshots/mobile-2.jpg",
+      "type": "image/jpeg",
+      "sizes": "1080x1920",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "img/screenshots/mobile-3.jpg",
+      "type": "image/jpeg",
+      "sizes": "1080x1920",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "img/screenshots/desktop-1.jpg",
+      "type": "image/jpeg",
+      "sizes": "1138x640",
+      "form_factor": "wide"
+    },
+    {
+      "src": "img/screenshots/desktop-2.jpg",
+      "type": "image/jpeg",
+      "sizes": "1138x640",
+      "form_factor": "wide"
+    },
+    {
+      "src": "img/screenshots/desktop-3.jpg",
+      "type": "image/jpeg",
+      "sizes": "1138x640",
+      "form_factor": "wide"
+    },
+    {
+      "src": "img/screenshots/desktop-4.jpg",
+      "type": "image/jpeg",
+      "sizes": "1138x640",
+      "form_factor": "wide"
+    }
+  ]
+}
