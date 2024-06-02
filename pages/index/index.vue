@@ -857,7 +857,7 @@ const handleExportNotesIgnorePassword = async () => {
 const isMobile = ref<boolean>(false);
 const isMobileChange = ref<boolean>(false);
 onMounted(async () => {
-  if (window.innerWidth <= 1024) {
+  if (window.innerWidth < 1024) {
     isMobile.value = true;
   }
 
