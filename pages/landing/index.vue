@@ -163,7 +163,23 @@ const _scrollTo = (elm: Element) => {
     </div>
 
     <div class="overflow-hidden relative px-4 lg:px-0 h-[calc(100vh_-_90px)]">
-      <div class="text-center py-16">
+      <div class="text-center pb-16">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 mb-8">
+          <a class="flex justify-center md:justify-end"
+            href="https://www.producthunt.com/posts/opennotas?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-opennotas"
+            target="_blank"><img
+              src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=455329&theme=light&period=daily"
+              alt="OpenNotas - The&#0032;best&#0032;personal&#0032;note&#0045;taking&#0032;app&#0044;&#0032;fast&#0044;&#0032;secure&#0032;&#0038;&#0032;free | Product Hunt"
+              style="width: 250px; height: 54px;" width="250" height="54" /></a>
+
+          <a class="flex justify-center md:justify-start"
+            href="https://www.producthunt.com/posts/opennotas?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-opennotas"
+            target="_blank"><img
+              src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=455329&theme=light"
+              alt="OpenNotas - The&#0032;best&#0032;personal&#0032;note&#0045;taking&#0032;app&#0044;&#0032;fast&#0044;&#0032;secure&#0032;&#0038;&#0032;free | Product Hunt"
+              style="width: 250px; height: 54px;" width="250" height="54" /></a>
+        </div>
+
         <div>
           <h1 class="mb-5 text-5xl font-bold text-base-content">{{ $t('app_name') }}</h1>
           <p class="mb-5">{{ $t('landing.slogan') }}</p>
