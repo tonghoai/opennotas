@@ -2,6 +2,7 @@
   "app_name": "OpenNotas",
   "vi": "Tiếng Việt",
   "en": "English",
+  "zhtw": "繁體中文",
   "landing": {
     "navbar_home": "Trang chủ",
     "navbar_feature": "Tính năng",
