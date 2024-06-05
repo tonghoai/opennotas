@@ -332,6 +332,7 @@ defineExpose({
                 @change="handleChangeLanguage">
                 <option value="vi">{{ $t('app.setting_general_language_vi') }}</option>
                 <option value="en">{{ $t('app.setting_general_language_en') }}</option>
+                <option value="zhtw">{{ $t('app.setting_general_language_zhtw') }}</option>
               </select>
             </label>
 
