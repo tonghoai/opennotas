@@ -2,6 +2,7 @@
   "app_name": "OpenNotas",
   "vi": "Tiếng Việt",
   "en": "English",
+  "zhtw": "繁體中文",
   "landing": {
     "navbar_home": "Home",
     "navbar_feature": "Features",
@@ -98,6 +99,7 @@
     "setting_general_language_title": "Language",
     "setting_general_language_vi": "Vietnamese",
     "setting_general_language_en": "English",
+    "setting_general_language_zhtw": "Traditional Chinese",
     "setting_general_theme_title": "Theme",
     "setting_general_theme_system": "System",
     "setting_general_theme_light": "OpenNotas Light",
