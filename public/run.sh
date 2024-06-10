@@ -16,7 +16,7 @@ read -p "Database name: " db_name
 
 # get sql
 echo "Downloading schema.sql..."
-curl -s -o schema.sql http://localhost:3000/schema.sql > /dev/null
+curl -s -o schema.sql https://opennotas.io/schema.sql > /dev/null
 
 # create turso database
 echo "creating database..."
