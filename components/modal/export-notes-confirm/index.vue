@@ -4,6 +4,7 @@ const { $i18n } = useNuxtApp();
 const emit = defineEmits([
   'confirmPassword',
   'confirmIgnorePassword',
+  'close',
 ]);
 
 const password = ref<string>('');
@@ -28,13 +29,17 @@ const showFailedPassword = () => {
 defineExpose({
   showFailedPassword,
 });
+
+const handleClickClose = () => {
+  emit('close');
+}
 </script>
 
 <template>
   <dialog id="modal-export-notes-confirm" class="modal modal-top lg:modal-middle">
     <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">{{ $t('app.modal_unlock_notes_title') }}</h3>
       <div class="py-4">

@@ -4,7 +4,10 @@ const props = defineProps([
   'formNotes',
 ]);
 
-const emit = defineEmits(['confirmPassword']);
+const emit = defineEmits([
+  'confirmPassword',
+  'close',
+]);
 
 const password = ref<string>('');
 const handleConfirmPassword = () => {
@@ -22,13 +25,17 @@ const showFailedPassword = () => {
 defineExpose({
   showFailedPassword,
 });
+
+const handleClickClose = () => {
+  emit('close');
+};
 </script>
 
 <template>
   <dialog id="modal-unlock-notes" class="modal modal-top lg:modal-middle">
     <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">{{ $t('app.modal_unlock_notes_title') }}</h3>
       <div class="py-4">
@@ -40,7 +47,8 @@ defineExpose({
           </div>
           <input ref="inputPasswordRef" v-model="password" type="password"
             :placeholder="$t('app.modal_unlock_notes_input_password_title')"
-            class="input input-sm lg:btn-md input-bordered w-full" @keydown.enter="handleConfirmPassword" autocomplete="off" autofocus />
+            class="input input-sm lg:btn-md input-bordered w-full" @keydown.enter="handleConfirmPassword"
+            autocomplete="off" autofocus />
         </div>
       </div>
     </div>

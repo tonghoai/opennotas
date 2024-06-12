@@ -1,5 +1,8 @@
 <script setup lang="ts">
-const emit = defineEmits(['confirm']);
+const emit = defineEmits([
+  'confirm',
+  'close',
+]);
 const isValidate = computed(() => !!inputE2eeKey.value);
 
 const inputE2eeKeyKey = ref(0);
@@ -17,13 +20,18 @@ const handleClickGenerateKey = async () => {
   inputE2eeKey.value = keyBase64;
   isGenerateKey.value = true;
 }
+
+const handleClickClose = () => {
+  emit('close');
+}
 </script>
 
 <template>
   <dialog id="modal-confirm-e2ee-key" class="modal modal-top lg:modal-middle">
     <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96">
       <form method="dialog">
-        <button class="btn btn-sm lg:btn-md btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        <button class="btn btn-sm lg:btn-md btn-circle btn-ghost absolute right-2 top-2"
+          @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">
         {{ $t('app.modal_confirm_e2ee_key_title') }}
@@ -37,7 +45,7 @@ const handleClickGenerateKey = async () => {
           <input :key="inputE2eeKeyKey" type="text" class="input input-bordered input-sm lg:input-md w-full"
             v-model="inputE2eeKey" autocomplete="off" autofocus />
           <span class="link link-error mt-2" @click="handleClickGenerateKey">{{
-          $t('app.modal_confirm_e2ee_key_generate_key') }}</span>
+            $t('app.modal_confirm_e2ee_key_generate_key') }}</span>
         </label>
 
         <div class="modal-action">

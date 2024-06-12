@@ -1,8 +1,16 @@
+<script setup lang="ts">
+const emit = defineEmits(['close']);
+
+const handleClickClose = () => {
+  emit('close');
+}
+</script>
+
 <template>
   <dialog id="modal-alert-set-password" class="modal modal-top lg:modal-middle">
     <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">{{ $t('app.modal_alert_set_password_title') }}</h3>
       <div class="pt-4">

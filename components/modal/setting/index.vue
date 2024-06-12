@@ -24,6 +24,7 @@ const emit = defineEmits([
   'clickSetPassword',
   'closeSetPassword',
   'clickImportNotes',
+  'closeSetting',
 ]);
 
 const tabIndex = ref<number>(0);
@@ -123,6 +124,10 @@ const handleClickResetServiceWorker = () => {
     window.location.href = window.location.href;
   });
 }
+
+const handleClickCloseSettings = () => {
+  emit('closeSetting');
+}
 </script>
 
 <template>
@@ -130,7 +135,7 @@ const handleClickResetServiceWorker = () => {
     <div class="modal-box w-full lg:w-1/2 h-5/6 overflow-hidden px-4 py-8">
       <span class="absolute bottom-2 right-4 text-sm underline">{{ runtimeConfig.public.version }}</span>
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickCloseSettings">✕</button>
       </form>
       <h3 class="font-bold text-lg">{{ $t('app.setting_title') }}</h3>
 

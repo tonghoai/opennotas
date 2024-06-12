@@ -8,6 +8,8 @@ const props = defineProps([
   'noteInfo'
 ]);
 
+const emit = defineEmits(['close']);
+
 const wordsCount = computed(() => {
   return props.noteInfo?.content?.split(' ').length;
 });
@@ -15,13 +17,17 @@ const wordsCount = computed(() => {
 const charactersCount = computed(() => {
   return props.noteInfo?.content?.length;
 });
+
+const handleClickClose = () => {
+  emit('close');
+}
 </script>
 
 <template>
   <dialog id="modal-notes-detail" class="modal">
     <div class="modal-box w-5/6 lg:w-4/12 lg:max-w-3xl">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
 
       <h3 class="font-bold text-lg">{{ $t('app.modal_notes_detail_title') }}</h3>

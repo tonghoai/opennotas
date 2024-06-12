@@ -7,7 +7,8 @@ const props = defineProps([
 ]);
 
 const emit = defineEmits([
-  'confirm'
+  'confirm',
+  'close',
 ]);
 
 const oldPassword = ref<string>('');
@@ -66,13 +67,17 @@ defineExpose({
   showOldPasswordWrong,
   reset,
 });
+
+const handleClickClose = () => {
+  emit('close');
+}
 </script>
 
 <template>
   <dialog id="modal-set-password" class="modal modal-top lg:modal-middle">
     <div id="modal-set-password-content" class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">
         {{ props.type === 'set' ? $t('app.modal_set_password_title') : $t('app.modal_set_password_change_title') }}

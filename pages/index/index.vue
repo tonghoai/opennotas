@@ -229,6 +229,9 @@ const handleRightClickFolderName = (data: any) => {
 };
 const listFolderRef = ref<any>(null);
 const isShowModalChangeFolderName = ref<boolean>(false);
+const handleClickCloseModalChangeFolderName = () => {
+  toggleModalChangeFolderName(false, isShowModalChangeFolderName);
+}
 const handleClickRenameFolder = () => {
   toggleModalMenuFolder(false, isShowModalMenuFolder);
   toggleModalChangeFolderName(true, isShowModalChangeFolderName);
@@ -247,6 +250,9 @@ const handleRenameFolderName = async (data: any) => {
 }
 const folderWillDelete = ref<string>("");
 const isShowModalConfirmDeleteFolder = ref<boolean>(false);
+const handleClickCloseModalConfirmDeleteFolder = () => {
+  toggleModalConfirmDeleteFolder(false, isShowModalConfirmDeleteFolder);
+}
 const handleClickDeleteFolder = async (folderId: string) => {
   folderWillDelete.value = folderId;
   toggleModalMenuFolder(false, isShowModalMenuFolder);
@@ -390,7 +396,13 @@ const handleClickPinNote = async (data: any) => {
   listNotes.value = await loadNotes();
 }
 const isShowModalUnlockNotes = ref<boolean>(false);
+const handleClickCloseModalUnlockNotes = () => {
+  toggleModalUnlockNotes(false, isShowModalUnlockNotes);
+}
 const isShowModalAlertSetPassword = ref<boolean>(false);
+const handleClickCloseModalAlertSetPassword = () => {
+  toggleModalAlertSetPassword(false, isShowModalAlertSetPassword);
+}
 const handleClickLockNote = async (data: any) => {
   if (data.status) {
     toggleModalMenuNote(false, isShowModalMenuNote);
@@ -532,6 +544,9 @@ const noteInfo = ref<any>({
   updatedAt: "",
 });
 const isShowModalNotesDetail = ref<boolean>(false);
+const handleClickCloseNotesDetail = () => {
+  toggleModalNotesDetail(false, isShowModalNotesDetail);
+}
 const handleClickFormNotesInfo = async (noteId: string) => {
   const note = await getNoteDetail(noteId);
   noteInfo.value = {
@@ -697,6 +712,9 @@ const handleChangeAdapter = async () => {
   reloadFolder();
 }
 const isShowModalConfirmChangeAdapter = ref<boolean>(false);
+const handleClickCloseModalConfirmChangeAdapter = () => {
+  toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
+}
 const handleConfirmChangeAdapter = async (e2eeKey: string) => {
   settings.value.sync.adapter = adapterWillChange.value;
   await handleChangeAdapter();
@@ -715,6 +733,9 @@ const handleConfirmChangeAdapter = async (e2eeKey: string) => {
   showInfoSnackbar($i18n.t('app.message_setting_sync_adapter_saved'));
 }
 const isShowModalConfirmE2eeKey = ref<boolean>(false);
+const handleClickCloseModalConfirmE2eeKey = () => {
+  toggleModalConfirmE2eeKey(false, isShowModalConfirmE2eeKey);
+}
 const handleConfirmChangeAdapterOnline = async () => {
   if (adapterWillChange.value === 'LocalForage') {
     toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
@@ -725,6 +746,9 @@ const handleConfirmChangeAdapterOnline = async () => {
   toggleModalConfirmE2eeKey(true, isShowModalConfirmE2eeKey);
 }
 const isShowModalExportNotesConfirm = ref<boolean>(false);
+const handleClickCloseModalExportNotesConfirm = () => {
+  toggleModalExportNotesConfirm(false, isShowModalExportNotesConfirm);
+}
 const handleClickExportNotes = async () => {
   // if password exist, need to input password to export notes
   // else, only export notes without password
@@ -775,6 +799,9 @@ const handleExportNotes = async (includeLock: boolean) => {
 }
 const navbarTopRef = ref<any>(null);
 const isShowModalImportNotes = ref<boolean>(false);
+const handleClickCloseModalImportNotes = () => {
+  toggleModalImportNotes(false, isShowModalImportNotes);
+}
 const handleClickImportNotes = () => {
   toggleModalImportNotes(true, isShowModalImportNotes);
 }
@@ -888,7 +915,9 @@ const isShowModalSettings = ref<boolean>(false);
 const handleClickSetting = () => {
   toggleModalSettings(true, isShowModalSettings);
 }
-
+const handleClickCloseSettings = () => {
+  toggleModalSettings(false, isShowModalSettings);
+}
 // actionObject using for sync data
 // flow:
 // each action (eg: create, update, delete folder/note) will push to actionObject
@@ -1118,28 +1147,32 @@ const syncErrorClass = ref<string>("");
   </div>
 
   <!-- modal -->
-  <ModalNotesDetail v-if="isShowModalNotesDetail" :noteInfo="noteInfo" />
+  <ModalNotesDetail v-if="isShowModalNotesDetail" :noteInfo="noteInfo" @close="handleClickCloseNotesDetail" />
   <ModalSetting v-if="isShowModalSettings" ref="modalSettingRef" :settings="settings" :isPasswordExist="isPasswordExist"
     @setPassword="handleSetPassword" @changePassword="handleChangePassword" @changeAdapter="handleChangeAdapter"
     @changeDefaultEditor="handleChangeDefaultEditor" @clickExportNotes="handleClickExportNotes"
     @triggerImportNotes="handleTriggerImportNotes" @saveSettings="handleSaveSettings" @saveAdapter="handleSaveAdapter"
     @clickSetPassword="handleClickSetPassword" @closeSetPassword="handleCloseSetPassword"
-    @clickImportNotes="handleClickImportNotes" />
-  <ModalAlertSetPassword v-if="isShowModalAlertSetPassword" />
+    @clickImportNotes="handleClickImportNotes" @closeSetting="handleClickCloseSettings" />
+  <ModalAlertSetPassword v-if="isShowModalAlertSetPassword" @close="handleClickCloseModalAlertSetPassword" />
   <ModalSetPassword v-if="isShowModalSetPassword" ref="modalSetPasswordRef" :type="isPasswordExist ? 'change' : 'set'"
-    @confirm="handleConfirmSetPassword" />
+    @confirm="handleConfirmSetPassword" @close="handleCloseSetPassword" />
   <ModalConfirmChangeAdapter v-if="isShowModalConfirmChangeAdapter" :adapterName="''"
-    :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" @confirm="handleConfirmChangeAdapterOnline" />
-  <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" @confirm="handleConfirmChangeAdapter" />
-  <ModalImportNotes v-if="isShowModalImportNotes" @confirm="handleTriggerImportNotes" />
+    :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" @confirm="handleConfirmChangeAdapterOnline"
+    @close="handleClickCloseModalConfirmChangeAdapter" />
+  <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" @confirm="handleConfirmChangeAdapter"
+    @close="handleClickCloseModalConfirmE2eeKey" />
+  <ModalImportNotes v-if="isShowModalImportNotes" @confirm="handleTriggerImportNotes"
+    @close="handleClickCloseModalImportNotes" />
   <ModalExportNotesConfirm v-if="isShowModalExportNotesConfirm" ref="modalExportNotesConfirm"
-    @confirmPassword="handleExportNotesConfirm" @confirmIgnorePassword="handleExportNotesIgnorePassword" />
+    @confirmPassword="handleExportNotesConfirm" @confirmIgnorePassword="handleExportNotesIgnorePassword"
+    @close="handleClickCloseModalExportNotesConfirm" />
   <ModalUnlockNotes v-if="isShowModalUnlockNotes" ref="modalUnlockNotesRef" :noteId="activeNoteId"
-    :formNotes="formNotes" @confirmPassword="handleUnlockNote" />
+    :formNotes="formNotes" @confirmPassword="handleUnlockNote" @close="handleClickCloseModalUnlockNotes" />
   <ModalChangeFolderName v-if="isShowModalChangeFolderName" ref="modalChangeFolderNameRef" :folderId="activeFolderId"
-    :folderName="activeFolderName" @confirm="handleRenameFolderName" />
+    :folderName="activeFolderName" @confirm="handleRenameFolderName" @close="handleClickCloseModalChangeFolderName" />
   <ModalConfirmDeleteFolder v-if="isShowModalConfirmDeleteFolder" :folderId="folderWillDelete"
-    @confirm="handleConfirmDeleteFolder" />
+    @confirm="handleConfirmDeleteFolder" @close="handleClickCloseModalConfirmDeleteFolder" />
   <ModalMenuFolder v-if="isShowModalMenuFolder" :folderId="activeFolderId" @renameFolder="handleClickRenameFolder"
     @deleteFolder="handleClickDeleteFolder" />
   <ModalMenuNote v-if="isShowModalMenuNote" :noteId="activeNoteId" :formNotes="formNotes"

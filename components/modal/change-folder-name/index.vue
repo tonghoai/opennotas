@@ -4,7 +4,10 @@ const props = defineProps([
   'folderName',
 ]);
 
-const emit = defineEmits(['confirm']);
+const emit = defineEmits([
+  'confirm',
+  'close',
+]);
 
 const modalChangeFolderNameKey = ref(0);
 const newFolderName = ref<string>(props.folderName);
@@ -35,13 +38,18 @@ const reset = () => {
 defineExpose({
   reset,
 });
+
+const handleClickClose = () => {
+  emit('close');
+}
 </script>
 
 <template>
   <dialog id="modal-change-folder-name" :key="modalChangeFolderNameKey" class="modal modal-top lg:modal-middle">
     <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96">
       <form method="dialog">
-        <button class="btn btn-sm lg:btn-md btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        <button class="btn btn-sm lg:btn-md btn-circle btn-ghost absolute right-2 top-2"
+          @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">
         {{ $t('app.modal_change_folder_name_title') }}
