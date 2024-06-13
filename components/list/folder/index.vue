@@ -31,10 +31,10 @@ const handleRightClickFolderName = (e: any, folderId: number) => {
     class="menu block lg:border-r lg:border-base-300 w-full p-0 p-2 transition-all h-[calc(100vh_-_321px)] overflow-auto lg:h-full lg:overflow-auto">
     <li class="menu-items w-full animate-fade-down animate-duration-200"
       v-for="folder in props.listFolders.filter((item: any) => !item.deletedAt)" :key="folder.id"
-      @click="handleClickFolderName(folder.id)" @contextmenu="handleRightClickFolderName($event, folder.id)">
-      <div class="flex flex-row justify-between rounded w-full"
+      @contextmenu="handleRightClickFolderName($event, folder.id)">
+      <div class="flex flex-row justify-between rounded w-full "
         :class="{ 'bg-primary text-primary-content hover:bg-primary': activeFolderId === folder.id }"
-        :id="'folder-' + folder.id">
+        :id="'folder-' + folder.id" @click="handleClickFolderName(folder.id)" @touchstart="handleClickFolderName(folder.id)">
         <div class="flex items-baseline w-5/6">
           <div class="w-4 h-4 mr-2">
             <Folder />
