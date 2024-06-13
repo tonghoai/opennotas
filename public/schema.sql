@@ -1,3 +1,4 @@
+PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
 CREATE TABLE `folders` (
 	`id` text PRIMARY KEY NOT NULL,
