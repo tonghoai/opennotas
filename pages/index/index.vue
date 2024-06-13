@@ -109,6 +109,7 @@ const scrollbarOptions: any = computed(() => {
 // reloadNotes & reloadFolder using for reload all data display on screen
 const listNotesKey = ref<number>(0);
 const reloadNotes = async (focus = true, isTrash = false) => {
+  await nextTick();
   listNotes.value = isTrash ? await loadTrashNotes() : await loadNotes();
   activeNoteId.value = await loadActiveNote() || "";
 
@@ -125,6 +126,7 @@ const reloadNotes = async (focus = true, isTrash = false) => {
   }
 }
 const reloadFolder = async (isFirst: boolean = false, focus = true) => {
+  await nextTick();
   listFoldersMenu.value = await loadFolder();
   const activeFolder = await loadActiveFolder();
   activeFolderId.value = (isFirst && activeFolder === 'bottombar-trash') ? "" : activeFolder || "";
