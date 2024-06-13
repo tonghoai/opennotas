@@ -1057,7 +1057,7 @@ const syncErrorClass = ref<string>("");
   </div>
 
   <div class="h-screen w-screen overflow-hidden bg-base-100"
-    style="-webkit-overflow-scrolling: touch; touch-action:none; overscroll-behavior-y: contain;" v-else>
+    style="-webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;" v-else>
     <!-- mobile nav top -->
     <div class="lg:hidden">
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
