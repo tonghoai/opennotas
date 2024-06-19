@@ -32,9 +32,7 @@ const handleRightClickFolderName = (e: any, folderId: number) => {
     class="menu block lg:border-r lg:border-base-300 w-full p-0 p-2 transition-all h-[calc(100vh_-_321px)] overflow-auto lg:h-full lg:overflow-auto">
     <li class="menu-items w-full animate-fade-down animate-duration-200"
       v-for="folder in props.listFolders.filter((item: any) => !item.deletedAt)" :key="folder.id"
-      @contextmenu="handleRightClickFolderName($event, folder.id)"
-      @touchstart="isTouchDevice() ? handleClickFolderName($event, folder.id) : null"
-      @click="isTouchDevice() ? null : handleClickFolderName($event, folder.id)">
+      @contextmenu="handleRightClickFolderName($event, folder.id)" @click="handleClickFolderName($event, folder.id)">
       <div class="flex flex-row justify-between rounded w-full "
         :class="{ 'bg-primary text-primary-content hover:bg-primary': activeFolderId === folder.id }"
         :id="'folder-' + folder.id">
@@ -47,7 +45,7 @@ const handleRightClickFolderName = (e: any, folderId: number) => {
             {{ folder.name }}
           </span>
         </div>
-        <div class="more-tools lg:hidden" @click.stop="handleRightClickFolderName($event, folder.id)">
+        <div class="more-tools" @click.stop="handleRightClickFolderName($event, folder.id)">
           <MoreHorizontal class="press w-3 h-3 opacity-80" />
         </div>
       </div>
