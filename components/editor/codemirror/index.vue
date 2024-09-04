@@ -100,7 +100,6 @@ defineExpose({
 
 <style lang="postcss">
 .cm-editor {
-  @apply !caret-base-content;
   outline: none !important;
 }
 
@@ -112,20 +111,15 @@ defineExpose({
   margin-bottom: 100px !important;
 }
 
-.cm-line {
-  @apply !caret-base-content;
-  line-height: 32px;
+.cm-focused .cm-cursor {
+  @apply !border-base-content;
 }
 
-.cm-content {
-  @apply !caret-base-content;
+.cm-line {
+  line-height: 32px;
 }
 
 .ͼ1 .cm-scroller {
   overflow-x: initial !important;
-}
-
-.ͼ4 .cm-line {
-  @apply !caret-base-content;
 }
 </style>

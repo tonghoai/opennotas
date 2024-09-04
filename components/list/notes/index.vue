@@ -34,11 +34,11 @@ const handleRightClickNote = (e: any, noteId: number) => {
           @contextmenu="handleRightClickNote($event, note.id)">
           <div class="w-full font-semibold mb-2 select-none truncate overflow-hidden transition-all"
             :class="{ 'italic': note.isLocked, 'text-warning': props.actionObjectKeys?.includes(note.id), 'text-info': props.idPulled?.includes(note.id) }">
-            {{ note.title || $t('app.list_note_no_title') }}
+            {{ note.title?.trim() || $t('app.list_note_no_title') }}
           </div>
           <div class="w-full select-none truncate overflow-hidden transition-all"
             :class="{ 'italic': note.isLocked, 'text-warning': props.actionObjectKeys?.includes(note.id), 'text-info': props.idPulled?.includes(note.id) }">
-            {{ note.content || $t('app.list_note_no_content') }}</div>
+            {{ note.content?.trim() || $t('app.list_note_no_content') }}</div>
         </div>
 
         <div class="w-1/12 flex flex-col justify-between py-3.5">

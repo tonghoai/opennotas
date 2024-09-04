@@ -22,6 +22,10 @@ function getSecondLineSubstrWord(text: string, numWords: number): string {
   return removeBreakLine(substrWord(getSecondLine(text), 0, numWords)).trim();
 }
 
+function removeSpecialChar(text: string): string {
+  return text?.replace(/[^\p{L}\p{N}\s]/gu, '') || '';
+}
+
 export {
   getFirstLine,
   getSecondLine,
@@ -29,4 +33,5 @@ export {
   removeBreakLine,
   getFirstLineSubstrWord,
   getSecondLineSubstrWord,
+  removeSpecialChar,
 }
