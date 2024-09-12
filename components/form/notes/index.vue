@@ -38,8 +38,8 @@ const editorRef = ref<any>(null);
 const focusPassword = () => {
   passwordUnlockRef.value?.focus();
 }
-const focus = () => {
-  editorRef.value?.focus();
+const focus = (location: 'start' | 'end' = 'start') => {
+  editorRef.value?.focus(location);
 }
 const readonly = () => {
   editorRef.value?.readonly();
@@ -70,7 +70,7 @@ defineExpose({
 <template>
   <div class="flex justify-center bg-svg h-full transition-all" v-if="!id"></div>
 
-  <div class="markdown-body transition-all h-full bg-svg" v-if="id && !isLocked">
+  <div class="markdown-body transition-all h-full bg-svg" v-if="id && !isLocked" @click="() => focus('end')">
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       @changeContent="handleChangeContent" />
 

@@ -87,8 +87,10 @@ onMounted(() => {
 //   editor.commands.setContent(/\s*\]\s*$/.test(newValue) ? `${newValue}&hairsp;` : newValue);
 // });
 
-const focus = () => {
-  editor.commands.focus('start');
+const focus = (location: 'start' | 'end' = 'start') => {
+  if (!editor.isFocused) {
+    editor.commands.focus(location);
+  }
 }
 
 const readonly = () => {

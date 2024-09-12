@@ -68,7 +68,9 @@ onMounted(() => {
 // });
 
 const focus = () => {
-  editor.focus();
+  if (!editor.hasFocus) {
+    editor.focus();
+  }
 }
 const readonly = () => {
 }
