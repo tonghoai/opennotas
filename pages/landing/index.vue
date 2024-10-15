@@ -84,6 +84,12 @@ onMounted(() => {
     deferredPrompt = e;
   });
 
+  window.addEventListener('appinstalled', (event) => {
+    if (window.location.pathname !== '/app') {
+      window.location.href = '/app';
+    }
+  });
+
   document.querySelectorAll('.install-btn') && document.querySelectorAll('.install-btn')!.forEach(selector => {
     selector.addEventListener('click', (e) => {
       if (isSupportHalfPWA.value || !isSupportPWA.value) {

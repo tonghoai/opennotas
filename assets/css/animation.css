@@ -84,3 +84,38 @@
 .press:active {
   transform: scale(0.7);
 }
+
+@keyframes fadeWarning {
+  0%,
+  100% {
+    background-color: inherit;
+    color: inherit;
+  }
+  25%,
+  75% {
+    background-color: oklch(var(--wa));
+    color: oklch(var(--wac));
+  }
+}
+
+.fade-warning-animation {
+  animation: fadeWarning 1000ms ease-in-out infinite;
+}
+
+.hidden-screen-mobile {
+  position: absolute;
+  right: -100vw;
+}
+
+.display-screen-mobile-animation {
+  animation: slideInDisplayScreenMobile 200ms forwards;
+}
+
+@keyframes slideInDisplayScreenMobile {
+  from {
+    right: -100vw;
+  }
+  to {
+    right: 0;
+  }
+}

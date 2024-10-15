@@ -250,6 +250,17 @@ const handleRenameFolderName = async (data: any) => {
 
   reloadFolder();
 }
+const handleReorderFolderName = async (data: any[]) => {
+  for (const [index, folder] of data.entries()) {
+    if (folder.id !== '') {
+      await updateFolder(folder.id, {
+        position: data.length - index,
+      });
+    }
+  }
+
+  reloadFolder();
+}
 const folderWillDelete = ref<string>("");
 const isShowModalConfirmDeleteFolder = ref<boolean>(false);
 const handleClickCloseModalConfirmDeleteFolder = () => {
@@ -718,6 +729,9 @@ const handleClickCloseModalConfirmChangeAdapter = () => {
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
 }
 const handleConfirmChangeAdapter = async (e2eeKey: string) => {
+  // automatically export notes if user change adapter
+  await handleExportNotes(true);
+
   settings.value.sync.adapter = adapterWillChange.value;
   await handleChangeAdapter();
   await handleSaveSettings(settings.value);
@@ -733,6 +747,9 @@ const handleConfirmChangeAdapter = async (e2eeKey: string) => {
 
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
   showInfoSnackbar($i18n.t('app.message_setting_sync_adapter_saved'));
+
+  // trigger 1 time sync to push data to new adapter
+  handleClickUpdateData();
 }
 const isShowModalConfirmE2eeKey = ref<boolean>(false);
 const handleClickCloseModalConfirmE2eeKey = () => {
@@ -1085,7 +1102,8 @@ const syncErrorClass = ref<string>("");
         <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px - 75px)">
           <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
             :actionObjectKeys="actionObjectKeys" @clickFolderName="handleClickFolderName"
-            @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName" />
+            @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
+            @reorderFolderName="handleReorderFolderName" />
         </div>
       </OverlayScrollbarsComponent>
       <hr class="border-base-300">
@@ -1118,7 +1136,7 @@ const syncErrorClass = ref<string>("");
 
     <!-- cols editor -->
     <div
-      :class="{ 'block w-full pt-[72px]': isMobile && isInEditor, 'hidden': isMobile && !isInEditor, 'lg:block lg:w-[inherit]': !isMobile }">
+      :class="{ 'hidden-screen-mobile display-screen-mobile-animation': isMobile, 'block w-full pt-[72px]': isMobile && isInEditor, 'hidden': isMobile && !isInEditor, 'lg:block lg:w-[inherit]': !isMobile }">
       <div>
         <ToolbarFormNotes :noteId="formNotes.id" :editorName="editorName" :isLocked="formNotes.isLocked"
           @copyToClipboard="handleCopyToClipboard" @clickInfo="handleClickFormNotesInfo"

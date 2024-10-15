@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import draggable from 'vuedraggable';
 import Folder from '../assets/svg/folder.svg?component';
 import MoreHorizontal from '../assets/svg/more-horizontal.svg?component';
 
@@ -8,7 +9,7 @@ const props = defineProps([
   'actionObjectKeys',
 ]);
 
-const emit = defineEmits(['clickFolderName', 'rightClickFolderName', 'renameFolderName']);
+const emit = defineEmits(['clickFolderName', 'rightClickFolderName', 'renameFolderName', 'reorderFolderName']);
 const handleClickFolderName = (event: Event, folderId: number) => {
   event.preventDefault();
   emit('clickFolderName', folderId);
@@ -21,6 +22,28 @@ const handleRightClickFolderName = (e: any, folderId: number) => {
   emit('rightClickFolderName', { folderId, x, y });
 };
 
+const futureIndex = ref<string>('');
+const onMoveFolder = ref<string>('');
+const onMove = (event: any) => {
+  onMoveFolder.value = '';
+  futureIndex.value = props.listFolders[event.draggedContext.index].id;
+
+  if (event.draggedContext.futureIndex === 0) {
+    return false;
+  }
+
+  return true;
+};
+
+const onEnd = () => {
+  onMoveFolder.value = futureIndex.value;
+  setTimeout(() => {
+    onMoveFolder.value = '';
+  }, 500);
+
+  futureIndex.value = '';
+  emit('reorderFolderName', props.listFolders);
+};
 </script>
 
 <template>
@@ -30,26 +53,29 @@ const handleRightClickFolderName = (e: any, folderId: number) => {
 
   <ul
     class="menu block lg:border-r lg:border-base-300 w-full p-0 p-2 transition-all h-[calc(100vh_-_321px)] overflow-auto lg:h-full lg:overflow-auto">
-    <li class="menu-items w-full animate-fade-down animate-duration-200"
-      v-for="folder in props.listFolders.filter((item: any) => !item.deletedAt)" :key="folder.id"
-      @contextmenu="handleRightClickFolderName($event, folder.id)" @click="handleClickFolderName($event, folder.id)">
-      <div class="flex flex-row justify-between rounded w-full "
-        :class="{ 'bg-primary text-primary-content hover:bg-primary': activeFolderId === folder.id }"
-        :id="'folder-' + folder.id">
-        <div class="flex items-baseline w-5/6">
-          <div class="w-4 h-4 mr-2">
-            <Folder />
+    <draggable :list="props.listFolders" @end="onEnd" :move="onMove" item-key="id">
+      <template #item="{ element: folder }">
+        <li class="menu-items w-full" :key="folder.id" @contextmenu="handleRightClickFolderName($event, folder.id)"
+          @click="handleClickFolderName($event, folder.id)">
+          <div class="flex flex-row justify-between rounded w-full active:!bg-neutral active:!text-neutral-content"
+            :class="{ 'bg-primary text-primary-content hover:bg-primary': activeFolderId === folder.id, 'bg-warning text-warning-content': futureIndex && (futureIndex === folder.id), 'fade-warning-animation': onMoveFolder && (onMoveFolder === folder.id) }"
+            :id="'folder-' + folder.id">
+            <div class="flex items-baseline w-5/6">
+              <div class="w-4 h-4 mr-2">
+                <Folder />
+              </div>
+              <span class="truncate overflow-hidden folder-name"
+                :class="{ 'text-warning': props.actionObjectKeys?.includes(folder.id) }" :folderId="folder.id">
+                {{ folder.name }}
+              </span>
+            </div>
+            <div class="more-tools" @click.stop="handleRightClickFolderName($event, folder.id)">
+              <MoreHorizontal class="press w-3 h-3 opacity-80" />
+            </div>
           </div>
-          <span class="truncate overflow-hidden folder-name transition-all"
-            :class="{ 'text-warning': props.actionObjectKeys?.includes(folder.id) }" :folderId="folder.id">
-            {{ folder.name }}
-          </span>
-        </div>
-        <div class="more-tools" @click.stop="handleRightClickFolderName($event, folder.id)">
-          <MoreHorizontal class="press w-3 h-3 opacity-80" />
-        </div>
-      </div>
-    </li>
+        </li>
+      </template>
+    </draggable>
   </ul>
 </template>
 <style lang="scss" scoped>

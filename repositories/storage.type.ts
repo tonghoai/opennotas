@@ -18,6 +18,7 @@ type FolderCreateType = {
 
 type FolderUpdateType = {
   name: string;
+  position: number;
   lastSync: number;
   createdAt: number;
   updatedAt: number;

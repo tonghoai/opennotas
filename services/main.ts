@@ -8,7 +8,10 @@ async function getAllFolders() {
 async function getFolders(allFolderName: string) {
   const folders = await storage.getFolders();
   const sortFolders = folders.sort((a: any, b: any) => {
-    return a.createdAt - b.createdAt;
+    if (a.position && b.position && (a.position !== b.position)) {
+      return b.position - a.position; // Sắp xếp theo priority giảm dần
+    }
+    return a.createdAt - b.createdAt; // Nếu priority bằng nhau, sắp xếp theo createdAt
   });
 
   sortFolders.unshift({

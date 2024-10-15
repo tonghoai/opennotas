@@ -30,6 +30,12 @@ onMounted(() => {
     deferredPrompt = e;
   });
 
+  window.addEventListener('appinstalled', (event) => {
+    if (window.location.pathname !== '/app') {
+      window.location.href = '/app';
+    }
+  });
+
   document.querySelector('#install-btn') && document.querySelector('#install-btn')!.addEventListener('click', (e) => {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choiceResult: any) => {

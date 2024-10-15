@@ -240,7 +240,7 @@ defineExpose({
           </div>
         </div>
         <div class="flex-1 flex justify-between pr-4">
-          <div v-if="!isShowSearchInput" class="font-semibold text-xl ml-1 animate-fade-down animate-duration-200">
+          <div v-if="!isShowSearchInput" class="font-semibold text-xl ml-1">
             {{ activeFolderName }}
           </div>
 
