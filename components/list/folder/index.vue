@@ -28,7 +28,7 @@ const onMove = (event: any) => {
   onMoveFolder.value = '';
   futureIndex.value = props.listFolders[event.draggedContext.index].id;
 
-  if (event.draggedContext.futureIndex === 0) {
+  if (event.draggedContext.futureIndex === 0 || event.draggedContext.index === 0) {
     return false;
   }
 
@@ -53,11 +53,12 @@ const onEnd = () => {
 
   <ul
     class="menu block lg:border-r lg:border-base-300 w-full p-0 p-2 transition-all h-[calc(100vh_-_321px)] overflow-auto lg:h-full lg:overflow-auto">
-    <draggable :list="props.listFolders" @end="onEnd" :move="onMove" item-key="id">
+    <draggable :delay="100" :prevent-on-filter="false" :touch-start-threshold="50" :list="props.listFolders"
+      @end="onEnd" :move="onMove" item-key="id">
       <template #item="{ element: folder }">
         <li class="menu-items w-full" :key="folder.id" @contextmenu="handleRightClickFolderName($event, folder.id)"
           @click="handleClickFolderName($event, folder.id)">
-          <div class="flex flex-row justify-between rounded w-full active:!bg-neutral active:!text-neutral-content"
+          <div class="flex flex-row justify-between rounded w-full bg-base-100 active:!bg-neutral active:!text-neutral-content"
             :class="{ 'bg-primary text-primary-content hover:bg-primary': activeFolderId === folder.id, 'bg-warning text-warning-content': futureIndex && (futureIndex === folder.id), 'fade-warning-animation': onMoveFolder && (onMoveFolder === folder.id) }"
             :id="'folder-' + folder.id">
             <div class="flex items-baseline w-5/6">
