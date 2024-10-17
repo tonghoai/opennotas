@@ -38,6 +38,7 @@ import {
   checkIsFirstInit,
   setFirstInit,
 } from '../../services/main';
+import Mutex from "~/utils/mutex";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
@@ -517,26 +518,26 @@ const handleConfirmPassword = async (password: string) => {
     showErrorSnackbar($i18n.t('app.message_note_unlocked_failed'));
   }
 };
-let debounceChangeContent: any = null;
+// let debounceChangeContent: any = null;
 const handleChangeContent = async (newVal: string) => {
-  idleKey.value += 1;
-  clearTimeout(debounceChangeContent);
-  debounceChangeContent = setTimeout(async () => {
-    const note = await getNoteDetail(activeNoteId.value);
-    const updatedNote = await updateNote(activeNoteId.value, {
-      content: note.isLocked ? await encryptData(newVal, await getPassword()) : newVal,
-      updatedAt: nowUnix(),
-    });
+  // idleKey.value += 1;
+  // clearTimeout(debounceChangeContent);
+  // debounceChangeContent = setTimeout(async () => {
+  const note = await getNoteDetail(activeNoteId.value);
+  const updatedNote = await updateNote(activeNoteId.value, {
+    content: note.isLocked ? await encryptData(newVal, await getPassword()) : newVal,
+    updatedAt: nowUnix(),
+  });
 
-    if (!note.isLocked) {
-      const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === activeNoteId.value);
-      listNotes.value[findNoteIndex].title = substrTitle(newVal)
-      listNotes.value[findNoteIndex].content = substrContent(newVal);
-      reloadFolder(false, false);
-    }
+  if (!note.isLocked) {
+    const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === activeNoteId.value);
+    listNotes.value[findNoteIndex].title = substrTitle(newVal)
+    listNotes.value[findNoteIndex].content = substrContent(newVal);
+    reloadFolder(false, false);
+  }
 
-    setActionObject('note', updatedNote);
-  }, 1000);
+  setActionObject('note', updatedNote);
+  // }, 1000);
 };
 const handleCopyToClipboard = async () => {
   toggleModalMenuNote(false, isShowModalMenuNote);
@@ -947,16 +948,24 @@ onMounted(async () => {
   const actionQueue: any = await getActionObject();
   actionObject.value = actionQueue;
 });
-const setActionObject = (obj: string, data: any) => {
+
+const mutex = new Mutex();
+const setActionObject = async (obj: string, data: any) => {
   if (settings.value.sync?.adapter === 'LocalForage') {
     return;
   }
 
-  actionObject.value = {
-    ...actionObject.value,
-    [data.id]: obj,
+  await mutex.acquire();
+  try {
+    actionObject.value = {
+      ...actionObject.value,
+      [data.id]: obj,
+    }
+  } finally {
+    mutex.release();
   }
 }
+
 watch(() => actionObject.value, async (newVal) => {
   await saveActionObject(newVal);
 }, { deep: true });
