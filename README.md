@@ -44,7 +44,7 @@ OpenNotas supports Markdown, utilizing open-source text editing tools that can e
 
 - Build from source code
 
-[Read the docs](http://localhost:3000/started/install) for any further information.
+[Read the docs](https://docs.opennotas.io/started/install) for any further information.
 
 ## Documentation
 
