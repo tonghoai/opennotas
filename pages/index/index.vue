@@ -1010,6 +1010,7 @@ const idleSync = async (immediate = false, initedApp = false) => {
       return;
     }
 
+    await mutex.acquire();
     isSyncing.value = true;
     await pullPush()
       .then(() => {
@@ -1037,6 +1038,7 @@ const idleSync = async (immediate = false, initedApp = false) => {
         }
       });
     isSyncing.value = false;
+    mutex.release();
   }, immediate ? 0 : 3000);
 }
 // idPulled save all id has been pulled in last pull to mark change
