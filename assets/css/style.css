@@ -58,3 +58,16 @@ body {
 .os-scrollbar {
   --os-size: 7px !important;
 }
+
+.simplebar-content {
+  height: 100%;
+}
+
+.simplebar-scrollbar:before {
+  transition-delay: 3s;
+}
+
+.simplebar-track.simplebar-vertical {
+  top: 0;
+  width: 9px;
+}

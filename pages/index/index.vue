@@ -83,6 +83,12 @@ onMounted(async () => {
   if (localKey) {
     privateKey.value = localKey;
   }
+
+  setTimeout(() => {
+    new (window as any).SimpleBar(document.getElementById('folders-instance'), { autoHide: true, clickOnTrack: false });
+    new (window as any).SimpleBar(document.getElementById('notes-instance'), { autoHide: true, clickOnTrack: false });
+    new (window as any).SimpleBar(document.getElementById('form-editors'), { autoHide: true, clickOnTrack: false });
+  }, 100);
 });
 
 
@@ -1114,14 +1120,14 @@ const syncErrorClass = ref<string>("");
       </div>
       <hr class="border-base-300">
 
-      <OverlayScrollbarsComponent :options="scrollbarOptions">
-        <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px - 75px)">
-          <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
-            :actionObjectKeys="actionObjectKeys" @clickFolderName="handleClickFolderName"
-            @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
-            @reorderFolderName="handleReorderFolderName" />
-        </div>
-      </OverlayScrollbarsComponent>
+      <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
+      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px - 75px)">
+        <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
+          :actionObjectKeys="actionObjectKeys" @clickFolderName="handleClickFolderName"
+          @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
+          @reorderFolderName="handleReorderFolderName" />
+      </div>
+      <!-- </OverlayScrollbarsComponent> -->
       <hr class="border-base-300">
       <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" />
     </div>
@@ -1136,17 +1142,17 @@ const syncErrorClass = ref<string>("");
       </div>
       <hr class="border-base-300">
 
-      <OverlayScrollbarsComponent :options="scrollbarOptions">
-        <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
-          <div v-if="isSyncError" class="m-2 rounded text-xs text-center py-1"
-            :class="{ 'bg-warning': syncErrorClass === 'warning', 'text-warning-content': syncErrorClass === 'warning', 'bg-error': syncErrorClass === 'error', 'text-error-content': syncErrorClass === 'error' }">
-            {{ syncErrorMessage }}
-          </div>
-          <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
-            :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
-            @rightClickNote="handleRightClickNote" />
+      <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
+      <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
+        <div v-if="isSyncError" class="m-2 rounded text-xs text-center py-1"
+          :class="{ 'bg-warning': syncErrorClass === 'warning', 'text-warning-content': syncErrorClass === 'warning', 'bg-error': syncErrorClass === 'error', 'text-error-content': syncErrorClass === 'error' }">
+          {{ syncErrorMessage }}
         </div>
-      </OverlayScrollbarsComponent>
+        <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
+          :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
+          @rightClickNote="handleRightClickNote" />
+      </div>
+      <!-- </OverlayScrollbarsComponent> -->
     </div>
 
 
@@ -1160,14 +1166,14 @@ const syncErrorClass = ref<string>("");
       </div>
       <hr class="border-base-300">
 
-      <OverlayScrollbarsComponent :options="scrollbarOptions">
-        <div id="form-editors" class="cursor-text overflow-auto" style="height: calc(100vh - 55px)">
-          <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
-            :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
-            :isDeleted="!!formNotes.deletedAt" @confirmPassword="handleConfirmPassword"
-            @changeContent="handleChangeContent" />
-        </div>
-      </OverlayScrollbarsComponent>
+      <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
+      <div id="form-editors" class="cursor-text overflow-auto" style="height: calc(100vh - 55px)">
+        <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
+          :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
+          :isDeleted="!!formNotes.deletedAt" @confirmPassword="handleConfirmPassword"
+          @changeContent="handleChangeContent" />
+      </div>
+      <!-- </OverlayScrollbarsComponent> -->
     </div>
   </div>
 

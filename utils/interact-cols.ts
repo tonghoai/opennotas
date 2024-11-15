@@ -53,7 +53,7 @@ function handleInteractCols(
       (window as any).interact(document.querySelector('.cols-notes'))
         .resizable({
           edges: {
-            right: true,
+            right: '.right-menu',
           },
           listeners: {
             move: function (event: any) {

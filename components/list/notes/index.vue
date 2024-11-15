@@ -42,7 +42,7 @@ const handleRightClickNote = (e: any, noteId: number) => {
             {{ note.content?.trim() || $t('app.list_note_no_content') }}</div>
         </div>
 
-        <div class="w-1/12 p-2.5 flex flex-col justify-between"
+        <div class="right-menu w-1/12 p-2.5 flex flex-col justify-between"
           :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-r-md': activeNoteId === note.id }">
           <div class="flex justify-end items-end flex-col">
             <Pin class="w-3 h-3 mb-2" v-if="note.isPinned" />

@@ -49,6 +49,7 @@ export default defineNuxtConfig({
           href: "/apple-touch-icon-180x180.png",
         },
         { rel: "manifest", href: "/manifest.json" },
+        { rel: "stylesheet", href: "https://unpkg.com/simplebar@latest/dist/simplebar.css" },
       ],
       script: [
         {
@@ -63,6 +64,9 @@ export default defineNuxtConfig({
         {
           src: "https://cdnjs.cloudflare.com/ajax/libs/FlexSearch/0.7.31/flexsearch.bundle.js",
         },
+        {
+          src: "https://unpkg.com/simplebar@latest/dist/simplebar.min.js",
+        }
       ],
     },
   },
