@@ -1167,7 +1167,8 @@ const syncErrorClass = ref<string>("");
       <hr class="border-base-300">
 
       <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
-      <div id="form-editors" class="cursor-text overflow-auto" style="height: calc(100vh - 55px)">
+      <div id="form-editors" class="cursor-text overflow-auto" :class="{ 'overflow-x-hidden': isMobile }"
+        style="height: calc(100vh - 55px)">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
           :isDeleted="!!formNotes.deletedAt" @confirmPassword="handleConfirmPassword"

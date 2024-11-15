@@ -311,16 +311,17 @@ defineExpose({
   </div>
 
   <!-- drawer setting -->
-  <div class="drawer drawer-end">
+  <div class="draw drawer-end">
     <input v-model="isDrawerSettingOpen" id="my-drawer-4" type="checkbox" class="drawer-toggle" />
 
     <div class="drawer-side z-1000">
       <label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
 
 
-      <div class="menu h-screen p-0 w-10/12 min-h-full bg-base-100">
-        <OverlayScrollbarsComponent :options="scrollbarOptions">
+      <div class="menu p-0 w-10/12 min-h-full bg-base-100">
+        <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
 
+        <div class="w-full">
           <!-- general setting -->
           <div class="p-4">
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_general_title') }}</h2>
@@ -364,7 +365,7 @@ defineExpose({
               </div>
               <button class="btn btn-sm btn-primary" @click="handleClickSetPassword">
                 {{ props.isPasswordExist ? $t('app.setting_general_security_change_password') :
-      $t('app.setting_general_security_set_password') }}
+                  $t('app.setting_general_security_set_password') }}
               </button>
             </label>
           </div>
@@ -392,8 +393,9 @@ defineExpose({
                 </a>
               </div>
               <div class="col-span-4">
-                <button class="btn btn-sm btn-primary w-full" :disabled="!isAdapterChanged"
-                  @click="handleSaveAdapter">{{ $t('app.setting_sync_adapter_save') }}</button>
+                <button class="btn btn-sm btn-primary w-full" :disabled="!isAdapterChanged" @click="handleSaveAdapter">
+                  {{ $t('app.setting_sync_adapter_save') }}
+                </button>
               </div>
             </div>
 
@@ -458,7 +460,9 @@ defineExpose({
           </div>
 
           <div class="h-6"></div>
-        </OverlayScrollbarsComponent>
+
+        </div>
+        <!-- </OverlayScrollbarsComponent> -->
       </div>
 
     </div>
