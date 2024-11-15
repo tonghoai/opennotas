@@ -105,6 +105,8 @@
 .hidden-screen-mobile {
   position: absolute;
   transform: translateX(100vw);
+  clip-path: inset(0 0 0 0);
+  overflow: hidden;
 }
 
 .display-screen-mobile-animation {
