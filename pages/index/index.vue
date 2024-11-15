@@ -84,11 +84,13 @@ onMounted(async () => {
     privateKey.value = localKey;
   }
 
-  setTimeout(() => {
-    new (window as any).SimpleBar(document.getElementById('folders-instance'), { autoHide: true, clickOnTrack: false });
-    new (window as any).SimpleBar(document.getElementById('notes-instance'), { autoHide: true, clickOnTrack: false });
-    new (window as any).SimpleBar(document.getElementById('form-editors'), { autoHide: true, clickOnTrack: false });
-  }, 100);
+  if (!isMobile.value) {
+    setTimeout(() => {
+      new (window as any).SimpleBar(document.getElementById('folders-instance'), { autoHide: true, clickOnTrack: false });
+      new (window as any).SimpleBar(document.getElementById('notes-instance'), { autoHide: true, clickOnTrack: false });
+      new (window as any).SimpleBar(document.getElementById('form-editors'), { autoHide: true, clickOnTrack: false });
+    }, 100);
+  }
 });
 
 
