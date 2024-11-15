@@ -26,8 +26,8 @@ const handleRightClickNote = (e: any, noteId: number) => {
 <template>
   <ul class="pb-28 lg:pb-3.5">
     <li v-for="note in props.listNotes" :key="note.id"
-      class="menu-items relative w-full animate-fade-down animate-duration-200"
-      :class="{ 'bg-base-300': note.isPinned }">
+      class="menu-items relative w-full"
+      :class="{ 'bg-base-200': note.isPinned }">
 
       <div class="w-full lg:p-2 lg:border-b lg:border-base-300 flex justify-between">
         <div class="w-11/12 p-2.5 hover:cursor-pointer"

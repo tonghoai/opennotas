@@ -79,7 +79,7 @@
 }
 
 .press {
-  transition: transform .2s;
+  transition: transform 0.2s;
 }
 .press:active {
   transform: scale(0.7);
@@ -104,18 +104,18 @@
 
 .hidden-screen-mobile {
   position: absolute;
-  right: -100vw;
+  transform: translateX(100vw);
 }
 
 .display-screen-mobile-animation {
-  animation: slideInDisplayScreenMobile 200ms forwards;
+  animation: slideInDisplayScreenMobile 100ms forwards;
 }
 
 @keyframes slideInDisplayScreenMobile {
   from {
-    right: -100vw;
+    transform: translateX(100vw);
   }
   to {
-    right: 0;
+    transform: translateX(0);
   }
 }
