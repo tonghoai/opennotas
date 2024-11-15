@@ -518,9 +518,10 @@ const handleConfirmPassword = async (password: string) => {
     showErrorSnackbar($i18n.t('app.message_note_unlocked_failed'));
   }
 };
-// let debounceChangeContent: any = null;
+let debounceChangeContent: any = null;
 const handleChangeContent = async (newVal: string) => {
-  // idleKey.value += 1;
+  await mutex.acquire();
+  idleKey.value += 1;
   // clearTimeout(debounceChangeContent);
   // debounceChangeContent = setTimeout(async () => {
   const note = await getNoteDetail(activeNoteId.value);
@@ -529,14 +530,18 @@ const handleChangeContent = async (newVal: string) => {
     updatedAt: nowUnix(),
   });
 
-  if (!note.isLocked) {
-    const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === activeNoteId.value);
-    listNotes.value[findNoteIndex].title = substrTitle(newVal)
-    listNotes.value[findNoteIndex].content = substrContent(newVal);
-    reloadFolder(false, false);
-  }
+  clearTimeout(debounceChangeContent);
+  debounceChangeContent = setTimeout(async () => {
+    if (!note.isLocked) {
+      const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === activeNoteId.value);
+      listNotes.value[findNoteIndex].title = substrTitle(newVal)
+      listNotes.value[findNoteIndex].content = substrContent(newVal);
+      reloadFolder(false, false);
+    }
+  }, 1000);
 
   setActionObject('note', updatedNote);
+  mutex.release();
   // }, 1000);
 };
 const handleCopyToClipboard = async () => {
@@ -1061,7 +1066,7 @@ const pullPush = async () => {
     actionObject,
     lastPull,
     pull.now!,
-  )
+  );
   if (pull.ok) {
     reloadFolder(false, false);
   }
