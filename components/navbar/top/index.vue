@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { OverlayScrollbarsComponent } from "overlayscrollbars-vue";
+// import { OverlayScrollbarsComponent } from "overlayscrollbars-vue";
 import { defineProps, onMounted } from 'vue';
 
 import Menu from '../assets/svg/menu.svg?component';
@@ -8,7 +8,7 @@ import ArrowLeft from '../assets/svg/arrow-left.svg?component';
 import Info from '../assets/svg/info.svg?component';
 import Clipboard from '../assets/svg/clipboard.svg?component';
 import ChevronRight from '../assets/svg/chevron-right.svg?component';
-import PlusCircle from '../assets/svg/plus-circle.svg?component';
+// import PlusCircle from '../assets/svg/plus-circle.svg?component';
 import Undo from '../assets/svg/undo.svg?component';
 import Redo from '../assets/svg/redo.svg?component';
 import Search from '../assets/svg/search.svg?component';
@@ -48,21 +48,22 @@ const emit = defineEmits([
   'clickRedo',
   'clickSetPassword',
   'clickImportNotes',
+  'clickMenuSidebar',
 ]);
 
 const { $i18n } = useNuxtApp();
 const { setLocale } = useI18n();
-const colorMode = useColorMode();
+// const colorMode = useColorMode();
 
-const scrollbarOptions: any = computed(() => {
-  return {
-    scrollbars: {
-      theme: colorMode.value === 'dark' ? 'os-theme-light' : 'os-theme-dark',
-      autoHide: 'scroll',
-      visibility: 'auto',
-    }
-  }
-});
+// const scrollbarOptions: any = computed(() => {
+//   return {
+//     scrollbars: {
+//       theme: colorMode.value === 'dark' ? 'os-theme-light' : 'os-theme-dark',
+//       autoHide: 'scroll',
+//       visibility: 'auto',
+//     }
+//   }
+// });
 
 const isDrawerOpen = ref<boolean>(false);
 
@@ -132,6 +133,10 @@ const handleClickSettingBtn = () => {
 const handleClickTrash = () => {
   emit('clickTrash');
   isDrawerOpen.value = false;
+};
+
+const handleClickMenuSidebar = () => {
+  emit('clickMenuSidebar');
 };
 
 const handleClickUndo = () => {
@@ -293,17 +298,18 @@ defineExpose({
                 @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
                 @renameFolderName="handleRenameFolderName" />
 
-              <div class="px-2 pt-2">
+              <!-- <div class="px-2 pt-2">
                 <button class="btn btn-sm btn-block rounded" @click="handleClickAddFolder">
                   <PlusCircle class="press" />
                 </button>
-              </div>
+              </div> -->
             </div>
           </div>
 
           <div class="w-full">
             <BottombarFolder :activeFolderId="props.activeFolderId" :isSyncing="isSyncing"
-              @clickUpdateData="handleClickUpdateData" @clickTrash="handleClickTrash" />
+              @clickUpdateData="handleClickUpdateData" @clickTrash="handleClickTrash"
+              @clickMenuSidebar="handleClickMenuSidebar" />
           </div>
         </div>
       </div>

@@ -102,7 +102,7 @@
   animation: fadeWarning 1000ms ease-in-out infinite;
 }
 
-.hidden-screen-mobile {
+/* .hidden-screen-mobile {
   position: absolute;
   transform: translateX(100vw);
   clip-path: inset(0 0 0 0);
@@ -120,4 +120,4 @@
   to {
     transform: translateX(0);
   }
-}
+} */

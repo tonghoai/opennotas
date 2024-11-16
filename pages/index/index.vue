@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { OverlayScrollbarsComponent } from "overlayscrollbars-vue";
+// import { OverlayScrollbarsComponent } from "overlayscrollbars-vue";
 import { onMounted, ref } from 'vue';
 const { $i18n } = useNuxtApp();
 const { locale } = useI18n();
@@ -86,9 +86,12 @@ onMounted(async () => {
 
   if (!isMobile.value) {
     setTimeout(() => {
-      new (window as any).SimpleBar(document.getElementById('folders-instance'), { autoHide: true, clickOnTrack: false });
-      new (window as any).SimpleBar(document.getElementById('notes-instance'), { autoHide: true, clickOnTrack: false });
-      new (window as any).SimpleBar(document.getElementById('form-editors'), { autoHide: true, clickOnTrack: false });
+      document.getElementById('folders-instance') && new (window as any)
+        .SimpleBar(document.getElementById('folders-instance'), { autoHide: true, clickOnTrack: false });
+      document.getElementById('notes-instance') && new (window as any)
+        .SimpleBar(document.getElementById('notes-instance'), { autoHide: true, clickOnTrack: false });
+      document.getElementById('form-editors') && new (window as any)
+        .SimpleBar(document.getElementById('form-editors'), { autoHide: true, clickOnTrack: false });
     }, 100);
   }
 });
@@ -202,6 +205,8 @@ onMounted(async () => {
 });
 const isSyncAll = ref<boolean>(false);
 const handleClickUpdateData = async () => {
+  toggleModalMenuSidebar(false, isShowModalMenuSidebar);
+
   isSyncAll.value = true;
   lastPull.value = 0;
   await pullPush().catch(() => { });
@@ -210,6 +215,8 @@ const handleClickUpdateData = async () => {
   showInfoSnackbar($i18n.t('app.message_sync_all_notes'));
 }
 const handleClickAddFolder = async () => {
+  toggleModalMenuSidebar(false, isShowModalMenuSidebar);
+
   const newFolder = await createFolder();
   setActionObject('folder', newFolder);
   await updateLastPull(nowUnix());
@@ -314,6 +321,10 @@ const handleClickBottombarTrash = async () => {
   } else {
     formNotes.value = {};
   }
+}
+const isShowModalMenuSidebar = ref<boolean>(false);
+const handleClickMenuSidebar = (e: any) => {
+  toggleModalMenuSidebar(true, isShowModalMenuSidebar);
 }
 
 
@@ -1111,7 +1122,8 @@ const syncErrorClass = ref<string>("");
         @clickExportNotes="handleClickExportNotes" @clickAddFolder="handleClickAddFolder"
         @clickSwitchEditor="handleClickSwitchEditor" @clickUndo="handleClickUndo" @clickRedo="handleClickRedo"
         @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch"
-        @clickSetPassword="handleClickSetPassword" @clickImportNotes="handleClickImportNotes" />
+        @clickSetPassword="handleClickSetPassword" @clickImportNotes="handleClickImportNotes"
+        @clickMenuSidebar="handleClickMenuSidebar" />
     </div>
 
     <!-- cols folders -->
@@ -1120,7 +1132,7 @@ const syncErrorClass = ref<string>("");
         <ToolbarFolder :isSyncing="isSyncAll" @clickAddFolder="handleClickAddFolder" @clickSetting="handleClickSetting"
           @clickUpdateData="handleClickUpdateData" />
       </div>
-      <hr class="border-base-300">
+      <hr class="hidden lg:block border-base-300">
 
       <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
       <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px - 75px)">
@@ -1142,7 +1154,7 @@ const syncErrorClass = ref<string>("");
         <ToolbarNotes @clickAddNote="handleClickAddNote" @clickSearch="handleClickSearch"
           @clickCancelSearch="handleClickCancelSearch" />
       </div>
-      <hr class="border-base-300">
+      <hr class="hidden lg:block border-base-300">
 
       <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
       <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
@@ -1160,13 +1172,13 @@ const syncErrorClass = ref<string>("");
 
     <!-- cols editor -->
     <div
-      :class="{ 'hidden-screen-mobile display-screen-mobile-animation': isMobile, 'block w-full pt-[72px]': isMobile && isInEditor, 'hidden': isMobile && !isInEditor, 'lg:block lg:w-[inherit]': !isMobile }">
+      :class="{ 'block w-full pt-[72px]': isMobile && isInEditor, 'hidden': isMobile && !isInEditor, 'lg:block lg:w-[inherit]': !isMobile }">
       <div>
         <ToolbarFormNotes :noteId="formNotes.id" :editorName="editorName" :isLocked="formNotes.isLocked"
           @copyToClipboard="handleCopyToClipboard" @clickInfo="handleClickFormNotesInfo"
           @clickResize="handleClickResizeApp" @clickSwitchEditor="handleClickSwitchEditor" />
       </div>
-      <hr class="border-base-300">
+      <hr class="hidden lg:block border-base-300">
 
       <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
       <div id="form-editors" class="cursor-text overflow-auto" :class="{ 'overflow-x-hidden': isMobile }"
@@ -1224,6 +1236,8 @@ const syncErrorClass = ref<string>("");
     @deleteNote="handleClickDeleteNote" @pinNote="handleClickPinNote" @lockNote="handleClickLockNote"
     @copyNote="handleCopyToClipboard" @restoreNote="handleClickRestoreNote"
     @deleteNoteForever="handleClickDeleteNoteForever" />
+  <ModalMenuSidebar v-if="isShowModalMenuSidebar" @clickAddFolder="handleClickAddFolder"
+    @clickForceSync="handleClickUpdateData" />
 
   <!-- float button create new note -->
   <FloatNewNotes v-if="!formNotes.id && initedApp && activeFolderId !== 'bottombar-trash'"

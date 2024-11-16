@@ -71,3 +71,7 @@ body {
   top: 0;
   width: 9px;
 }
+
+.simplebar-scrollbar:before {
+  background-color: oklch(var(--bc));
+}

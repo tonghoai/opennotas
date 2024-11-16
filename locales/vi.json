@@ -155,6 +155,8 @@
     "modal_menu_note_delete": "Xóa",
     "modal_menu_note_restore": "Khôi phục",
     "modal_menu_note_delete_forever": "Xóa khỏi thùng rác",
+    "modal_menu_sidebar_new_folder": "Tạo thư mục mới",
+    "modal_menu_sidebar_sync": "Đồng bộ dữ liệu",
     "modal_notes_detail_title": "Thông tin ghi chú",
     "modal_notes_detail_last_sync": "Lần đồng bộ cuối",
     "modal_notes_detail_last_modified": "Lần chỉnh sửa cuối",

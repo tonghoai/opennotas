@@ -2,6 +2,7 @@
 import draggable from 'vuedraggable';
 import Folder from '../assets/svg/folder.svg?component';
 import MoreHorizontal from '../assets/svg/more-horizontal.svg?component';
+import Setting from '../assets/svg/settings.svg?component';
 
 const props = defineProps([
   'listFolders',

@@ -3,7 +3,6 @@ import ChevronRight from '../assets/svg/chevron-right.svg?component';
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
-const colorMode = useColorMode();
 
 const props = defineProps([
   'isPasswordExist',
@@ -38,33 +37,9 @@ watch(() => props.settings, (newValue) => {
   adapterSelect.value = settings.value.sync.adapter;
 });
 
-let scrollBarInstance: any;
 onMounted(() => {
-  scrollBarInstance = document.querySelector('#setting-content') && (window as any).OverlayScrollbarsGlobal?.OverlayScrollbars(
-    document.querySelector('#setting-content'),
-    {
-      scrollbars: {
-        theme: colorMode.value == 'dark' ? 'os-theme-light' : 'os-theme-dark',
-        autoHide: 'scroll',
-        visibility: 'auto',
-      },
-    },
-  );
-});
-
-watch(() => colorMode.preference, (newValue) => {
-  scrollBarInstance && scrollBarInstance.destroy();
-
-  scrollBarInstance = document.querySelector('#setting-content') && (window as any).OverlayScrollbarsGlobal?.OverlayScrollbars(
-    document.querySelector('#setting-content'),
-    {
-      scrollbars: {
-        theme: newValue == 'dark' ? 'os-theme-light' : 'os-theme-dark',
-        autoHide: 'scroll',
-        visibility: 'auto',
-      },
-    },
-  );
+  document.getElementById('setting-content') && new (window as any)
+    .SimpleBar(document.getElementById('setting-content'), { autoHide: true, clickOnTrack: false });
 });
 
 const handleSaveSettings = async () => {
@@ -135,7 +110,8 @@ const handleClickCloseSettings = () => {
     <div class="modal-box w-full lg:w-1/2 h-5/6 overflow-hidden px-4 py-8">
       <span class="absolute bottom-2 right-4 text-sm underline">{{ runtimeConfig.public.version }}</span>
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickCloseSettings">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          @click="handleClickCloseSettings">✕</button>
       </form>
       <h3 class="font-bold text-lg">{{ $t('app.setting_title') }}</h3>
 
@@ -152,7 +128,7 @@ const handleClickCloseSettings = () => {
         </div>
       </div>
 
-      <div id="setting-content" class="pt-4 overflow-scroll" style="height: calc(100% - 120px)">
+      <div id="setting-content" class="pt-4" style="height: calc(100% - 120px)">
         <div class="px-2 h-full">
           <!-- general settings -->
           <div class="transition-all pb-6" v-if="tabIndex == 0">
@@ -195,7 +171,7 @@ const handleClickCloseSettings = () => {
               </div>
               <button class="btn btn-primary" @click="handleClickSetPassword">
                 {{ props.isPasswordExist ? $t('app.setting_general_security_change_password') :
-        $t('app.setting_general_security_set_password') }}
+                  $t('app.setting_general_security_set_password') }}
               </button>
             </label>
           </div>

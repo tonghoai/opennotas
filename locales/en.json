@@ -155,6 +155,8 @@
     "modal_menu_note_delete": "Delete",
     "modal_menu_note_restore": "Restore",
     "modal_menu_note_delete_forever": "Delete from Trash",
+    "modal_menu_sidebar_new_folder": "New Folder",
+    "modal_menu_sidebar_sync": "Sync Data",
     "modal_notes_detail_title": "Note Information",
     "modal_notes_detail_last_sync": "Last Sync",
     "modal_notes_detail_last_modified": "Last Modified",

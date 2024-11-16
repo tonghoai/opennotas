@@ -155,6 +155,8 @@
         "modal_menu_note_delete": "刪除",
         "modal_menu_note_restore": "復原",
         "modal_menu_note_delete_forever": "從垃圾桶刪除",
+        "modal_menu_sidebar_new_folder": "建立資料夾",
+        "modal_menu_sidebar_sync": "同步",
         "modal_notes_detail_title": "筆記資訊",
         "modal_notes_detail_last_sync": "上次同步時間",
         "modal_notes_detail_last_modified": "最後修改",
