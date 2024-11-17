@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import PlusCircle from '../assets/svg/plus-circle.svg?component';
 import Search from '../assets/svg/search.svg?component';
+import X from '../assets/svg/x.svg?component';
 
 const emit = defineEmits([
   'clickAddNote',
@@ -27,25 +28,37 @@ const handleToggleSearch = () => {
 
 const searchInputRef = ref<HTMLInputElement | null>(null);
 const searchInput = ref<string>('');
+const isShowSearchLoading = ref(false);
 let searchInputDebounce: any = null;
 watch(searchInput, (value) => {
   clearTimeout(searchInputDebounce);
+  isShowSearchLoading.value = false;
 
   searchInputDebounce = setTimeout(() => {
+    isShowSearchLoading.value = true;
     emit('clickSearch', value);
-  }, 300);
+  }, 500);
+});
+
+const searchLoadingDone = () => {
+  isShowSearchLoading.value = false;
+}
+
+defineExpose({
+  searchLoadingDone,
 });
 </script>
 
 <template>
   <div v-if="isShowSearchInput" class="p-2 flex items-center h-12 w-full animate-fade-down animate-duration-200">
-    <label class="input input-sm input-bordered flex items-center gap-2 mr-2 w-8/12">
-      <input ref="searchInputRef" type="text" class="grow" placeholder="" autocomplete="off" name="hidden"
-        v-model="searchInput" />
-    </label>
+    <div class="relative flex-1 mr-2">
+      <input ref="searchInputRef" type="text" class="grow relative input input-sm input-bordered w-full" placeholder=""
+        autocomplete="off" name="hidden" v-model="searchInput" />
+      <span v-if="isShowSearchLoading" class="loading loading-spinner loading-sm absolute right-1.5 top-1.5"></span>
+    </div>
 
-    <button class="btn btn-primary btn-sm" @click="handleToggleSearch">
-      {{ $t('app.toolbar_note_search_cancel') }}
+    <button class="flex-none btn btn-primary btn-sm" @click="handleToggleSearch">
+      <X />
     </button>
   </div>
 

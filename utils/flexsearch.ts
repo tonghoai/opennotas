@@ -1,14 +1,18 @@
 function newFlexSearch() {
   return new (window as any).FlexSearch.Document({
-    doc: {
+    document: {
       id: "id",
-      field: ["content"]
+      index: [{
+        field: "content",
+        preset: "score",
+        tokenize: "reverse",
+      }]
     }
   });
 }
 
 function addToFlexSearch(index: any, data: any) {
-  index.add(data);
+  index.addAsync(data);
 }
 
 export {

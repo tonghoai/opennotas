@@ -187,6 +187,7 @@
     "message_sync_network_offline_error": "You are offline",
     "message_sync_internal_error": "Cannot sync data",
     "message_sync_init": "Synchronizing data...",
-    "message_sync_success": "Synchronization successful"
+    "message_sync_success": "Synchronization successful",
+    "message_search_no_result": "No results found"
   }
 }

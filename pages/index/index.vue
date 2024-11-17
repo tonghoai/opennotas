@@ -349,12 +349,21 @@ const handleClickAddNote = async () => {
 };
 const handleClickSearch = async (value: string) => {
   if (!value) {
+    navbarTopRef.value?.searchLoadingDone();
+    toolbarNotesRef.value?.searchLoadingDone();
     return;
   }
 
+  const currentNotes = await loadNotes();
   const result = flexsearch!.search(value);
-  await reloadNotes(false, activeFolderId.value === 'bottombar-trash');
-  listNotes.value = listNotes.value.filter((item: any) => result[0]?.result?.includes(item.id));
+  // await reloadNotes(false, activeFolderId.value === 'bottombar-trash');
+  listNotes.value = currentNotes.filter((item: any) => result[0]?.result?.includes(item.id));
+  navbarTopRef.value?.searchLoadingDone();
+  toolbarNotesRef.value?.searchLoadingDone();
+
+  if (!listNotes.value.length) {
+    showInfoSnackbar($i18n.t('app.message_search_no_result'));
+  }
 }
 const handleClickCancelSearch = async () => {
   listNotes.value = await loadNotes();
@@ -842,6 +851,7 @@ const handleExportNotes = async (includeLock: boolean) => {
   saveJsonFile(data, 'opennotas-export-notes.json');
 }
 const navbarTopRef = ref<any>(null);
+const toolbarNotesRef = ref<any>(null);
 const isShowModalImportNotes = ref<boolean>(false);
 const handleClickCloseModalImportNotes = () => {
   toggleModalImportNotes(false, isShowModalImportNotes);
@@ -1151,7 +1161,7 @@ const syncErrorClass = ref<string>("");
     <div class="cols-notes" :style="{ width: colsNotesWidth + 'px' }"
       :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[72px] absolute': isMobile, 'lg:w-3/12 lg:float-left border-r border-base-300': !isMobile }">
       <div class="hidden lg:block">
-        <ToolbarNotes @clickAddNote="handleClickAddNote" @clickSearch="handleClickSearch"
+        <ToolbarNotes ref="toolbarNotesRef" @clickAddNote="handleClickAddNote" @clickSearch="handleClickSearch"
           @clickCancelSearch="handleClickCancelSearch" />
       </div>
       <hr class="hidden lg:block border-base-300">

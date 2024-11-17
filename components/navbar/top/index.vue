@@ -12,6 +12,7 @@ import ChevronRight from '../assets/svg/chevron-right.svg?component';
 import Undo from '../assets/svg/undo.svg?component';
 import Redo from '../assets/svg/redo.svg?component';
 import Search from '../assets/svg/search.svg?component';
+import X from '../assets/svg/x.svg?component';
 
 const props = defineProps([
   'listFolders',
@@ -90,13 +91,16 @@ const handleToggleSearch = () => {
 }
 const searchInputRef = ref<HTMLInputElement | null>(null);
 const searchInput = ref<string>('');
+const isShowSearchLoading = ref(false);
 let searchInputDebounce: any = null;
 watch(searchInput, (value) => {
   clearTimeout(searchInputDebounce);
+  isShowSearchLoading.value = false;
 
   searchInputDebounce = setTimeout(() => {
+    isShowSearchLoading.value = true;
     emit('clickSearch', value);
-  }, 300);
+  }, 500);
 });
 
 
@@ -221,12 +225,16 @@ const resetSearchInput = () => {
   searchInput.value = '';
   isShowSearchInput.value = false;
 }
+const searchLoadingDone = () => {
+  isShowSearchLoading.value = false;
+}
 
 defineExpose({
   closeDrawer,
   openSettingDrawer,
   openHambugerDrawer,
   resetSearchInput,
+  searchLoadingDone,
 });
 </script>
 
@@ -251,11 +259,16 @@ defineExpose({
 
           <div v-if="isShowSearchInput"
             class="p-2 flex items-center h-12 w-full animate-fade-down animate-duration-200">
-            <input ref="searchInputRef" type="text" class="input input-sm input-bordered text-base-content w-9/12 mr-2"
-              placeholder="" autocomplete="off" name="hidden" v-model="searchInput" />
+            <div class="relative flex-1 mr-2">
+              <input ref="searchInputRef" type="text" class="input input-sm input-bordered text-base-content w-full"
+                placeholder="" autocomplete="off" name="hidden" v-model="searchInput" />
+              <span v-if="isShowSearchLoading"
+                class="loading loading-spinner loading-sm absolute right-1.5 top-1.5"></span>
+            </div>
 
-            <button class="btn bg-base-100 text-base-content btn-sm w-3/12" @click="handleToggleSearch">
-              {{ $t('app.toolbar_note_search_cancel') }}
+            <button class="flex-none btn bg-base-100 text-base-content btn-sm" @click="handleToggleSearch">
+              <!-- {{ $t('app.toolbar_note_search_cancel') }} -->
+              <X />
             </button>
           </div>
 

@@ -187,6 +187,7 @@
     "message_sync_network_offline_error": "Bạn đang ngoại tuyến",
     "message_sync_internal_error": "Không thể đồng bộ dữ liệu",
     "message_sync_init": "Đang đồng bộ dữ liệu...",
-    "message_sync_success": "Đồng bộ thành công"
+    "message_sync_success": "Đồng bộ thành công",
+    "message_search_no_result": "Không tìm thấy kết quả"
   }
 }
