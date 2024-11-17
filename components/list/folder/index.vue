@@ -53,7 +53,7 @@ const onEnd = () => {
   </div>
 
   <ul
-    class="menu block lg:border-r lg:border-base-300 w-full p-0 p-2 transition-all h-[calc(100vh_-_321px)] overflow-auto lg:h-full lg:overflow-auto">
+    class="menu block lg:border-r lg:border-base-300 w-full p-0 p-2 transition-all h-[calc(100vh_-_222px)] overflow-auto lg:h-full lg:overflow-auto">
     <draggable :delay="100" :prevent-on-filter="false" :touch-start-threshold="50" :list="props.listFolders"
       @end="onEnd" :move="onMove" item-key="id">
       <template #item="{ element: folder }">
