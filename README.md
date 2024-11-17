@@ -4,9 +4,9 @@
 
 <div align="center">  
   <h3>The best personal Note-taking app 📙 Fast 🚀 Secure 🔐 and Free 💯</h3>  
-  <a href="https://opennotas.io">Website</a> •  
-  <a href="https://docs.opennotas.io/">Documentation</a> •  
-  <a href="https://t.me/opennotas">Telegram</a>
+  <a href="https://opennotas.io">🌎 Website</a> •  
+  <a href="https://docs.opennotas.io/">📂 Documentation</a> •  
+  <a href="https://t.me/opennotas">🛟 Telegram</a>
 </div>
 
 <br/>  
@@ -14,29 +14,21 @@
 
 ## Introduction
 
-OpenNotas is an open-source note-taking application, cross-platform based on PWA, focusing on security and device synchronization.
+OpenNotas is an **open-source** note-taking application, **cross-platform** based on PWA, focusing on **security** and device **synchronization**.
 
-OpenNotas follows the philosophy of "simplicity in usage," catering to anyone who needs to quickly and reliably jot down their notes in text format.
+OpenNotas follows the philosophy of **"simplicity in usage"**, catering to anyone who needs to **quickly** and **reliably** jot down their notes in text format.
 
-OpenNotas supports Markdown, utilizing open-source text editing tools that can easily be expanded with additional features and utilities.
+OpenNotas **supports Markdown**, utilizing open-source text editing tools that can easily be expanded with additional features and utilities.
 
 ![OpenNotas](https://opennotas.io/img/opennotas.webp)
 
-- **Easy to Use**
+- **Easy to Use 🚀** - OpenNotas is designed to be easy to use. Just a tap and you can start writing notes immediately.
 
-> OpenNotas is designed to be easy to use. Just a tap and you can start writing notes immediately.
+- **Multi-platform 📱💻** - OpenNotas is available on most platforms, from mobile to desktop, from Windows to Linux, MacOS.
 
-- **Multi-platform**
+- **Sync 🌎** - You can set up note syncing across devices through Adapter configuration, [read](https://docs.opennotas.io/advanced/sync-flow).
 
-> OpenNotas is available on most platforms, from mobile to desktop, from Windows to Linux, MacOS.
-
-- **Sync**
-
-> You can set up note syncing across devices through Adapter configuration, [learn more »](https://docs.opennotas.io/advanced/sync-flow).
-
-- **End-to-End Encryption**
-
-> Note data is encrypted with the AES algorithm before reaching the sync server, keeping your data always safe and secure, [learn more »](https://docs.opennotas.io/advanced/security).
+- **End-to-End Encryption 🔐** - Note data is encrypted with the AES algorithm before reaching the sync server, keeping your data always safe and secure, [read](https://docs.opennotas.io/advanced/security).
 
 ## Installation
 
