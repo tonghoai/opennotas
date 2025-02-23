@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// import { OverlayScrollbarsComponent } from "overlayscrollbars-vue";
 import { onMounted, ref } from 'vue';
 const { $i18n } = useNuxtApp();
 const { locale } = useI18n();
@@ -53,12 +52,24 @@ watch(() => route.params, () => {
   }
 });
 
+// function for update viewport height
+function updateViewportHeight() {
+  const viewportHeight = globalThis.innerHeight;
+  document.documentElement.style.setProperty(
+    "--vh",
+    `${viewportHeight * 0.01}px`,
+  );
+}
+
 // all init for app
 const privateKey = ref<CryptoKey>(); // using to decrypt/encrypt sync data
 onMounted(async () => {
   if (runtimeConfig.public.env === 'production') {
     registerServiceWorker();
   }
+
+  updateViewportHeight();
+
   window.history.replaceState({}, '', window.location.pathname); // reset query params
   outsideClickMenu(); // handle outside click for menu
 
@@ -78,22 +89,23 @@ onMounted(async () => {
   //   e.preventDefault();
   // });
   window.addEventListener('resize', handleResizeScreen);
+  window.addEventListener('resize', updateViewportHeight);
 
   const localKey = await getE2EEKey();
   if (localKey) {
     privateKey.value = localKey;
   }
 
-  if (!isMobile.value) {
-    setTimeout(() => {
-      document.getElementById('folders-instance') && new (window as any)
-        .SimpleBar(document.getElementById('folders-instance'), { autoHide: true, clickOnTrack: false });
-      document.getElementById('notes-instance') && new (window as any)
-        .SimpleBar(document.getElementById('notes-instance'), { autoHide: true, clickOnTrack: false });
-      document.getElementById('form-editors') && new (window as any)
-        .SimpleBar(document.getElementById('form-editors'), { autoHide: true, clickOnTrack: false });
-    }, 100);
-  }
+  // if (!isMobile.value) {
+  //   setTimeout(() => {
+  //     document.getElementById('folders-instance') && new (window as any)
+  //       .SimpleBar(document.getElementById('folders-instance'), { autoHide: true, clickOnTrack: false });
+  //     document.getElementById('notes-instance') && new (window as any)
+  //       .SimpleBar(document.getElementById('notes-instance'), { autoHide: true, clickOnTrack: false });
+  //     document.getElementById('form-editors') && new (window as any)
+  //       .SimpleBar(document.getElementById('form-editors'), { autoHide: true, clickOnTrack: false });
+  //   }, 100);
+  // }
 });
 
 
@@ -105,16 +117,6 @@ onMounted(async () => {
     await setImportData(notes);
     await handleTriggerImportNotes();
     await setFirstInit();
-  }
-});
-
-const scrollbarOptions: any = computed(() => {
-  return {
-    scrollbars: {
-      theme: colorMode.value === 'dark' ? 'os-theme-light' : 'os-theme-dark',
-      autoHide: 'scroll',
-      visibility: 'auto',
-    }
   }
 });
 
@@ -173,8 +175,9 @@ const setColsWidthData = async () => {
 const settings = ref<any>(getDefaultSettings());
 onMounted(async () => {
   const oldSettings = await getSettings();
-  if (oldSettings.general) {
-    settings.value = oldSettings;
+  const mergeSettings = deepMerge(settings.value, oldSettings);
+  if (mergeSettings.general) {
+    settings.value = mergeSettings;
     setLocale(settings.value.general.lang);
   }
 });
@@ -1118,8 +1121,9 @@ const syncErrorClass = ref<string>("");
     <p class="absolute bottom-4">{{ runtimeConfig.public.version }}</p>
   </div>
 
-  <div class="h-screen w-screen overflow-hidden bg-base-100"
-    style="-webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;" v-else>
+  <div class="w-screen overflow-hidden bg-base-100"
+    style="height: calc(var(--vh, 1vh) * 100);-webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;"
+    v-else>
     <!-- mobile nav top -->
     <div class="lg:hidden">
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
@@ -1144,14 +1148,12 @@ const syncErrorClass = ref<string>("");
       </div>
       <hr class="hidden lg:block border-base-300">
 
-      <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
       <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px - 75px)">
         <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
           :actionObjectKeys="actionObjectKeys" @clickFolderName="handleClickFolderName"
           @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
           @reorderFolderName="handleReorderFolderName" />
       </div>
-      <!-- </OverlayScrollbarsComponent> -->
       <hr class="border-base-300">
       <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" />
     </div>
@@ -1166,7 +1168,6 @@ const syncErrorClass = ref<string>("");
       </div>
       <hr class="hidden lg:block border-base-300">
 
-      <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
       <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
         <div v-if="isSyncError" class="m-2 rounded text-xs text-center py-1"
           :class="{ 'bg-warning': syncErrorClass === 'warning', 'text-warning-content': syncErrorClass === 'warning', 'bg-error': syncErrorClass === 'error', 'text-error-content': syncErrorClass === 'error' }">
@@ -1176,7 +1177,6 @@ const syncErrorClass = ref<string>("");
           :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
           @rightClickNote="handleRightClickNote" />
       </div>
-      <!-- </OverlayScrollbarsComponent> -->
     </div>
 
 
@@ -1190,15 +1190,13 @@ const syncErrorClass = ref<string>("");
       </div>
       <hr class="hidden lg:block border-base-300">
 
-      <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
-      <div id="form-editors" class="cursor-text overflow-auto" :class="{ 'overflow-x-hidden': isMobile }"
+      <div id="form-editors" class="bg-svg cursor-text overflow-auto" :class="{ 'overflow-x-hidden': isMobile }"
         style="height: calc(100vh - 55px)">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
           :isDeleted="!!formNotes.deletedAt" @confirmPassword="handleConfirmPassword"
           @changeContent="handleChangeContent" />
       </div>
-      <!-- </OverlayScrollbarsComponent> -->
     </div>
   </div>
 

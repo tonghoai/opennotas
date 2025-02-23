@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Editor, EditorContent } from '@tiptap/vue-3'
+import { BubbleMenu, Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import { Image as TipTapImage } from "@tiptap/extension-image";
@@ -10,21 +10,41 @@ import TableRow from '@tiptap/extension-table-row';
 import Italic from '@tiptap/extension-italic';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
+import CodeBlock from '@tiptap/extension-code-block'
+
+import H from '../assets/svg/h.svg?component';
+import Pilcrow from '../assets/svg/pilcrow.svg?component';
+import Bold from '../assets/svg/bold.svg?component';
+import ItalicSVG from '../assets/svg/italic.svg?component';
+import Strike from '../assets/svg/strikethrough.svg?component';
+import BulletList from '../assets/svg/list.svg?component';
+import Task from '../assets/svg/square-check.svg?component';
+import TableSVG from '../assets/svg/table.svg?component';
+import ImageUp from '../assets/svg/image-up.svg?component';
+import CodeSVG from '../assets/svg/code.svg?component';
 
 const props = defineProps([
   'value',
   'isDeleted',
+  'settings',
 ]);
 
 const emit = defineEmits([
   'changeContent',
 ]);
 
+const CustomImage = TipTapImage.configure({
+  HTMLAttributes: {
+    onError: "this.onerror=null;this.src='/img/no-picture-available.jpg';",
+  },
+});
+
 let editor: Editor;
 onMounted(() => {
-  const value = /\s*\]\s*$/.test(props.value) ? `${props.value}&hairsp;` : props.value;
+  const value = props.value;
   editor = new Editor({
-    content: value.replace(/(\n)(?!\|)/g, '  \n\n'),
+    // content: value.replace(/(\n)(?!\|)/g, '  \n\n'),
+    content: value,
     editable: !props.isDeleted,
     extensions: [
       StarterKit,
@@ -52,13 +72,14 @@ onMounted(() => {
         transformPastedText: true,
         transformCopiedText: true,
       }),
-      TipTapImage.configure({
+      CustomImage.configure({
         allowBase64: false,
       }),
+      CodeBlock,
     ],
     editorProps: {
       attributes: {
-        class: 'bg-svg px-2 lg:px-8 py-6',
+        class: `px-2 lg:px-8 py-6 ${props.settings?.general.editorView === 'compact' ? 'max-w-screen-md' : ''}`,
       },
       handleClickOn(view, pos, node, nodePos, event) {
         editor.commands.focus(pos, { scrollIntoView: true });
@@ -87,10 +108,19 @@ onMounted(() => {
 //   editor.commands.setContent(/\s*\]\s*$/.test(newValue) ? `${newValue}&hairsp;` : newValue);
 // });
 
-const focus = (location: 'start' | 'end' = 'start') => {
-  if (!editor.isFocused) {
-    editor.commands.focus(location);
+const addImage = () => {
+  const url = window.prompt('URL');
+  const alt = window.prompt('Alt', "Image");
+
+  if (url) {
+    editor.chain().focus().setImage({ src: url, alt: alt! }).run();
   }
+}
+
+const focus = (location: 'start' | 'end' = 'start') => {
+  // if (!editor.isFocused) {
+  //   editor.commands.focus(location);
+  // }
 }
 
 const readonly = () => {
@@ -193,18 +223,114 @@ const CustomTaskItem = TaskItem.extend({
 
 <template>
   <client-only>
+    <div class="control-group w-full sticky top-0 z-50 bg-base-100">
+      <div class="button-group flex gap-2 flex-wrap lg:px-8 lg:py-2 p-2 mx-auto"
+        :class="{ 'max-w-screen-md': settings?.general.editorView === 'compact' }">
+        <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+          :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }" :disabled="!editor.isEditable">
+          <span class="flex gap-1">
+            <H class="cursor-pointer opacity-80" />
+            H1
+          </span>
+
+        </button>
+        <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+          :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }" :disabled="!editor.isEditable">
+          <span class="flex gap-1">
+            <H class="cursor-pointer opacity-80" />
+            H2
+          </span>
+        </button>
+        <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
+          :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }" :disabled="!editor.isEditable">
+          <span class="flex gap-1">
+            <H class="cursor-pointer opacity-80" />
+            H3
+          </span>
+        </button>
+        <button @click="editor.chain().focus().setParagraph().run()"
+          :class="{ 'is-active': editor.isActive('paragraph') }" :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center">
+            <Pilcrow class="cursor-pointer opacity-80" />
+            Paragraph
+          </span>
+        </button>
+        <button @click="editor.chain().focus().toggleCodeBlock().run()"
+          :disabled="editor.isActive('codeBlock') || !editor.isEditable"
+          :class="{ 'is-active': editor.isActive('codeBlock') }">
+          <span class="flex gap-1 items-center">
+            <CodeSVG class="cursor-pointer opacity-80" />
+            Code
+          </span>
+        </button>
+        <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }"
+          :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center">
+            <Bold class="cursor-pointer opacity-80" />
+            Bold
+          </span>
+        </button>
+        <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }"
+          :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center">
+            <ItalicSVG class="cursor-pointer opacity-80" />
+            Italic
+          </span>
+        </button>
+        <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }"
+          :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center">
+            <Strike class="cursor-pointer opacity-80" />
+            Strike
+          </span>
+        </button>
+        <button @click="editor.chain().focus().toggleBulletList().run()"
+          :class="{ 'is-active': editor.isActive('bulletList') }" :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center">
+            <BulletList class="cursor-pointer opacity-80" />
+            Bullet List
+          </span>
+        </button>
+        <button @click="editor.chain().focus().toggleTaskList().run()"
+          :class="{ 'is-active': editor.isActive('taskList') }" :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center">
+            <Task class="cursor-pointer opacity-80" />
+            Task List
+          </span>
+        </button>
+        <button @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true, }).run()"
+          :class="{ 'is-active': editor.isActive('table') }" :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center">
+            <TableSVG class="cursor-pointer opacity-80" />
+            Table
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor && editor.isActive('image')">
+      <div class="bubble-menu">
+        <button @click="addImage" :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center">
+            <ImageUp class="cursor-pointer opacity-80" />
+            Change Image
+          </span>
+        </button>
+      </div>
+    </bubble-menu>
+
     <editor-content :editor="editor" />
   </client-only>
 </template>
 
-<style lang="postcss">
+<style>
 .tiptap {
   outline: none;
   line-height: 32px;
 
-  &:last-child {
+  /* &:last-child {
     padding-bottom: 64px !important;
-  }
+  } */
 
   >*+* {
     margin-top: 0.75em;
@@ -221,5 +347,16 @@ const CustomTaskItem = TaskItem.extend({
   h6 {
     @apply border-b border-base-300;
   }
+}
+
+button {
+  @apply bg-base-300 rounded border-none text-sm font-medium py-1 px-2 transition;
+}
+
+button.is-active,
+input.is-active,
+select.is-active,
+textarea.is-active {
+  @apply bg-primary text-primary-content;
 }
 </style>

@@ -37,10 +37,10 @@ watch(() => props.settings, (newValue) => {
   adapterSelect.value = settings.value.sync.adapter;
 });
 
-onMounted(() => {
-  document.getElementById('setting-content') && new (window as any)
-    .SimpleBar(document.getElementById('setting-content'), { autoHide: true, clickOnTrack: false });
-});
+// onMounted(() => {
+//   document.getElementById('setting-content') && new (window as any)
+//     .SimpleBar(document.getElementById('setting-content'), { autoHide: true, clickOnTrack: false });
+// });
 
 const handleSaveSettings = async () => {
   emit('saveSettings', settings.value);
@@ -54,6 +54,12 @@ const handleChangeLanguage = () => {
 
 // default editor
 const handleChangeDefaultEditor = () => {
+  // handleSaveSettings();
+  emit('saveSettings', settings.value);
+}
+
+// editor view
+const handleChangeEditorView = () => {
   // handleSaveSettings();
   emit('saveSettings', settings.value);
 }
@@ -162,6 +168,17 @@ const handleClickCloseSettings = () => {
                 @change="handleChangeDefaultEditor">
                 <option value="Tiptap">{{ $t('app.setting_general_default_editor_tiptap') }}</option>
                 <option value="CodeMirror">{{ $t('app.setting_general_default_editor_codemirror') }}</option>
+              </select>
+            </label>
+
+            <label class="form-control w-full pt-2">
+              <div class="label">
+                <span class="font-semibold label-text">{{ "Editor View" }}</span>
+              </div>
+              <select class="select select-bordered" v-model="settings.general.editorView"
+                @change="handleChangeEditorView">
+                <option value="full">{{ "Full" }}</option>
+                <option value="compact">{{ "Compact" }}</option>
               </select>
             </label>
 

@@ -56,6 +56,12 @@ watch(() => props.editorName, (newValue) => {
   editorName.value = newValue;
 });
 
+// reload editor view when settings changed
+const editorTiptapKey = ref<number>(0);
+watch(props.settings, () => {
+  editorTiptapKey.value++;
+});
+
 defineExpose({
   focusPassword,
   focus,
@@ -70,12 +76,12 @@ defineExpose({
 <template>
   <div class="flex justify-center bg-svg h-full transition-all" v-if="!id"></div>
 
-  <div class="markdown-body transition-all h-full bg-svg" v-if="id && !isLocked" @click="() => focus('end')">
+  <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="() => focus('end')">
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
-      @changeContent="handleChangeContent" />
+      :settings="settings" :key="editorTiptapKey" @changeContent="handleChangeContent" />
 
     <EditorCodemirror v-if="editorName === 'CodeMirror'" ref="editorRef" :value="props.value"
-      :isDeleted="props.isDeleted" @changeContent="handleChangeContent" />
+      :isDeleted="props.isDeleted" :settings="settings" @changeContent="handleChangeContent" />
   </div>
 
   <div class="flex justify-center pt-8 pb-1 bg-svg h-full transition-all" v-show="id && isLocked">

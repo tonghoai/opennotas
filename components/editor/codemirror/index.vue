@@ -7,6 +7,7 @@ import { drawSelection, dropCursor, rectangularSelection, keymap } from "@codemi
 const props = defineProps([
   'value',
   'isDeleted',
+  'settings',
 ]);
 
 const emit = defineEmits([
@@ -97,7 +98,8 @@ defineExpose({
 </script>
 
 <template>
-  <div id="cm-editor" class="w-full outline-none px-2 lg:px-8 py-6 bg-svg" />
+  <div id="cm-editor" class="w-full mx-auto outline-none px-2 lg:px-8 py-6"
+    :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }" />
 </template>
 
 <style lang="postcss">

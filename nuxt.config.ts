@@ -10,15 +10,17 @@ export default defineNuxtConfig({
       ga: "",
     },
   },
+
   devtools: { enabled: false },
+
   css: [
     "~/assets/css/main.css",
     "~/assets/css/style.css",
     "~/assets/css/markdown.css",
     "~/assets/css/animation.css",
     "~/assets/css/codemirror.css",
-    "~/node_modules/overlayscrollbars/styles/overlayscrollbars.css",
   ],
+
   postcss: {
     plugins: {
       "postcss-import": {},
@@ -27,6 +29,7 @@ export default defineNuxtConfig({
       autoprefixer: {},
     },
   },
+
   app: {
     head: {
       title: "OpenNotas",
@@ -49,14 +52,10 @@ export default defineNuxtConfig({
           href: "/apple-touch-icon-180x180.png",
         },
         { rel: "manifest", href: "/manifest.json" },
-        { rel: "stylesheet", href: "https://unpkg.com/simplebar@latest/dist/simplebar.css" },
       ],
       script: [
         {
           src: "https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.10.27/interact.min.js",
-        },
-        {
-          src: "https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/2.8.0/browser/overlayscrollbars.browser.es6.min.js",
         },
         {
           src: "https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js",
@@ -64,22 +63,25 @@ export default defineNuxtConfig({
         {
           src: "https://cdnjs.cloudflare.com/ajax/libs/FlexSearch/0.7.31/flexsearch.bundle.js",
         },
-        {
-          src: "https://unpkg.com/simplebar@latest/dist/simplebar.min.js",
-        }
       ],
     },
   },
+
   vite: {
     plugins: [svgLoader({})],
   },
+
   modules: ["@nuxtjs/color-mode", "@nuxtjs/tailwindcss", "@nuxtjs/i18n"],
+
   i18n: {
     vueI18n: "./i18n.config.ts",
   },
+
   colorMode: {
     preference: "light",
     fallback: "light",
     dataValue: "theme",
   },
+
+  compatibilityDate: "2024-11-18",
 });

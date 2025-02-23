@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// import { OverlayScrollbarsComponent } from "overlayscrollbars-vue";
 import { defineProps, onMounted } from 'vue';
 
 import Menu from '../assets/svg/menu.svg?component';
@@ -55,16 +54,6 @@ const emit = defineEmits([
 const { $i18n } = useNuxtApp();
 const { setLocale } = useI18n();
 // const colorMode = useColorMode();
-
-// const scrollbarOptions: any = computed(() => {
-//   return {
-//     scrollbars: {
-//       theme: colorMode.value === 'dark' ? 'os-theme-light' : 'os-theme-dark',
-//       autoHide: 'scroll',
-//       visibility: 'auto',
-//     }
-//   }
-// });
 
 const isDrawerOpen = ref<boolean>(false);
 
@@ -338,8 +327,6 @@ defineExpose({
 
 
       <div class="menu p-0 w-10/12 min-h-full bg-base-100">
-        <!-- <OverlayScrollbarsComponent :options="scrollbarOptions"> -->
-
         <div class="w-full">
           <!-- general setting -->
           <div class="p-4">
@@ -481,7 +468,6 @@ defineExpose({
           <div class="h-6"></div>
 
         </div>
-        <!-- </OverlayScrollbarsComponent> -->
       </div>
 
     </div>
