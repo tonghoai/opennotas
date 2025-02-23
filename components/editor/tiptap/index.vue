@@ -225,87 +225,98 @@ const CustomTaskItem = TaskItem.extend({
 <template>
   <client-only>
     <div class="control-group w-full sticky top-0 z-50 bg-base-100">
-      <div class="button-group flex gap-2 flex-wrap lg:px-8 lg:py-2 p-2 mx-auto"
+      <div class="flex flex-wrap gap-2 lg:px-8 lg:py-2 p-2 mx-auto"
         :class="{ 'max-w-screen-md': settings?.general.editorView === 'compact' }">
-        <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-          :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }" :disabled="!editor.isEditable">
-          <span class="flex gap-1">
-            <H class="cursor-pointer opacity-80" />
-            H1
-          </span>
+        <div class="flex gap-2 w-full">
+          <button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <H class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">H1</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <H class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">H2</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <H class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">H3</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().setParagraph().run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('paragraph') }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <Pilcrow class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">Para.</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().toggleCodeBlock().run()" class="flex-1"
+            :disabled="editor.isActive('codeBlock') || !editor.isEditable"
+            :class="{ 'is-active': editor.isActive('codeBlock') }">
+            <span class="flex gap-1 items-center justify-center">
+              <CodeSVG class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">Code</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().toggleBold().run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('bold') }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <Bold class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">Bold</span>
+            </span>
+          </button>
+        </div>
 
-        </button>
-        <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-          :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }" :disabled="!editor.isEditable">
-          <span class="flex gap-1">
-            <H class="cursor-pointer opacity-80" />
-            H2
-          </span>
-        </button>
-        <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
-          :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }" :disabled="!editor.isEditable">
-          <span class="flex gap-1">
-            <H class="cursor-pointer opacity-80" />
-            H3
-          </span>
-        </button>
-        <button @click="editor.chain().focus().setParagraph().run()"
-          :class="{ 'is-active': editor.isActive('paragraph') }" :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center">
-            <Pilcrow class="cursor-pointer opacity-80" />
-            Paragraph
-          </span>
-        </button>
-        <button @click="editor.chain().focus().toggleCodeBlock().run()"
-          :disabled="editor.isActive('codeBlock') || !editor.isEditable"
-          :class="{ 'is-active': editor.isActive('codeBlock') }">
-          <span class="flex gap-1 items-center">
-            <CodeSVG class="cursor-pointer opacity-80" />
-            Code
-          </span>
-        </button>
-        <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }"
-          :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center">
-            <Bold class="cursor-pointer opacity-80" />
-            Bold
-          </span>
-        </button>
-        <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }"
-          :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center">
-            <ItalicSVG class="cursor-pointer opacity-80" />
-            Italic
-          </span>
-        </button>
-        <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }"
-          :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center">
-            <Strike class="cursor-pointer opacity-80" />
-            Strike
-          </span>
-        </button>
-        <button @click="editor.chain().focus().toggleBulletList().run()"
-          :class="{ 'is-active': editor.isActive('bulletList') }" :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center">
-            <BulletList class="cursor-pointer opacity-80" />
-            List
-          </span>
-        </button>
-        <button @click="editor.chain().focus().toggleTaskList().run()"
-          :class="{ 'is-active': editor.isActive('taskList') }" :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center">
-            <Task class="cursor-pointer opacity-80" />
-            Task
-          </span>
-        </button>
-        <button @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true, }).run()"
-          :class="{ 'is-active': editor.isActive('table') }" :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center">
-            <TableSVG class="cursor-pointer opacity-80" />
-            Table
-          </span>
-        </button>
+        <div class="flex gap-2 w-full">
+          <button @click="editor.chain().focus().toggleItalic().run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('italic') }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <ItalicSVG class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">Italic</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().toggleStrike().run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('strike') }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <Strike class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">Strike</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().toggleBulletList().run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('bulletList') }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <BulletList class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">List</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().toggleTaskList().run()" class="flex-1"
+            :class="{ 'is-active': editor.isActive('taskList') }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <Task class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">Task</span>
+            </span>
+          </button>
+          <button @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true, }).run()"
+            class="flex-1" :class="{ 'is-active': editor.isActive('table') }" :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <TableSVG class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">Table</span>
+            </span>
+          </button>
+          <button @click="addImage" class="flex-1" :class="{ 'is-active': editor.isActive('image') }"
+            :disabled="!editor.isEditable">
+            <span class="flex gap-1 items-center justify-center">
+              <ImageUp class="cursor-pointer opacity-80" />
+              <span class="hidden sm:block">Image</span>
+            </span>
+          </button>
+        </div>
       </div>
     </div>
 
