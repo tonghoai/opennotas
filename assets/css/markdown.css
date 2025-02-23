@@ -930,6 +930,7 @@
 .ProseMirror ::selection {
   display: inline;
   background-color: oklch(var(--p));
+  color: oklch(var(--pc));
 }
 
 :is(.dark .ProseMirror *)::-moz-selection {
@@ -987,12 +988,21 @@
 
 .ProseMirror em {
   font-style: italic;
+  font-size: inherit;
+  font-weight: inherit;
+  text-decoration: inherit;
 }
 
 .ProseMirror strong {
   font-weight: 600;
+  font-style: inherit;
+  font-size: inherit;
+  text-decoration: inherit;
 }
 
 .ProseMirror s {
   text-decoration: line-through;
+  font-style: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }

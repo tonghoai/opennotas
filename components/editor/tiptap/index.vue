@@ -96,9 +96,9 @@ onMounted(() => {
       const markdownContent = editor.storage.markdown.getMarkdown();
       const content = markdownContent
         .replace(/\\/g, '')
-        // .replace(/\n\n/g, '\n')
-        .replace(/&hairsp;/g, '')
-        .replace(/ /g, '')
+      // .replace(/\n\n/g, '\n')
+      // .replace(/&hairsp;/g, '')
+      // .replace(/ /g, '')
       emit('changeContent', content);
     }
   });
@@ -153,6 +153,7 @@ const CustomTaskItem = TaskItem.extend({
       const checkboxStyler = document.createElement('span');
       const checkbox = document.createElement('input');
       const content = document.createElement('div');
+
       checkboxWrapper.contentEditable = 'false';
       checkbox.type = 'checkbox';
       checkbox.classList.add('checkbox', 'checkbox-sm');
@@ -288,14 +289,14 @@ const CustomTaskItem = TaskItem.extend({
           :class="{ 'is-active': editor.isActive('bulletList') }" :disabled="!editor.isEditable">
           <span class="flex gap-1 items-center">
             <BulletList class="cursor-pointer opacity-80" />
-            Bullet List
+            List
           </span>
         </button>
         <button @click="editor.chain().focus().toggleTaskList().run()"
           :class="{ 'is-active': editor.isActive('taskList') }" :disabled="!editor.isEditable">
           <span class="flex gap-1 items-center">
             <Task class="cursor-pointer opacity-80" />
-            Task List
+            Task
           </span>
         </button>
         <button @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true, }).run()"
