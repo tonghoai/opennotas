@@ -550,13 +550,13 @@ const handleConfirmPassword = async (password: string) => {
   }
 };
 let debounceChangeContent: any = null;
-const handleChangeContent = async (newVal: string) => {
+const handleChangeContent = async ({ content: newVal, id }: { content: string, id: string }) => {
   await mutex.acquire();
   idleKey.value += 1;
   // clearTimeout(debounceChangeContent);
   // debounceChangeContent = setTimeout(async () => {
-  const note = await getNoteDetail(activeNoteId.value);
-  const updatedNote = await updateNote(activeNoteId.value, {
+  const note = await getNoteDetail(id);
+  const updatedNote = await updateNote(id, {
     content: note.isLocked ? await encryptData(newVal, await getPassword()) : newVal,
     updatedAt: nowUnix(),
   });
@@ -564,7 +564,7 @@ const handleChangeContent = async (newVal: string) => {
   clearTimeout(debounceChangeContent);
   debounceChangeContent = setTimeout(async () => {
     if (!note.isLocked) {
-      const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === activeNoteId.value);
+      const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === id);
       listNotes.value[findNoteIndex].title = substrTitle(newVal)
       listNotes.value[findNoteIndex].content = substrContent(newVal);
       reloadFolder(false, false);

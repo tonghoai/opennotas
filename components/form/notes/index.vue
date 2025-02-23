@@ -30,7 +30,7 @@ const resetPassword = () => {
 
 const handleChangeContent = (content: string) => {
   if (props.value !== content) {
-    emit('changeContent', content);
+    emit('changeContent', { content, id: props.id });
   }
 }
 
