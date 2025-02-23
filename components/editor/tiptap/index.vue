@@ -303,7 +303,7 @@ const CustomTaskItem = TaskItem.extend({
             </span>
           </button>
           <button @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true, }).run()"
-            class="flex-1" :class="{ 'is-active': editor.isActive('table') }" :disabled="!editor.isEditable">
+            class="flex-1 opacity-50 cursor-not-allowed" :class="{ 'is-active': editor.isActive('table') }" :disabled="true">
             <span class="flex gap-1 items-center justify-center">
               <TableSVG class="cursor-pointer opacity-80" />
               <span class="hidden sm:block">Table</span>
