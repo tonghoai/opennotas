@@ -906,7 +906,7 @@
   margin-right: auto;
   /* max-width: 768px; */
   /* padding: 4rem 2rem 4rem 5rem; */
-  caret-color: oklch(var(--pc));
+  caret-color: oklch(var(--bc));
   outline-width: 0;
 }
 

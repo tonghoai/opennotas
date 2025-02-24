@@ -134,7 +134,7 @@ const handleClickCloseSettings = () => {
         </div>
       </div>
 
-      <div id="setting-content" class="pt-4" style="height: calc(100% - 120px)">
+      <div id="setting-content" class="pt-4 overflow-auto" style="height: calc(100% - 120px)">
         <div class="px-2 h-full">
           <!-- general settings -->
           <div class="transition-all pb-6" v-if="tabIndex == 0">
