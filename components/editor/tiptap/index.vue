@@ -89,7 +89,7 @@ onMounted(() => {
     ],
     editorProps: {
       attributes: {
-        class: `px-2 lg:px-8 py-6 ${props.settings?.general.editorView === 'compact' ? 'max-w-screen-md' : ''}`,
+        class: `px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] ${props.settings?.general.editorView === 'compact' ? 'max-w-screen-md' : ''}`,
       },
       handleClickOn(view, pos, node, nodePos, event) {
         editor.commands.focus(pos, { scrollIntoView: true });

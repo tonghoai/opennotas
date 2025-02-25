@@ -98,7 +98,7 @@ defineExpose({
 </script>
 
 <template>
-  <div id="cm-editor" class="w-full mx-auto outline-none px-2 lg:px-8 py-6"
+  <div id="cm-editor" class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)]"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }" />
 </template>
 
