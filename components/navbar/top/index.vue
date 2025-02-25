@@ -28,6 +28,7 @@ const emit = defineEmits([
   'clickFolderName',
   'rightClickFolderName',
   'renameFolderName',
+  'reorderFolderName',
   'clickSearch',
   'clickCancelSearch',
   'clickSetting',
@@ -104,6 +105,10 @@ const handleRightClickFolderName = (folderId: string) => {
 
 const handleRenameFolderName = (folderId: string) => {
   emit('renameFolderName', folderId);
+};
+
+const handleReorderFolderName = (data: any[]) => {
+  emit('reorderFolderName', data);
 };
 
 const handleClickSetting = () => {
@@ -233,7 +238,7 @@ defineExpose({
 
     <!-- drawer home -->
     <div v-if="!props.isInEditor" class="drawer-content flex flex-col">
-      <div class="navbar bg-base-100 p-0 bg-primary text-primary-content">
+      <div class="navbar p-0 bg-primary text-primary-content">
         <div class="flex-none">
           <div class="px-4">
             <label for="my-drawer-3" aria-label="open sidebar">
@@ -270,7 +275,7 @@ defineExpose({
     </div>
 
     <!-- drawer in editor -->
-    <div v-if="props.isInEditor" class="navbar bg-base-100 p-0 bg-primary text-primary-content">
+    <div v-if="props.isInEditor" class="navbar p-0 bg-primary text-primary-content">
       <div class="flex-none">
         <div class="px-4" @click="handleClickBack">
           <ArrowLeft class="press cursor-pointer opacity-80" />
@@ -298,7 +303,7 @@ defineExpose({
             <div>
               <ListFolder ref="listFolderRef" :listFolders="props.listFolders" :activeFolderId="props.activeFolderId"
                 @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
-                @renameFolderName="handleRenameFolderName" />
+                @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName" />
 
               <!-- <div class="px-2 pt-2">
                 <button class="btn btn-sm btn-block rounded" @click="handleClickAddFolder">

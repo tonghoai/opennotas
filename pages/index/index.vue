@@ -1163,7 +1163,7 @@ const syncErrorClass = ref<string>("");
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
         :activeFolderId="activeFolderId" :formNotes="formNotes" :isSyncing="isSyncAll" :settings="settings"
         :isPasswordExist="isPasswordExist" @clickFolderName="handleClickFolderName"
-        @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
+        @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName"
         @clickSetting="handleClickSetting" @clickBack="handleClickBack" @clickUpdateData="handleClickUpdateData"
         @clickTrash="handleClickBottombarTrash" @copyToClipboard="handleCopyToClipboard"
         @clickInfo="handleClickFormNotesInfo" @saveSettings="handleSaveSettings" @saveAdapter="handleSaveAdapter"
