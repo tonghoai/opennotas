@@ -1006,3 +1006,11 @@
   font-size: inherit;
   font-weight: inherit;
 }
+
+.ProseMirror a {
+  color: oklch(var(--a));
+  text-decoration: underline;
+  font-style: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}

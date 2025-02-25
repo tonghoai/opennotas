@@ -11,6 +11,8 @@ const props = defineProps([
 const emit = defineEmits([
   'changeContent',
   'confirmPassword',
+  'clickInsertLink',
+  'closeInsertLink',
 ]);
 
 const passwordUnlockValue = ref<string>('');
@@ -32,6 +34,18 @@ const handleChangeContent = (content: string) => {
   if (props.value !== content) {
     emit('changeContent', { content, id: props.id });
   }
+}
+
+const handleClickInsertLink = (data: { url: string }) => {
+  emit('clickInsertLink', data);
+}
+
+const handleInsertLink = (data: { url: string }) => {
+  editorRef.value?.handleInsertLink(data);
+}
+
+const handleCloseInsertLink = () => {
+  emit('closeInsertLink');
 }
 
 const editorRef = ref<any>(null);
@@ -70,6 +84,7 @@ defineExpose({
   redo,
   wrongPassword,
   resetPassword,
+  handleInsertLink,
 })
 </script>
 
@@ -78,7 +93,8 @@ defineExpose({
 
   <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="() => focus('end')">
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
-      :settings="settings" :key="editorTiptapKey" @changeContent="handleChangeContent" />
+      :settings="settings" :key="editorTiptapKey" @changeContent="handleChangeContent"
+      @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleCloseInsertLink" />
 
     <EditorCodemirror v-if="editorName === 'CodeMirror'" ref="editorRef" :value="props.value"
       :isDeleted="props.isDeleted" :settings="settings" @changeContent="handleChangeContent" />

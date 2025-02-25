@@ -649,6 +649,23 @@ const handleClickSwitchEditor = async (nodeId: string) => {
       break;
   }
 }
+const isShowModalInsertLink = ref<boolean>(false);
+const modalInsertLinkRef = ref<any>(null);
+const handleClickInsertLink = (data: { url: string }) => {
+  toggleModalInsertLink(true, isShowModalInsertLink);
+  if (data.url) {
+    setTimeout(() => {
+      modalInsertLinkRef.value?.setURL(data.url);
+    }, 100)
+  }
+}
+const handleClickCloseModalInsertLink = () => {
+  modalInsertLinkRef.value?.reset();
+  toggleModalInsertLink(false, isShowModalInsertLink);
+}
+const handleConfirmInsertLink = (data: any) => {
+  formNotesRef.value?.handleInsertLink(data);
+}
 
 
 // search notes feature
@@ -1195,7 +1212,8 @@ const syncErrorClass = ref<string>("");
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
           :isDeleted="!!formNotes.deletedAt" @confirmPassword="handleConfirmPassword"
-          @changeContent="handleChangeContent" />
+          @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"
+          @closeInsertLink="handleClickCloseModalInsertLink" />
       </div>
     </div>
   </div>
@@ -1246,6 +1264,8 @@ const syncErrorClass = ref<string>("");
     @deleteNoteForever="handleClickDeleteNoteForever" />
   <ModalMenuSidebar v-if="isShowModalMenuSidebar" @clickAddFolder="handleClickAddFolder"
     @clickForceSync="handleClickUpdateData" />
+  <ModalInsertLink v-if="isShowModalInsertLink" ref="modalInsertLinkRef" @confirm="handleConfirmInsertLink"
+    @close="handleClickCloseModalInsertLink" />
 
   <!-- float button create new note -->
   <FloatNewNotes v-if="!formNotes.id && initedApp && activeFolderId !== 'bottombar-trash'"

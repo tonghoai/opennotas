@@ -10,7 +10,8 @@ import TableRow from '@tiptap/extension-table-row';
 import Italic from '@tiptap/extension-italic';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
-import CodeBlock from '@tiptap/extension-code-block'
+import CodeBlock from '@tiptap/extension-code-block';
+import Link from '@tiptap/extension-link';
 
 import H from '../assets/svg/h.svg?component';
 import Pilcrow from '../assets/svg/pilcrow.svg?component';
@@ -31,6 +32,8 @@ const props = defineProps([
 
 const emit = defineEmits([
   'changeContent',
+  'clickInsertLink',
+  'closeInsertLink',
 ]);
 
 const CustomImage = TipTapImage.configure({
@@ -76,6 +79,9 @@ onMounted(() => {
         allowBase64: false,
       }),
       CodeBlock,
+      Link.configure({
+        openOnClick: false,
+      }),
     ],
     editorProps: {
       attributes: {
@@ -117,6 +123,18 @@ const addImage = () => {
   }
 }
 
+const clickInsertLink = () => {
+  const link = editor.getAttributes('link');
+
+  emit('clickInsertLink', { url: link?.href });
+}
+
+const handleInsertLink = (data: any) => {
+  editor.chain().focus().setLink({ href: data.url }).run();
+  editor.commands.focus(editor.state.selection.to + 1);
+  emit('closeInsertLink');
+}
+
 const focus = (location: 'start' | 'end' = 'start') => {
   // if (!editor.isFocused) {
   //   editor.commands.focus(location);
@@ -143,6 +161,8 @@ defineExpose({
   readonly,
   undo,
   redo,
+  clickInsertLink,
+  handleInsertLink,
 });
 
 const CustomTaskItem = TaskItem.extend({
@@ -219,6 +239,26 @@ const CustomTaskItem = TaskItem.extend({
     };
   },
 })
+
+const checkIsInLink = () => {
+  const { from, to } = editor.state.selection;
+  const node = editor.state.doc.nodeAt(from);
+
+  let isEntireLinkSelected = false;
+
+  if (node) {
+    const linkMark = node.marks.find(mark => mark.type.name === 'link');
+    if (linkMark) {
+      const nodeStart = from - editor.state.doc.resolve(from).textOffset;
+      const nodeEnd = nodeStart + node.nodeSize;
+      if (nodeStart === from && nodeEnd === to) {
+        isEntireLinkSelected = true;
+      }
+    }
+  }
+
+  return isEntireLinkSelected;
+}
 
 </script>
 
@@ -303,7 +343,8 @@ const CustomTaskItem = TaskItem.extend({
             </span>
           </button>
           <button @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true, }).run()"
-            class="flex-1 opacity-50 cursor-not-allowed" :class="{ 'is-active': editor.isActive('table') }" :disabled="true">
+            class="flex-1 opacity-50 cursor-not-allowed" :class="{ 'is-active': editor.isActive('table') }"
+            :disabled="true">
             <span class="flex gap-1 items-center justify-center">
               <TableSVG class="cursor-pointer opacity-80" />
               <span class="hidden sm:block">Table</span>
@@ -320,12 +361,48 @@ const CustomTaskItem = TaskItem.extend({
       </div>
     </div>
 
-    <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor && editor.isActive('image')">
+    <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
+      :should-show="() => editor.isActive('image')">
       <div class="bubble-menu">
-        <button @click="addImage" :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center">
-            <ImageUp class="cursor-pointer opacity-80" />
+        <button class="btn btn-accent btn-xs" @click="addImage" :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center text-xs font-semibold">
             Change Image
+          </span>
+        </button>
+      </div>
+    </bubble-menu>
+
+    <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
+      :should-show="checkIsInLink">
+      <div class="bubble-menu flex gap-2">
+        <button class="btn btn-accent btn-xs" @click="clickInsertLink" :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center text-xs font-semibold">
+            Edit
+          </span>
+        </button>
+
+        <button class="btn btn-accent btn-xs" @click="editor.chain().focus().unsetAllMarks().run()"
+          :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center text-xs font-semibold">
+            Clear Format
+          </span>
+        </button>
+      </div>
+    </bubble-menu>
+
+    <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
+      :should-show="() => editor.state.selection.from !== editor.state.selection.to && !editor.isActive('link') && !editor.isActive('image') && !editor.isActive('codeBlock')">
+      <div class="bubble-menu flex gap-2">
+        <button class="btn btn-accent btn-xs" @click="clickInsertLink" :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center text-xs font-semibold">
+            Insert Link
+          </span>
+        </button>
+
+        <button class="btn btn-accent btn-xs" @click="editor.chain().focus().unsetAllMarks().run()"
+          :disabled="!editor.isEditable">
+          <span class="flex gap-1 items-center text-xs font-semibold">
+            Clear Format
           </span>
         </button>
       </div>

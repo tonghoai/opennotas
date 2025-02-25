@@ -67,6 +67,10 @@ function toggleModalSetPassword(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-set-password", isOpen, state);
 }
 
+function toggleModalInsertLink(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-insert-link", isOpen, state);
+}
+
 export {
   toggleModalMenuFolder,
   toggleModalChangeFolderName,
@@ -82,4 +86,5 @@ export {
   toggleModalImportNotes,
   toggleModalSettings,
   toggleModalSetPassword,
+  toggleModalInsertLink,
 };
