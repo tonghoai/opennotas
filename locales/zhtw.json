@@ -172,6 +172,8 @@
         "modal_set_password_old_password_wrong": "舊密碼錯誤",
         "modal_unlock_notes_title": "解鎖筆記",
         "modal_unlock_notes_input_password_title": "輸入密碼",
+        "modal_insert_image_title": "插入圖片",
+        "modal_insert_image_ok": "確認",
         "navbar_top_note_title": "筆記",
         "navbar_top_trash_title": "垃圾桶",
         "message_folder_deleted": "資料夾已刪除",
@@ -188,6 +190,7 @@
         "message_sync_internal_error": "無法同步資料",
         "message_sync_init": "正在同步資料...",
         "message_sync_success": "同步成功",
-        "message_search_no_result": "找不到符合的筆記"
+        "message_search_no_result": "找不到符合的筆記",
+        "message_note_can_not_save": "無法儲存筆記, 請嘗試切換到另一個編輯器如 CodeMirror"
     }
 }

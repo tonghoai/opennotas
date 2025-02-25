@@ -24,6 +24,8 @@ import TableSVG from '../assets/svg/table.svg?component';
 import ImageUp from '../assets/svg/image-up.svg?component';
 import CodeSVG from '../assets/svg/code.svg?component';
 
+const { $i18n } = useNuxtApp();
+
 const props = defineProps([
   'value',
   'isDeleted',
@@ -34,6 +36,8 @@ const emit = defineEmits([
   'changeContent',
   'clickInsertLink',
   'closeInsertLink',
+  'clickInsertImage',
+  'closeInsertImage',
 ]);
 
 const CustomImage = TipTapImage.configure({
@@ -99,13 +103,17 @@ onMounted(() => {
       },
     },
     onUpdate: ({ editor }) => {
-      const markdownContent = editor.storage.markdown.getMarkdown();
-      const content = markdownContent
-        .replace(/\\/g, '')
-      // .replace(/\n\n/g, '\n')
-      // .replace(/&hairsp;/g, '')
-      // .replace(/ /g, '')
-      emit('changeContent', content);
+      try {
+        const markdownContent = editor.storage.markdown.getMarkdown();
+        const content = markdownContent
+          .replace(/\\/g, '')
+        // .replace(/\n\n/g, '\n')
+        // .replace(/&hairsp;/g, '')
+        // .replace(/ /g, '')
+        emit('changeContent', content);
+      } catch (_) {
+        showErrorSnackbar($i18n.t('app.message_note_can_not_save'));
+      }
     }
   });
 });
@@ -114,13 +122,23 @@ onMounted(() => {
 //   editor.commands.setContent(/\s*\]\s*$/.test(newValue) ? `${newValue}&hairsp;` : newValue);
 // });
 
-const addImage = () => {
-  const url = window.prompt('URL');
-  const alt = window.prompt('Alt', "Image");
+const clickInsertImage = () => {
+  const image = editor.getAttributes('image');
 
-  if (url) {
-    editor.chain().focus().setImage({ src: url, alt: alt! }).run();
+  emit('clickInsertImage', { url: image?.src, alt: image?.alt });
+}
+const handleInsertImage = ({ url, alt }: { url: string, alt: string }) => {
+  editor.chain().focus().setParagraph().setImage({ src: url, alt: alt }).run();
+
+  try {
+    const oldValue = editor.storage.markdown.getMarkdown();
+    const newValue = oldValue.replace(/(!\[\]\(.*?\))(?!\n\n)/g, "$1\n\n");
+    emit('changeContent', newValue);
+  } catch (_) {
+    showErrorSnackbar($i18n.t('app.message_note_can_not_save'));
   }
+
+  emit('closeInsertImage');
 }
 
 const clickInsertLink = () => {
@@ -128,7 +146,6 @@ const clickInsertLink = () => {
 
   emit('clickInsertLink', { url: link?.href });
 }
-
 const handleInsertLink = (data: any) => {
   editor.chain().focus().setLink({ href: data.url }).run();
   editor.commands.focus(editor.state.selection.to + 1);
@@ -163,6 +180,8 @@ defineExpose({
   redo,
   clickInsertLink,
   handleInsertLink,
+  clickInsertImage,
+  handleInsertImage,
 });
 
 const CustomTaskItem = TaskItem.extend({
@@ -350,7 +369,7 @@ const checkIsInLink = () => {
               <span class="hidden sm:block">Table</span>
             </span>
           </button>
-          <button @click="addImage" class="flex-1" :class="{ 'is-active': editor.isActive('image') }"
+          <button @click="clickInsertImage" class="flex-1" :class="{ 'is-active': editor.isActive('image') }"
             :disabled="!editor.isEditable">
             <span class="flex gap-1 items-center justify-center">
               <ImageUp class="cursor-pointer opacity-80" />
@@ -364,7 +383,7 @@ const checkIsInLink = () => {
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.isActive('image')">
       <div class="bubble-menu">
-        <button class="btn btn-accent btn-xs" @click="addImage" :disabled="!editor.isEditable">
+        <button class="btn btn-accent btn-xs" @click="clickInsertImage" :disabled="!editor.isEditable">
           <span class="flex gap-1 items-center text-xs font-semibold">
             Change Image
           </span>

@@ -172,6 +172,8 @@
     "modal_set_password_old_password_wrong": "Mật khẩu cũ không đúng",
     "modal_unlock_notes_title": "Bỏ khóa ghi chú",
     "modal_unlock_notes_input_password_title": "Nhập mật khẩu",
+    "modal_insert_image_title": "Nhập hình ảnh",
+    "modal_insert_image_ok": "Xác nhận",
     "navbar_top_note_title": "Ghi chú",
     "navbar_top_trash_title": "Thùng rác",
     "message_folder_deleted": "Đã xóa thư mục",
@@ -188,6 +190,7 @@
     "message_sync_internal_error": "Không thể đồng bộ dữ liệu",
     "message_sync_init": "Đang đồng bộ dữ liệu...",
     "message_sync_success": "Đồng bộ thành công",
-    "message_search_no_result": "Không tìm thấy kết quả"
+    "message_search_no_result": "Không tìm thấy kết quả",
+    "message_note_can_not_save": "Không thể lưu ghi chú, hãy thử chuyển sang trình soạn thảo khác như CodeMirror"
   }
 }

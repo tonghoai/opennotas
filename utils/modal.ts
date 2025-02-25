@@ -71,6 +71,10 @@ function toggleModalInsertLink(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-insert-link", isOpen, state);
 }
 
+function toggleModalInsertImage(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-insert-image", isOpen, state);
+}
+
 export {
   toggleModalMenuFolder,
   toggleModalChangeFolderName,
@@ -87,4 +91,5 @@ export {
   toggleModalSettings,
   toggleModalSetPassword,
   toggleModalInsertLink,
+  toggleModalInsertImage,
 };

@@ -172,6 +172,8 @@
     "modal_set_password_old_password_wrong": "Old Password is Incorrect",
     "modal_unlock_notes_title": "Unlock Note",
     "modal_unlock_notes_input_password_title": "Enter Password",
+    "modal_insert_image_title": "Insert Image",
+    "modal_insert_image_ok": "Confirm",
     "navbar_top_note_title": "Note",
     "navbar_top_trash_title": "Trash",
     "message_folder_deleted": "Folder Deleted",
@@ -188,6 +190,7 @@
     "message_sync_internal_error": "Cannot sync data",
     "message_sync_init": "Synchronizing data...",
     "message_sync_success": "Synchronization successful",
-    "message_search_no_result": "No results found"
+    "message_search_no_result": "No results found",
+    "message_note_can_not_save": "Cannot save notes, try switching to another editor like CodeMirror"
   }
 }

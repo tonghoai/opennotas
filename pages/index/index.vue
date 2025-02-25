@@ -656,7 +656,7 @@ const handleClickInsertLink = (data: { url: string }) => {
   if (data.url) {
     setTimeout(() => {
       modalInsertLinkRef.value?.setURL(data.url);
-    }, 100)
+    }, 100);
   }
 }
 const handleClickCloseModalInsertLink = () => {
@@ -667,6 +667,23 @@ const handleConfirmInsertLink = (data: any) => {
   formNotesRef.value?.handleInsertLink(data);
 }
 
+const isShowModalInsertImage = ref<boolean>(false);
+const modalInsertImageRef = ref<any>(null);
+const handleClickInsertImage = (data: { url: string, alt: string }) => {
+  toggleModalInsertImage(true, isShowModalInsertImage);
+  if (data.url) {
+    setTimeout(() => {
+      modalInsertImageRef.value?.setURL({ url: data.url, alt: data.alt });
+    }, 100);
+  }
+}
+const handleClickCloseModalInsertImage = () => {
+  modalInsertImageRef.value?.reset();
+  toggleModalInsertImage(false, isShowModalInsertImage);
+}
+const handleConfirmInsertImage = (data: any) => {
+  formNotesRef.value?.handleInsertImage(data);
+}
 
 // search notes feature
 // flow: load notes with content -> create Document instance -> search
@@ -1213,7 +1230,8 @@ const syncErrorClass = ref<string>("");
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
           :isDeleted="!!formNotes.deletedAt" @confirmPassword="handleConfirmPassword"
           @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"
-          @closeInsertLink="handleClickCloseModalInsertLink" />
+          @closeInsertLink="handleClickCloseModalInsertLink" @clickInsertImage="handleClickInsertImage"
+          @closeInsertImage="handleClickCloseModalInsertImage" />
       </div>
     </div>
   </div>
@@ -1266,6 +1284,8 @@ const syncErrorClass = ref<string>("");
     @clickForceSync="handleClickUpdateData" />
   <ModalInsertLink v-if="isShowModalInsertLink" ref="modalInsertLinkRef" @confirm="handleConfirmInsertLink"
     @close="handleClickCloseModalInsertLink" />
+  <ModalInsertImage v-if="isShowModalInsertImage" ref="modalInsertImageRef" @confirm="handleConfirmInsertImage"
+    @close="handleClickCloseModalInsertImage" />
 
   <!-- float button create new note -->
   <FloatNewNotes v-if="!formNotes.id && initedApp && activeFolderId !== 'bottombar-trash'"

@@ -13,6 +13,8 @@ const emit = defineEmits([
   'confirmPassword',
   'clickInsertLink',
   'closeInsertLink',
+  'clickInsertImage',
+  'closeInsertImage',
 ]);
 
 const passwordUnlockValue = ref<string>('');
@@ -39,13 +41,21 @@ const handleChangeContent = (content: string) => {
 const handleClickInsertLink = (data: { url: string }) => {
   emit('clickInsertLink', data);
 }
-
 const handleInsertLink = (data: { url: string }) => {
   editorRef.value?.handleInsertLink(data);
 }
-
 const handleCloseInsertLink = () => {
   emit('closeInsertLink');
+}
+
+const handleClickInsertImage = (data: { url: string, alt: string }) => {
+  emit('clickInsertImage', data);
+}
+const handleInsertImage = (data: { url: string, alt: string }) => {
+  editorRef.value?.handleInsertImage(data);
+}
+const handleCloseInsertImage = () => {
+  emit('closeInsertImage');
 }
 
 const editorRef = ref<any>(null);
@@ -85,6 +95,7 @@ defineExpose({
   wrongPassword,
   resetPassword,
   handleInsertLink,
+  handleInsertImage,
 })
 </script>
 
@@ -94,7 +105,8 @@ defineExpose({
   <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="() => focus('end')">
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :key="editorTiptapKey" @changeContent="handleChangeContent"
-      @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleCloseInsertLink" />
+      @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleCloseInsertLink"
+      @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleCloseInsertImage" />
 
     <EditorCodemirror v-if="editorName === 'CodeMirror'" ref="editorRef" :value="props.value"
       :isDeleted="props.isDeleted" :settings="settings" @changeContent="handleChangeContent" />
