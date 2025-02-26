@@ -4,7 +4,7 @@ function getDefaultSettings() {
       lang: 'en',
       theme: 'system',
       defaultEditor: 'CodeMirror',
-      editorView: 'full',
+      editorView: 'compact',
     },
     sync: {
       frequency: '5',
