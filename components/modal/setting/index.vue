@@ -173,12 +173,12 @@ const handleClickCloseSettings = () => {
 
             <label class="form-control w-full pt-2">
               <div class="label">
-                <span class="font-semibold label-text">{{ "Editor View" }}</span>
+                <span class="font-semibold label-text">{{ $t('app.setting_general_editor_view_title') }}</span>
               </div>
               <select class="select select-bordered" v-model="settings.general.editorView"
                 @change="handleChangeEditorView">
-                <option value="full">{{ "Full" }}</option>
-                <option value="compact">{{ "Compact" }}</option>
+                <option value="full">{{ $t('app.setting_general_editor_view_full') }}</option>
+                <option value="compact">{{ $t('app.setting_general_editor_view_compact') }}</option>
               </select>
             </label>
 
