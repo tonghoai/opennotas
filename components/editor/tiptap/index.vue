@@ -101,6 +101,16 @@ onMounted(() => {
           editor.commands.scrollIntoView();
         }, 0);
       },
+      clipboardTextSerializer: (slice) => {
+        const text = slice.content.textBetween(0, slice.content.size, '\n')
+        const lines = text.split('\n')
+
+        if (lines.length === 1) {
+          return text.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '').replace(/^<(.+)>$/, '$1');
+        }
+
+        return text;
+      },
     },
     onUpdate: ({ editor }) => {
       try {
