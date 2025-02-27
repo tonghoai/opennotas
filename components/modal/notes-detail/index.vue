@@ -40,7 +40,7 @@ const handleClickClose = () => {
           <p class="mb-1 truncate overflow-hidden opacity-65">{{ $t('app.modal_notes_detail_character_count') }}</p>
         </div>
         <div class="col-span-2 text-right">
-          <p class="mb-1 truncate overflow-hidden">{{ dayjs.unix(noteInfo.lastSync).format('lll') }}</p>
+          <p class="mb-1 truncate overflow-hidden">{{ noteInfo.lastSync && dayjs.unix(noteInfo.lastSync).format('lll') || 'N/A' }}</p>
           <p class="mb-1 truncate overflow-hidden">{{ dayjs.unix(noteInfo.updatedAt).format('lll') }}</p>
           <p class="mb-1 truncate overflow-hidden">{{ dayjs.unix(noteInfo.createdAt).format('lll') }}</p>
           <p class="mb-1 truncate overflow-hidden">{{ wordsCount }}</p>

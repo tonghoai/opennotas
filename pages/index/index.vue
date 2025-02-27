@@ -559,6 +559,9 @@ const handleChangeContent = async ({ content: newVal, id }: { content: string, i
   const updatedNote = await updateNote(id, {
     content: note.isLocked ? await encryptData(newVal, await getPassword()) : newVal,
     updatedAt: nowUnix(),
+    ...(settings.value.sync?.adapter !== 'LocalForage' && {
+      lastSync: nowUnix(),
+    }),
   });
 
   clearTimeout(debounceChangeContent);
@@ -1163,13 +1166,13 @@ const syncErrorClass = ref<string>("");
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
         :activeFolderId="activeFolderId" :formNotes="formNotes" :isSyncing="isSyncAll" :settings="settings"
         :isPasswordExist="isPasswordExist" @clickFolderName="handleClickFolderName"
-        @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName"
-        @clickSetting="handleClickSetting" @clickBack="handleClickBack" @clickUpdateData="handleClickUpdateData"
-        @clickTrash="handleClickBottombarTrash" @copyToClipboard="handleCopyToClipboard"
-        @clickInfo="handleClickFormNotesInfo" @saveSettings="handleSaveSettings" @saveAdapter="handleSaveAdapter"
-        @clickExportNotes="handleClickExportNotes" @clickAddFolder="handleClickAddFolder"
-        @clickSwitchEditor="handleClickSwitchEditor" @clickUndo="handleClickUndo" @clickRedo="handleClickRedo"
-        @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch"
+        @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
+        @reorderFolderName="handleReorderFolderName" @clickSetting="handleClickSetting" @clickBack="handleClickBack"
+        @clickUpdateData="handleClickUpdateData" @clickTrash="handleClickBottombarTrash"
+        @copyToClipboard="handleCopyToClipboard" @clickInfo="handleClickFormNotesInfo"
+        @saveSettings="handleSaveSettings" @saveAdapter="handleSaveAdapter" @clickExportNotes="handleClickExportNotes"
+        @clickAddFolder="handleClickAddFolder" @clickSwitchEditor="handleClickSwitchEditor" @clickUndo="handleClickUndo"
+        @clickRedo="handleClickRedo" @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch"
         @clickSetPassword="handleClickSetPassword" @clickImportNotes="handleClickImportNotes"
         @clickMenuSidebar="handleClickMenuSidebar" />
     </div>
