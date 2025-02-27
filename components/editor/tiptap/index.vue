@@ -102,14 +102,15 @@ onMounted(() => {
         }, 0);
       },
       clipboardTextSerializer: (slice) => {
-        const text = slice.content.textBetween(0, slice.content.size, '\n')
-        const lines = text.split('\n')
+        let text = slice.content.textBetween(0, slice.content.size, '\n')
 
-        if (lines.length === 1) {
-          return text.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '').replace(/^<(.+)>$/, '$1');
-        }
+        text = text.replace(/^\*+|\*+$/g, '')
+          .replace(/^_+|_+$/g, '')
+          .replace(/^[-*]\s+/gm, '')
+          .replace(/^\d+\.\s+/gm, '')
+          .replace(/\[(.*?)\]\(.*?\)/g, '$1')
 
-        return text;
+        return text
       },
     },
     onUpdate: ({ editor }) => {
