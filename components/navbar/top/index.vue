@@ -203,6 +203,7 @@ const handleClickResetServiceWorker = () => {
 const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
   settings.value = newValue;
+  adapterSelect.value = settings.value.sync.adapter;
 });
 
 const closeDrawer = () => {
