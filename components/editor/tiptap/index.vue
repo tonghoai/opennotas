@@ -208,7 +208,7 @@ const CustomTaskItem = TaskItem.extend({
       checkbox.type = 'checkbox';
       checkbox.classList.add('checkbox', 'checkbox-sm');
       checkbox.addEventListener('change', event => {
-        // if the editor isn’t editable and we don't have a handler for
+        // if the editor isn't editable and we don't have a handler for
         // readonly checks we have to undo the latest change
         if (!editor.isEditable && !this.options.onReadOnlyChecked) {
           checkbox.checked = !checkbox.checked;
@@ -288,6 +288,83 @@ const checkIsInLink = () => {
   }
 
   return isEntireLinkSelected;
+}
+
+const copyCodeBlock = () => {
+  const { state } = editor;
+  let { from, to } = state.selection;
+
+  if (from === to) {
+    let pos = from;
+    let currentNode = null;
+
+    while (pos >= 0) {
+      const node = state.doc.nodeAt(pos);
+      if (node && node.type.name === 'codeBlock') {
+        currentNode = node;
+        break;
+      }
+      pos--;
+    }
+
+    if (currentNode) {
+      navigator.clipboard.writeText(currentNode.textContent);
+    }
+  } else {
+    const text = state.doc.textBetween(from, to, "\n");
+    navigator.clipboard.writeText(text);
+  }
+}
+
+const insertParaAboveCodeBlock = () => {
+  const { state } = editor;
+  const { from } = state.selection;
+
+  let pos = from;
+  let codeBlockPos = null;
+
+  while (pos >= 0) {
+    const node = state.doc.nodeAt(pos);
+    if (node && node.type.name === 'codeBlock') {
+      codeBlockPos = pos;
+      break;
+    }
+    pos--;
+  }
+
+  if (codeBlockPos !== null) {
+    editor.chain()
+      .focus()
+      .insertContentAt(codeBlockPos, { type: 'paragraph' })
+      .run();
+  }
+}
+
+const insertParaBelowCodeBlock = () => {
+  const { state } = editor;
+  const { from } = state.selection;
+
+  let pos = from;
+  let codeBlockPos = null;
+  let codeBlockNode = null;
+
+  while (pos >= 0) {
+    const node = state.doc.nodeAt(pos);
+    if (node && node.type.name === 'codeBlock') {
+      codeBlockPos = pos;
+      codeBlockNode = node;
+      break;
+    }
+    pos--;
+  }
+
+  if (codeBlockPos !== null && codeBlockNode) {
+    const insertPos = codeBlockPos + codeBlockNode.nodeSize;
+    editor.chain()
+      .focus()
+      .insertContentAt(insertPos, { type: 'paragraph' })
+      .run();
+  }
 }
 
 </script>
@@ -394,7 +471,7 @@ const checkIsInLink = () => {
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.isActive('image')">
       <div class="bubble-menu">
-        <button class="btn btn-accent btn-xs" @click="clickInsertImage" :disabled="!editor.isEditable">
+        <button class="btn btn-primary btn-xs" @click="clickInsertImage" :disabled="!editor.isEditable">
           <span class="flex gap-1 items-center text-xs font-semibold">
             Change Image
           </span>
@@ -405,13 +482,13 @@ const checkIsInLink = () => {
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="checkIsInLink">
       <div class="bubble-menu flex gap-2">
-        <button class="btn btn-accent btn-xs" @click="clickInsertLink" :disabled="!editor.isEditable">
+        <button class="btn btn-primary btn-xs" @click="clickInsertLink" :disabled="!editor.isEditable">
           <span class="flex gap-1 items-center text-xs font-semibold">
             Edit
           </span>
         </button>
 
-        <button class="btn btn-accent btn-xs" @click="editor.chain().focus().unsetAllMarks().run()"
+        <button class="btn btn-primary btn-xs" @click="editor.chain().focus().unsetAllMarks().run()"
           :disabled="!editor.isEditable">
           <span class="flex gap-1 items-center text-xs font-semibold">
             Clear Format
@@ -423,18 +500,28 @@ const checkIsInLink = () => {
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.state.selection.from !== editor.state.selection.to && !editor.isActive('link') && !editor.isActive('image') && !editor.isActive('codeBlock')">
       <div class="bubble-menu flex gap-2">
-        <button class="btn btn-accent btn-xs" @click="clickInsertLink" :disabled="!editor.isEditable">
+        <button class="btn btn-primary btn-xs" @click="clickInsertLink" :disabled="!editor.isEditable">
           <span class="flex gap-1 items-center text-xs font-semibold">
             Insert Link
           </span>
         </button>
 
-        <button class="btn btn-accent btn-xs" @click="editor.chain().focus().unsetAllMarks().run()"
+        <button class="btn btn-primary btn-xs" @click="editor.chain().focus().unsetAllMarks().run()"
           :disabled="!editor.isEditable">
           <span class="flex gap-1 items-center text-xs font-semibold">
             Clear Format
           </span>
         </button>
+      </div>
+    </bubble-menu>
+
+    <!-- thêm bubble menu cho code block -->
+    <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
+      :should-show="() => editor.isActive('codeBlock')">
+      <div class="bubble-menu flex gap-2">
+        <button class="btn btn-primary btn-xs" @click="copyCodeBlock">Copy</button>
+        <button class="btn btn-primary btn-xs" @click="insertParaAboveCodeBlock">Insert Para. Above</button>
+        <button class="btn btn-primary btn-xs" @click="insertParaBelowCodeBlock">Insert Para. Below</button>
       </div>
     </bubble-menu>
 
@@ -453,18 +540,6 @@ const checkIsInLink = () => {
 
   >*+* {
     margin-top: 0.75em;
-  }
-}
-
-.markdown-body {
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply border-b border-base-300;
   }
 }
 
