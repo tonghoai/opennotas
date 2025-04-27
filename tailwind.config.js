@@ -33,12 +33,14 @@ export default {
         light: {
           ...require("daisyui/src/theming/themes")["light"],
           primary: "#003566",
+          "base-content": "#171717",
           "base-300": "#d1d5db",
           "--base-400": "#f0f0f0",
         },
         dark: {
           ...require("daisyui/src/theming/themes")["dark"],
           primary: "#003566",
+          "base-content": "#d4d4d4",
           "base-300": "#374151",
           "--base-400": "#001104",
         },
