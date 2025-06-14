@@ -3,7 +3,7 @@
 </div>  
 
 <div align="center">  
-  <h3>The best personal Note-taking app 📙 Fast 🚀 Secure 🔐 and Free 💯</h3>  
+  <h3>A simple, lightweight, cross-platform personal note-taking application, focusing on security and completely free.</h3>  
   <a href="https://opennotas.io">🌎 Website</a> •  
   <a href="https://docs.opennotas.io/">📂 Documentation</a> •  
   <a href="https://t.me/opennotas">🛟 Telegram</a>
@@ -14,9 +14,11 @@
 
 ## Introduction
 
+If you're tired of numerous complex note-taking apps with too many features that are difficult to use, then try OpenNotas.
+
 OpenNotas is an **open-source** note-taking application, **cross-platform** based on PWA, focusing on **security** and device **synchronization**.
 
-OpenNotas follows the philosophy of **"simplicity in usage"**, catering to anyone who needs to **quickly** and **reliably** jot down their notes in text format.
+Follows the philosophy of **"simplicity in usage"**, catering to anyone who needs to **quickly** and **reliably** jot down their notes in text format.
 
 OpenNotas **supports Markdown**, utilizing open-source text editing tools that can easily be expanded with additional features and utilities.
 
