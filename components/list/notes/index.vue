@@ -26,23 +26,24 @@ const handleRightClickNote = (e: any, noteId: number) => {
 <template>
   <ul class="pb-28 lg:pb-3.5">
     <li v-for="note in props.listNotes" :key="note.id"
-      class="menu-items relative w-full"
-      :class="{ 'bg-base-200': note.isPinned }">
+      class="menu-items relative w-full animate-fade-right animate-duration-100">
 
-      <div class="w-full lg:p-2 lg:border-b lg:border-base-300 flex justify-between">
-        <div class="w-11/12 p-2.5 hover:cursor-pointer"
+      <div class="w-full lg:p-2 flex justify-between">
+        <div class="w-11/12 p-2.5 hover:cursor-pointer lg:bg-base-200 lg:rounded-l-md"
           :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-l-md': activeNoteId === note.id }"
           @click="handleClickNote(note.id)" @contextmenu="handleRightClickNote($event, note.id)">
           <div class="w-full font-semibold mb-2 select-none truncate overflow-hidden transition-all"
-            :class="{ 'italic': note.isLocked, 'text-warning': props.actionObjectKeys?.includes(note.id), 'text-info': props.idPulled?.includes(note.id) }">
+            :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
             {{ note.title?.trim() || $t('app.list_note_no_title') }}
           </div>
           <div class="w-full select-none truncate overflow-hidden transition-all"
-            :class="{ 'italic': note.isLocked, 'text-warning': props.actionObjectKeys?.includes(note.id), 'text-info': props.idPulled?.includes(note.id) }">
-            {{ note.content?.trim() || $t('app.list_note_no_content') }}</div>
+            :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
+            <span class="search-highlight" v-if="note.highlight" v-html="note.highlight"></span>
+            <span v-else>{{ note.content?.trim() || $t('app.list_note_no_content') }}</span>
+          </div>
         </div>
 
-        <div class="right-menu w-1/12 p-2.5 flex flex-col justify-between"
+        <div class="right-menu w-1/12 p-2.5 flex flex-col justify-between lg:bg-base-200 lg:rounded-r-md"
           :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-r-md': activeNoteId === note.id }">
           <div class="flex justify-end items-end flex-col">
             <Pin class="w-3 h-3 mb-2" v-if="note.isPinned" />

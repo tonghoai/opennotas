@@ -75,7 +75,7 @@ const handleClickClose = () => {
 
 <template>
   <dialog id="modal-set-password" class="modal modal-top lg:modal-middle">
-    <div id="modal-set-password-content" class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96">
+    <div id="modal-set-password-content" class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-neutral">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
@@ -84,7 +84,7 @@ const handleClickClose = () => {
       </h3>
       <div class="py-4">
         <div v-if="props.type !== 'set'" class="form-control w-full">
-          <div class="div">
+          <div class="label">
             <span class="font-semibold label-text">{{ $t('app.modal_set_password_old_password_input_title') }}</span>
           </div>
           <input ref="inputOldPasswordRef" v-model="oldPassword" type="password"

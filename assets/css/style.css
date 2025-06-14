@@ -1,8 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"); */
 
 * {
-  font-size: 18px;
-  font-family: "Work Sans", sans-serif;
+  font-size: 16px;
+  /* font-family: "Work Sans", sans-serif; */
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
@@ -64,4 +64,17 @@ textarea:focus-visible {
 
 .os-scrollbar {
   --os-size: 7px !important;
+}
+
+.modal-box {
+  max-width: 48rem;
+}
+
+.search-highlight {
+  b {
+    background-color: oklch(var(--wa));
+    color: oklch(var(--wac));
+    border-radius: 0.125rem;
+    font-weight: normal;
+  }
 }

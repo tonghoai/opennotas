@@ -8,7 +8,7 @@ const handleClickClose = () => {
 
 <template>
   <dialog id="modal-alert-set-password" class="modal modal-top lg:modal-middle">
-    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96">
+    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-neutral">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>

@@ -2,10 +2,11 @@ function newFlexSearch() {
   return new (window as any).FlexSearch.Document({
     document: {
       id: "id",
+      store: true,
       index: [{
         field: "content",
         preset: "score",
-        tokenize: "reverse",
+        tokenize: "default",
       }]
     }
   });

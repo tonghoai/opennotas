@@ -6,6 +6,7 @@ const props = defineProps([
   'settings',
   'editorName',
   'isDeleted',
+  'isShowFormatToolbar',
 ]);
 
 const emit = defineEmits([
@@ -104,7 +105,8 @@ defineExpose({
 
   <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="() => focus('end')">
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
-      :settings="settings" :key="editorTiptapKey" @changeContent="handleChangeContent"
+      :settings="settings" :key="editorTiptapKey" :isShowFormatToolbar="props.isShowFormatToolbar"
+      @changeContent="handleChangeContent"
       @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleCloseInsertLink"
       @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleCloseInsertImage" />
 

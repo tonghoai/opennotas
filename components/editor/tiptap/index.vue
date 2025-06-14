@@ -30,6 +30,7 @@ const props = defineProps([
   'value',
   'isDeleted',
   'settings',
+  'isShowFormatToolbar',
 ]);
 
 const emit = defineEmits([
@@ -367,11 +368,16 @@ const insertParaBelowCodeBlock = () => {
   }
 }
 
+const openLink = () => {
+  const link = editor.getAttributes('link');
+  window.open(link?.href, '_blank');
+}
+
 </script>
 
 <template>
   <client-only>
-    <div class="control-group w-full sticky top-0 z-50 bg-base-100">
+    <!-- <div class="control-group w-full sticky top-0 z-50 bg-base-100">
       <div class="flex flex-wrap gap-2 lg:px-8 lg:py-2 p-2 mx-auto"
         :class="{ 'max-w-screen-md': settings?.general.editorView === 'compact' }">
         <div class="flex gap-2 w-full">
@@ -466,66 +472,127 @@ const insertParaBelowCodeBlock = () => {
           </button>
         </div>
       </div>
-    </div>
+    </div> -->
 
+    <!-- khi chọn 1 hình ảnh -->
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.isActive('image')">
       <div class="bubble-menu">
-        <button class="btn btn-primary btn-xs" @click="clickInsertImage" :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center text-xs font-semibold">
-            Change Image
-          </span>
-        </button>
+        <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
+          <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="clickInsertImage">
+            <a>
+              <span class="flex gap-1 items-center text-xs font-semibold">
+                Change Image
+              </span>
+            </a>
+          </li>
+        </ul>
       </div>
     </bubble-menu>
 
+    <!-- khi chọn hết một liên kết -->
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="checkIsInLink">
       <div class="bubble-menu flex gap-2">
-        <button class="btn btn-primary btn-xs" @click="clickInsertLink" :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center text-xs font-semibold">
-            Edit
-          </span>
-        </button>
+        <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
+          <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="clickInsertLink">
+            <a>
+              <span class="flex gap-1 items-center text-xs font-semibold">
+                Edit
+              </span>
+            </a>
+          </li>
 
-        <button class="btn btn-primary btn-xs" @click="editor.chain().focus().unsetAllMarks().run()"
-          :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center text-xs font-semibold">
-            Clear Format
-          </span>
-        </button>
+          <li class="inline-block hover:bg-primary-content/15 rounded-md"
+            @click="editor.chain().focus().unsetAllMarks().run()">
+            <a>
+              <span class="flex gap-1 items-center text-xs font-semibold">
+                Clear Format
+              </span>
+            </a>
+          </li>
+        </ul>
       </div>
     </bubble-menu>
 
+    <!-- khi bôi đen một đoạn văn bản -->
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.state.selection.from !== editor.state.selection.to && !editor.isActive('link') && !editor.isActive('image') && !editor.isActive('codeBlock')">
       <div class="bubble-menu flex gap-2">
-        <button class="btn btn-primary btn-xs" @click="clickInsertLink" :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center text-xs font-semibold">
-            Insert Link
-          </span>
-        </button>
+        <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
+          <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="clickInsertLink">
+            <a>
+              <span class="flex gap-1 items-center text-xs font-semibold">
+                Insert Link
+              </span>
+            </a>
+          </li>
 
-        <button class="btn btn-primary btn-xs" @click="editor.chain().focus().unsetAllMarks().run()"
-          :disabled="!editor.isEditable">
-          <span class="flex gap-1 items-center text-xs font-semibold">
-            Clear Format
-          </span>
-        </button>
+          <li class="inline-block hover:bg-primary-content/15 rounded-md"
+            @click="editor.chain().focus().unsetAllMarks().run()">
+            <a>
+              <span class="flex gap-1 items-center text-xs font-semibold">
+                Clear Format
+              </span>
+            </a>
+          </li>
+        </ul>
       </div>
     </bubble-menu>
 
     <!-- thêm bubble menu cho code block -->
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.isActive('codeBlock')">
-      <div class="bubble-menu flex gap-2">
-        <button class="btn btn-primary btn-xs" @click="copyCodeBlock">Copy</button>
-        <button class="btn btn-primary btn-xs" @click="insertParaAboveCodeBlock">Insert Para. Above</button>
-        <button class="btn btn-primary btn-xs" @click="insertParaBelowCodeBlock">Insert Para. Below</button>
+      <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
+        <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="copyCodeBlock">
+          <a>
+            <span class="flex gap-1 items-center text-xs font-semibold">
+              Copy
+            </span>
+          </a>
+        </li>
+
+        <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="insertParaAboveCodeBlock">
+          <a>
+            <span class="flex gap-1 items-center text-xs font-semibold">
+              Insert Para. Above
+            </span>
+          </a>
+        </li>
+
+        <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="insertParaBelowCodeBlock">
+          <a>
+            <span class="flex gap-1 items-center text-xs font-semibold">
+              Insert Para. Below
+            </span>
+          </a>
+        </li>
+      </ul>
+    </bubble-menu>
+
+    <!-- thêm bubble menu cho link -->
+    <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
+      :should-show="() => editor.isActive('link') && editor.state.selection.from === editor.state.selection.to">
+      <div class="bubble-menu">
+        <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
+          <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="openLink">
+            <a>
+              <span class="flex gap-1 items-center text-xs font-semibold">
+                Open Link
+              </span>
+            </a>
+          </li>
+        </ul>
       </div>
     </bubble-menu>
 
-    <editor-content :editor="editor" />
+    <div class="relative h-full">
+      <editor-content :editor="editor" />
+
+      <div v-if="props.isShowFormatToolbar" class="sticky bottom-16 left-0 w-fit max-w-screen-md mx-auto">
+        <ToolbarFormNotesFormat :editor="editor" @insertImage="clickInsertImage" />
+      </div>
+    </div>
   </client-only>
 </template>
 

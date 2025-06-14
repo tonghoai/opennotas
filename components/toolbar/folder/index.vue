@@ -1,7 +1,5 @@
 <script lang="ts" setup>
-import PlusCircle from '../assets/svg/plus-circle.svg?component';
-import Setting from '../assets/svg/settings.svg?component';
-import Refresh from '../assets/svg/refresh.svg?component';
+import Plus from '../assets/svg/plus.svg?component';
 
 const props = defineProps(['isSyncing']);
 
@@ -16,14 +14,6 @@ const handleClickAddFolder = () => {
   emit('clickAddFolder');
 }
 
-const handleClickSetting = () => {
-  emit('clickSetting');
-}
-
-const handleClickUpdateData = () => {
-  emit('clickUpdateData');
-}
-
 const refreshRef = ref<HTMLElement | null>(null);
 watch(() => props.isSyncing, (value) => {
   if (value) {
@@ -35,21 +25,13 @@ watch(() => props.isSyncing, (value) => {
 </script>
 
 <template>
-  <div class="p-2 flex justify-between items-center h-12">
-    <span class="tooltip tooltip-right" :data-tip="$t('app.toolbar_folder_setting_tooltip')">
-      <Setting class="press cursor-pointer opacity-80" @click="handleClickSetting" />
-    </span>
+  <div class="px-4 py-2 flex gap-4 justify-between items-center h-20 overflow-hidden">
+    <p class="text-md font-semibold text-base-content mr-4">OpenNotas</p>
 
-    <div class="flex">
-      <span class="tooltip tooltip-right" :data-tip="$t('app.toolbar_folder_sync_tooltip')">
-        <span class="mr-4 flex" ref="refreshRef">
-          <Refresh class="press cursor-pointer opacity-80" @click="handleClickUpdateData" />
-        </span>
-      </span>
-
-      <span class="tooltip tooltip-right" :data-tip="$t('app.toolbar_folder_add_tooltip')">
-        <PlusCircle class="press cursor-pointer opacity-80" @click="handleClickAddFolder" />
-      </span>
-    </div>
+    <button class="btn btn-sm bg-primary text-primary-content flex items-center gap-1 hover:bg-primary/90"
+      @click="handleClickAddFolder">
+      <Plus />
+      {{ $t('app.toolbar_folder_add') }}
+    </button>
   </div>
 </template>

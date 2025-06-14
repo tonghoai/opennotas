@@ -43,7 +43,6 @@
     "dayjs": "^1.11.10",
     "diff": "^5.2.0",
     "drizzle-orm": "^0.29.5",
-    "flexsearch": "^0.7.43",
     "localforage": "^1.10.0",
     "tailwindcss-animated": "^1.0.1",
     "tiptap-markdown": "^0.8.10",

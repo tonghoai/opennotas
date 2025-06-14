@@ -15,16 +15,14 @@ const handleClickDeleteFolder = () => {
 </script>
 
 <template>
-  <div class="border border-base-300 bg-base-100 shadow-sm rounded">
-    <ul class="p-1">
-      <li id="menu-folder-rename" class="flex px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer"
+  <div class="border border-neutral bg-base-100 shadow-sm rounded-lg animate-fade-down animate-duration-100">
+    <ul class="px-1.5 py-2">
+      <li id="menu-folder-rename" class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer"
         @click="handleClickRenameFolder">
         {{ $t('app.menu_folder_rename') }}
       </li>
-      <li>
-        <hr class="border-base-300">
-      </li>
-      <li class="flex px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer text-rose-500"
+
+      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer text-rose-500"
         @click="handleClickDeleteFolder">
         {{ $t('app.menu_folder_delete') }}
       </li>

@@ -36,8 +36,20 @@ function offsetMenuNote(data: any) {
   }
 }
 
+function hideMenuFolder() {
+  const menuFolder: any = document.getElementById('menu-folder') || {};
+  menuFolder.style.display = 'none';
+}
+
+function hideMenuNote() {
+  const menuNote: any = document.getElementById('menu-note') || {};
+  menuNote.style.display = 'none';
+}
+
 export {
   outsideClickMenu,
   offsetMenuFolder,
   offsetMenuNote,
+  hideMenuFolder,
+  hideMenuNote,
 };

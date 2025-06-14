@@ -98,17 +98,18 @@ defineExpose({
 </script>
 
 <template>
-  <div id="cm-editor" class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)]"
+  <div id="cm-editor" class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] animate-fade-right animate-duration-100"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }" />
 </template>
 
 <style lang="postcss">
-.cm-editor {
+#cm-editor {
   outline: none !important;
 }
 
 .ͼ1 .cm-scroller {
   outline: none !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 .cm-content {

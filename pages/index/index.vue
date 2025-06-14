@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 const { $i18n } = useNuxtApp();
 const { locale } = useI18n();
 
@@ -233,17 +233,24 @@ const activeFolderName = computed(() => {
 });
 const handleClickFolderName = async (folderId: string) => {
   navbarTopRef.value?.resetSearchInput();
+  toolbarNotesRef.value?.resetSearchInput();
   activeFolderId.value = folderId;
   setActiveFolder(folderId);
 
   reloadNotes();
 };
 const isShowModalMenuFolder = ref<boolean>(false);
+const menuFolderKey = ref<number>(0);
 const handleRightClickFolderName = (data: any) => {
+  // ẩn menu note
+  hideMenuNote();
+
   if (isMobile.value) {
     handleClickFolderName(data.folderId);
+    menuFolderKey.value += 1;
     toggleModalMenuFolder(true, isShowModalMenuFolder);
   } else {
+    menuFolderKey.value += 1;
     handleClickFolderName(data.folderId);
     offsetMenuFolder(data);
   }
@@ -352,15 +359,32 @@ const handleClickAddNote = async () => {
 };
 const handleClickSearch = async (value: string) => {
   if (!value) {
+    listNotes.value = await loadNotes();
     navbarTopRef.value?.searchLoadingDone();
     toolbarNotesRef.value?.searchLoadingDone();
     return;
   }
 
   const currentNotes = await loadNotes();
-  const result = flexsearch!.search(value);
+  const result = flexsearch!.search({
+    query: value,
+    highlight: {
+      template: "<b>$1</b>",
+      boundary: {
+        before: 3,
+        after: 3,
+      }
+    },
+  });
   // await reloadNotes(false, activeFolderId.value === 'bottombar-trash');
-  listNotes.value = currentNotes.filter((item: any) => result[0]?.result?.includes(item.id));
+  // listNotes.value = currentNotes.filter((item: any) => result[0]?.result?.includes(item.id));
+  listNotes.value = result[0]?.result.reduce((acc: any[], item: any) => {
+    const currentNote = currentNotes.find((note: any) => note.id === item.id);
+    currentNote.highlight = item.highlight;
+    acc.push(currentNote);
+
+    return acc;
+  }, []);
   navbarTopRef.value?.searchLoadingDone();
   toolbarNotesRef.value?.searchLoadingDone();
 
@@ -395,11 +419,15 @@ const handleClickNote = async (noteId: string, inEditor: boolean = false) => {
 };
 const isShowModalMenuNote = ref<boolean>(false);
 const handleRightClickNote = (data: any) => {
+  // ẩn menu folder
+  hideMenuFolder();
+
   if (isMobile.value) {
     handleClickNote(data.noteId);
     menuNoteKey.value += 1;
     toggleModalMenuNote(true, isShowModalMenuNote);
   } else {
+    menuNoteKey.value += 1;
     handleClickNote(data.noteId, true);
     offsetMenuNote(data);
   }
@@ -631,6 +659,30 @@ const handleClickUndo = async () => {
 const handleClickRedo = async () => {
   formNotesRef.value?.redo();
 }
+const isCollapsePanel = ref<boolean>(false);
+const handleClickCollapsePanel = () => {
+  isCollapsePanel.value = !isCollapsePanel.value;
+}
+const isShowToolbarNotes = ref<boolean>(true);
+watch(() => isCollapsePanel.value, (newValue) => {
+  if (newValue) {
+    setTimeout(() => {
+      isShowToolbarNotes.value = !newValue;
+    }, 290);
+  } else {
+    isShowToolbarNotes.value = true;
+  }
+});
+const isShowFormatToolbar = ref<boolean>(false);
+const handleClickFormatToolbar = () => {
+  isShowFormatToolbar.value = !isShowFormatToolbar.value;
+}
+watch(() => activeNoteId.value, () => {
+  isShowFormatToolbar.value = false;
+});
+watch(() => activeFolderId.value, () => {
+  isShowFormatToolbar.value = false;
+});
 
 const editorName = ref<string>(settings.value.general.defaultEditor);
 watch(() => settings.value.general.defaultEditor, (newValue) => {
@@ -701,16 +753,17 @@ onMounted(() => {
     flexsearch = newFlexSearch();
 
     listNotesToSearch.value.forEach((note: any) => {
-      addToFlexSearch(flexsearch, note);
+      addToFlexSearch(flexsearch, toRaw(note));
     });
   }, 1000);
 });
 watch(() => activeFolderId.value, async () => {
+  await new Promise(resolve => setTimeout(resolve, 500));
   listNotesToSearch.value = await loadNotesWithContent(activeFolderId.value);
   flexsearch = newFlexSearch();
 
   listNotesToSearch.value.forEach((note: any) => {
-    addToFlexSearch(flexsearch, note);
+    addToFlexSearch(flexsearch, toRaw(note));
   });
 });
 
@@ -1158,7 +1211,7 @@ const syncErrorClass = ref<string>("");
     <p class="absolute bottom-4">{{ runtimeConfig.public.version }}</p>
   </div>
 
-  <div class="w-screen overflow-hidden bg-base-100"
+  <div class="w-screen overflow-hidden bg-background"
     style="height: calc(var(--vh, 1vh) * 100);-webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;"
     v-else>
     <!-- mobile nav top -->
@@ -1177,33 +1230,42 @@ const syncErrorClass = ref<string>("");
         @clickMenuSidebar="handleClickMenuSidebar" />
     </div>
 
-    <!-- cols folders -->
-    <div class="hidden lg:block lg:float-left cols-folders" :style="{ width: colsFoldersWidth + 'px' }">
-      <div class="border-r border-base-300">
-        <ToolbarFolder :isSyncing="isSyncAll" @clickAddFolder="handleClickAddFolder" @clickSetting="handleClickSetting"
-          @clickUpdateData="handleClickUpdateData" />
-      </div>
-      <hr class="hidden lg:block border-base-300">
+    <!-- cols personal -->
+    <div class="hidden lg:block lg:float-left cols-personal w-20">
+      <ColsPersonal :activeFolderId="activeFolderId" @clickNotes="handleClickFolderName('')"
+        @clickTrash="handleClickBottombarTrash" @clickSetting="handleClickSetting"
+        @clickUpdateData="handleClickUpdateData" />
+    </div>
 
-      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px - 75px)">
+    <!-- cols folders -->
+    <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300"
+      :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel }"
+      :style="{ width: colsFoldersWidth + 'px' }">
+      <div>
+        <ToolbarFolder v-if="isShowToolbarNotes" :isSyncing="isSyncAll" @clickAddFolder="handleClickAddFolder"
+          @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData" />
+      </div>
+      <!-- <hr class="hidden lg:block border-base-300"> -->
+
+      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px)">
         <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
           :actionObjectKeys="actionObjectKeys" @clickFolderName="handleClickFolderName"
           @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
           @reorderFolderName="handleReorderFolderName" />
       </div>
-      <hr class="border-base-300">
-      <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" />
+      <!-- <hr class="border-base-300"> -->
+      <!-- <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" /> -->
     </div>
 
 
     <!-- cols notes -->
-    <div class="cols-notes" :style="{ width: colsNotesWidth + 'px' }"
-      :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[72px] absolute': isMobile, 'lg:w-3/12 lg:float-left border-r border-base-300': !isMobile }">
+    <div class="cols-notes transition-all duration-300" :style="{ width: colsNotesWidth + 'px' }"
+      :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[72px] absolute': isMobile, 'lg:w-3/12 lg:float-left bg-base-200 h-full': !isMobile, '!w-0': isCollapsePanel }">
       <div class="hidden lg:block">
-        <ToolbarNotes ref="toolbarNotesRef" @clickAddNote="handleClickAddNote" @clickSearch="handleClickSearch"
-          @clickCancelSearch="handleClickCancelSearch" />
+        <ToolbarNotes v-if="isShowToolbarNotes" ref="toolbarNotesRef" @clickAddNote="handleClickAddNote"
+          @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch" />
       </div>
-      <hr class="hidden lg:block border-base-300">
+      <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
         <div v-if="isSyncError" class="m-2 rounded text-xs text-center py-1"
@@ -1219,29 +1281,32 @@ const syncErrorClass = ref<string>("");
 
     <!-- cols editor -->
     <div
-      :class="{ 'block w-full pt-[72px]': isMobile && isInEditor, 'hidden': isMobile && !isInEditor, 'lg:block lg:w-[inherit]': !isMobile }">
+      :class="{ 'block w-full pt-[64px]': isMobile && isInEditor, 'hidden': isMobile && !isInEditor, 'lg:block lg:w-[inherit]': !isMobile }">
       <div>
         <ToolbarFormNotes :noteId="formNotes.id" :editorName="editorName" :isLocked="formNotes.isLocked"
-          @copyToClipboard="handleCopyToClipboard" @clickInfo="handleClickFormNotesInfo"
-          @clickResize="handleClickResizeApp" @clickSwitchEditor="handleClickSwitchEditor" />
+          :formNotes="formNotes" @pinNote="handleClickPinNote" @copyNote="handleCopyToClipboard"
+          @lockNote="handleClickLockNote" @deleteNote="handleClickDeleteNote" @copyToClipboard="handleCopyToClipboard"
+          @clickInfo="handleClickFormNotesInfo" @clickResize="handleClickResizeApp"
+          @clickSwitchEditor="handleClickSwitchEditor" @clickCollapsePanel="handleClickCollapsePanel"
+          @clickFormatToolbar="handleClickFormatToolbar" />
       </div>
-      <hr class="hidden lg:block border-base-300">
+      <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="form-editors" class="bg-svg cursor-text overflow-auto" :class="{ 'overflow-x-hidden': isMobile }"
+      <div id="form-editors" class="cursor-text overflow-auto bg-base-100" :class="{ 'overflow-x-hidden': isMobile }"
         style="height: calc(100vh - 55px)">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
-          :isDeleted="!!formNotes.deletedAt" @confirmPassword="handleConfirmPassword"
-          @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"
-          @closeInsertLink="handleClickCloseModalInsertLink" @clickInsertImage="handleClickInsertImage"
-          @closeInsertImage="handleClickCloseModalInsertImage" />
+          :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt"
+          @confirmPassword="handleConfirmPassword" @changeContent="handleChangeContent"
+          @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleClickCloseModalInsertLink"
+          @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleClickCloseModalInsertImage" />
       </div>
     </div>
   </div>
 
   <!-- menu folder & note -->
   <div id="menu-folder" class="hidden absolute">
-    <MenuFolder :folderId="activeFolderId" @renameFolder="handleClickRenameFolder"
+    <MenuFolder :key="menuFolderKey" :folderId="activeFolderId" @renameFolder="handleClickRenameFolder"
       @deleteFolder="handleClickDeleteFolder" />
   </div>
   <div id="menu-note" class="hidden absolute">

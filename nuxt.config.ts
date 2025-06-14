@@ -61,7 +61,7 @@ export default defineNuxtConfig({
           src: "https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js",
         },
         {
-          src: "https://cdnjs.cloudflare.com/ajax/libs/FlexSearch/0.7.31/flexsearch.bundle.js",
+          src: "https://cdnjs.cloudflare.com/ajax/libs/FlexSearch/0.8.2/flexsearch.bundle.min.js",
         },
       ],
     },

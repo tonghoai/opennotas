@@ -382,7 +382,7 @@ defineExpose({
             </label>
           </div>
 
-          <hr class="mt-6 mb-4 border-base-300">
+          <hr class="mt-6 mb-4 border-neutral">
 
           <!-- sync setting -->
           <div class="p-4">
@@ -437,7 +437,7 @@ defineExpose({
             </div>
           </div>
 
-          <hr class="mt-6 mb-4 border-base-300">
+          <hr class="mt-6 mb-4 border-neutral">
 
           <!-- tools setting -->
           <div class="p-4">
@@ -446,7 +446,7 @@ defineExpose({
             <div class="label">
               <span class="font-semibold label-text">{{ $t('app.setting_tools_backup_title') }}</span>
             </div>
-            <ul class="menu bg-base-100 border rounded-md border-base-300 p-0 [&_li>*]:rounded-none">
+            <ul class="menu bg-base-100 border rounded-md border-neutral p-0 [&_li>*]:rounded-none">
               <li @click="handleClickExportNotes">
                 <span class="w-full flex flex-row justify-between">
                   {{ $t('app.setting_tools_backup_export') }}
@@ -465,7 +465,7 @@ defineExpose({
               <div class="label">
                 <span class="font-semibold label-text">Service Worker</span>
               </div>
-              <button class="btn btn-outline btn-sm btn-error" @click="handleClickResetServiceWorker">
+              <button class="btn btn-error btn-sm" @click="handleClickResetServiceWorker">
                 {{ $t('app.setting_tools_reset_service_worker_title') }}
               </button>
             </label>

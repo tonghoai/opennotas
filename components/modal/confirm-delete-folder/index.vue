@@ -17,7 +17,7 @@ const handleClickClose = () => {
 
 <template>
   <dialog id="modal-confirm-delete-folder" class="modal">
-    <div class="modal-box p-4 w-5/6 lg:w-96 lg:p-6">
+    <div class="modal-box p-4 w-5/6 lg:w-96 lg:p-6 border border-neutral">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
