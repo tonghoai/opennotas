@@ -129,7 +129,7 @@ const handleClickCloseSettings = () => {
 
 <template>
   <dialog id="modal-settings" class="modal">
-    <div class="modal-box w-full h-3/6 overflow-hidden p-0 border border-neutral shadow-xl">
+    <div class="modal-box w-full h-[34rem] overflow-hidden p-0 border border-neutral shadow-xl">
       <!-- <span class="absolute bottom-2 right-4 text-sm underline">{{ runtimeConfig.public.version }}</span> -->
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
