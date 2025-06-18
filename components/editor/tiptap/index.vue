@@ -165,9 +165,9 @@ const handleInsertLink = (data: any) => {
 }
 
 const focus = (location: 'start' | 'end' = 'start') => {
-  // if (!editor.isFocused) {
-  //   editor.commands.focus(location);
-  // }
+  if (!editor.isFocused) {
+    editor.commands.focus(location);
+  }
 }
 
 const readonly = () => {
