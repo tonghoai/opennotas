@@ -103,7 +103,7 @@ defineExpose({
 </template>
 
 <style lang="postcss">
-#cm-editor {
+#cm-editor, .ͼ1.cm-focused {
   outline: none !important;
 }
 
@@ -126,5 +126,16 @@ defineExpose({
 
 .ͼ1 .cm-scroller {
   overflow-x: initial !important;
+}
+
+.cm-selectionBackground,
+.cm-editor ::selection {
+  background-color: oklch(var(--p)) !important;
+  color: oklch(var(--pc)) !important;
+}
+
+.cm-focused .cm-scroller .cm-selectionLayer .cm-selectionBackground {
+  background-color: oklch(var(--p)) !important;
+  color: oklch(var(--pc)) !important;
 }
 </style>

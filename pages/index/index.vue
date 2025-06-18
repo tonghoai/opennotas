@@ -1247,7 +1247,7 @@ const syncErrorClass = ref<string>("");
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px)">
+      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
         <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
           :actionObjectKeys="actionObjectKeys" @clickFolderName="handleClickFolderName"
           @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
@@ -1293,7 +1293,7 @@ const syncErrorClass = ref<string>("");
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="form-editors" class="cursor-text overflow-auto bg-base-100" :class="{ 'overflow-x-hidden': isMobile }"
-        style="height: calc(100vh - 55px)">
+        style="height: calc(100vh - 85px)">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
           :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt"

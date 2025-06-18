@@ -252,6 +252,11 @@
     var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
+.ProseMirror pre code::selection {
+  background-color: oklch(var(--pc));
+  color: oklch(var(--p));
+}
+
 .ProseMirror pre .hljs-comment,
 .ProseMirror pre .hljs-quote {
   --tw-text-opacity: 1;
@@ -737,9 +742,9 @@
   margin-top: 0;
 }
 
-.ProseMirror > p:last-child {
+/* .ProseMirror > p:last-child {
   margin-bottom: 1.875rem;
-}
+} */
 
 .ProseMirror h1 {
   font-size: 1.875rem;
