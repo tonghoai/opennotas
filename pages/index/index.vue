@@ -664,6 +664,12 @@ const handleClickCollapsePanel = () => {
   isCollapsePanel.value = !isCollapsePanel.value;
 }
 const isShowToolbarNotes = ref<boolean>(true);
+watch(() => activeFolderId.value, () => {
+  if (activeFolderId.value === 'bottombar-trash') {
+    isCollapsePanel.value = true;
+    isCollapsePanel.value = false;
+  }
+});
 watch(() => isCollapsePanel.value, (newValue) => {
   if (newValue) {
     setTimeout(() => {
