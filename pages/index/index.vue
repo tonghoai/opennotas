@@ -123,6 +123,9 @@ onMounted(async () => {
 // reloadNotes & reloadFolder using for reload all data display on screen
 const listNotesKey = ref<number>(0);
 const reloadNotes = async (focus = true, isTrash = false) => {
+  // scroll to top
+  document.getElementById('notes-instance')?.scrollTo({ top: 0, behavior: 'smooth' });
+
   await nextTick();
   listNotes.value = isTrash ? await loadTrashNotes() : await loadNotes();
   activeNoteId.value = await loadActiveNote() || "";
@@ -1299,7 +1302,7 @@ const syncErrorClass = ref<string>("");
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="form-editors" class="cursor-text overflow-auto bg-base-100" :class="{ 'overflow-x-hidden': isMobile }"
-        style="height: calc(100vh - 85px)">
+        style="height: calc(100vh - 80px)">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
           :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt"
