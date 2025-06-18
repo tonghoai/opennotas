@@ -23,7 +23,7 @@ const clickInsertImage = () => {
 
 <template>
   <div
-    class="flex gap-6 flex-row justify-between items-center bg-primary p-1 rounded-lg shadow-lg animate-fade-up animate-duration-300">
+    class="flex gap-6 flex-row justify-between items-center bg-primary p-1 rounded-lg shadow-lg animate-fade-up animate-duration-300 border border-neutral">
     <div class="flex flex-row gap-2">
       <div class="dropdown dropdown-top dropdown-start">
         <div tabindex="0" role="button"
