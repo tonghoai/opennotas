@@ -1240,14 +1240,14 @@ const syncErrorClass = ref<string>("");
     </div>
 
     <!-- cols personal -->
-    <div class="hidden lg:block lg:float-left cols-personal w-20">
+    <div class="hidden lg:block lg:float-left cols-personal w-20 bg-base-300">
       <ColsPersonal :activeFolderId="activeFolderId" @clickNotes="handleClickFolderName('')"
         @clickTrash="handleClickBottombarTrash" @clickSetting="handleClickSetting"
         @clickUpdateData="handleClickUpdateData" />
     </div>
 
     <!-- cols folders -->
-    <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300"
+    <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300"
       :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel }"
       :style="{ width: colsFoldersWidth + 'px' }">
       <div>

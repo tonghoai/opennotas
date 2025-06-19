@@ -4,7 +4,7 @@
 
 @layer base {
   .bg-background {
-    background-color: var(--bg-background) !important;
+    background-color: oklch(var(--b1)) !important;
   }
 
   .border-neutral {
@@ -21,14 +21,12 @@
 }
 
 [data-theme="light"] {
-  --bg-background: oklch(0.99 0.00 0);
   --neutral: oklch(0.87 0.00 0);
   --text-warning-sync: oklch(0.77 0.16 70);
   --text-info-sync: oklch(0.62 0.19 260);
 }
 
 [data-theme="dark"] {
-  --bg-background: oklch(.145 0 0);
   --neutral: oklch(0.37 0.00 0);
   --text-warning-sync: oklch(0.67 0.16 58);
   --text-info-sync: oklch(0.71 0.14 255);
