@@ -72,7 +72,7 @@ async function getNotes(folderId: string) {
   const sortNotes = reformatNotes.sort((a: any, b: any) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
-    return b.updatedAt - a.updatedAt;
+    return b.createdAt - a.createdAt;
   });
 
   return sortNotes;
