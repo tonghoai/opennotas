@@ -725,9 +725,9 @@
   line-height: 1.625;
 }
 
-.ProseMirror p:first-child {
+/* .ProseMirror p:first-child {
   margin-top: 0;
-}
+} */
 
 .ProseMirror p:last-child {
   margin-bottom: 0;
@@ -738,9 +738,9 @@
   margin-bottom: 1rem;
 }
 
-.ProseMirror > p:first-child {
+/* .ProseMirror > p:first-child {
   margin-top: 0;
-}
+} */
 
 /* .ProseMirror > p:last-child {
   margin-bottom: 1.875rem;

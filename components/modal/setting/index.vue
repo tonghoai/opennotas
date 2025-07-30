@@ -238,6 +238,7 @@ const handleClickCloseSettings = () => {
                     @change="handleChangeDefaultEditor">
                     <option value="Tiptap">{{ $t('app.setting_general_default_editor_tiptap') }}</option>
                     <option value="CodeMirror">{{ $t('app.setting_general_default_editor_codemirror') }}</option>
+                    <option value="Crepe">Crepe</option>
                   </select>
                 </label>
 

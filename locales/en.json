@@ -87,7 +87,7 @@
     "menu_note_unlock": "Unlock Note",
     "menu_note_delete": "Delete",
     "menu_note_restore": "Restore",
-    "menu_note_delete_forever": "Delete from Trash",
+    "menu_note_delete_forever": "Delete",
     "list_note_no_title": "No Title",
     "list_note_no_content": "No Content",
     "form_note_input_password_title": "Enter Password",

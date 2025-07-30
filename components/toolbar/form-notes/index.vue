@@ -43,7 +43,7 @@ const handleClickChangeEditor = () => {
     </div>
 
     <div v-if="!props.isLocked" class="flex items-center gap-4">
-      <div class="mr-2" @click="handleClickFormatToolbar">
+      <div v-if="['Tiptap', 'Crepe'].includes(props.editorName)" class="mr-2" @click="handleClickFormatToolbar">
         <Aa v-if="props.noteId" class="press cursor-pointer" />
       </div>
 

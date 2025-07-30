@@ -16,6 +16,7 @@ const emit = defineEmits([
   'closeInsertLink',
   'clickInsertImage',
   'closeInsertImage',
+  'alertMessage',
 ]);
 
 const passwordUnlockValue = ref<string>('');
@@ -59,12 +60,16 @@ const handleCloseInsertImage = () => {
   emit('closeInsertImage');
 }
 
+const handleAlertMessage = (message: string) => {
+  emit('alertMessage', message);
+}
+
 const editorRef = ref<any>(null);
 const focusPassword = () => {
   passwordUnlockRef.value?.focus();
 }
 const focus = (location: 'start' | 'end' = 'start') => {
-  editorRef.value?.focus(location);
+  // editorRef.value?.focus(location);
 }
 const readonly = () => {
   editorRef.value?.readonly();
@@ -106,12 +111,16 @@ defineExpose({
   <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="() => focus('end')">
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :key="editorTiptapKey" :isShowFormatToolbar="props.isShowFormatToolbar"
-      @changeContent="handleChangeContent"
-      @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleCloseInsertLink"
-      @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleCloseInsertImage" />
+      @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"
+      @closeInsertLink="handleCloseInsertLink" @clickInsertImage="handleClickInsertImage"
+      @closeInsertImage="handleCloseInsertImage" />
 
     <EditorCodemirror v-if="editorName === 'CodeMirror'" ref="editorRef" :value="props.value"
       :isDeleted="props.isDeleted" :settings="settings" @changeContent="handleChangeContent" />
+
+    <EditorCrepe v-if="editorName === 'Crepe'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
+      :settings="settings" :isShowFormatToolbar="props.isShowFormatToolbar" @changeContent="handleChangeContent"
+      @alertMessage="handleAlertMessage" />
   </div>
 
   <div class="flex justify-center pt-8 pb-1 bg-svg h-full transition-all" v-show="id && isLocked">

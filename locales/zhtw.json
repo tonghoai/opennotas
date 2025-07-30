@@ -87,7 +87,7 @@
         "menu_note_unlock": "解鎖筆記",
         "menu_note_delete": "刪除",
         "menu_note_restore": "復原",
-        "menu_note_delete_forever": "從垃圾桶刪除",
+        "menu_note_delete_forever": "刪除",
         "list_note_no_title": "（無標題）",
         "list_note_no_content": "（無內容）",
         "form_note_input_password_title": "輸入密碼",

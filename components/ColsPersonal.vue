@@ -3,14 +3,20 @@ import Notes from '../assets/svg/notes.svg?component';
 import Trash from '../assets/svg/trash-2.svg?component';
 import Settings from '../assets/svg/settings.svg?component';
 import Refresh from '../assets/svg/refresh.svg?component';
+import ArrowLeftToLine from '../assets/svg/arrow-left-to-line.svg?component';
+import ArrowRightToLine from '../assets/svg/arrow-right-to-line.svg?component';
 
-const props = defineProps(['activeFolderId']);
+const props = defineProps([
+  'activeFolderId',
+  'isCollapseFolder',
+]);
 
 const emit = defineEmits([
   'clickNotes',
   'clickTrash',
   'clickSetting',
   'clickUpdateData',
+  'clickCollapseFolder'
 ]);
 
 const handleClickSetting = () => {
@@ -24,6 +30,9 @@ const handleClickNotes = () => {
 }
 const handleClickTrash = () => {
   emit('clickTrash');
+}
+const handleClickCollapseFolder = () => {
+  emit('clickCollapseFolder');
 }
 </script>
 
@@ -51,6 +60,11 @@ const handleClickTrash = () => {
 
     <!-- Bottom Actions -->
     <div class="p-4 flex flex-col gap-4">
+      <button class="btn btn-ghost btn-sm w-full" @click="handleClickCollapseFolder">
+        <div class="arrow-wrapper" :class="{ 'is-collapsed': props.isCollapseFolder }">
+          <ArrowLeftToLine class="arrow-icon" />
+        </div>
+      </button>
       <button class="btn btn-ghost btn-sm w-full" @click="handleClickUpdateData">
         <Refresh />
       </button>
@@ -87,5 +101,27 @@ const handleClickTrash = () => {
   height: 20px;
   background-color: oklch(var(--p));
   border-radius: 0 4px 4px 0;
+}
+
+.arrow-wrapper {
+  display: inline-flex;
+  transition: transform 0.3s ease;
+}
+
+.arrow-wrapper.is-collapsed {
+  transform: rotate(180deg);
+}
+
+.arrow-icon {
+  width: 20px;
+  height: 20px;
+}
+
+button:hover .arrow-wrapper {
+  transform: translateX(0px) rotate(0deg);
+}
+
+button:hover .arrow-wrapper.is-collapsed {
+  transform: translateX(0px) rotate(180deg);
 }
 </style>

@@ -17,8 +17,9 @@ export default defineNuxtConfig({
     "~/assets/css/main.css",
     "~/assets/css/style.css",
     "~/assets/css/markdown.css",
-    "~/assets/css/animation.css",
     "~/assets/css/codemirror.css",
+    "~/assets/css/crepe.css",
+    "~/assets/css/animation.css",
   ],
 
   postcss: {

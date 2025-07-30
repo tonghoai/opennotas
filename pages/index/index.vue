@@ -470,6 +470,12 @@ const handleClickPinNote = async (data: any) => {
   setActionObject('note', updatedNote);
 
   listNotes.value = await loadNotes();
+
+  // scroll to top id notes-instance
+  const notesInstance = document.getElementById('notes-instance');
+  if (notesInstance) {
+    notesInstance.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 const isShowModalUnlockNotes = ref<boolean>(false);
 const handleClickCloseModalUnlockNotes = () => {
@@ -682,6 +688,10 @@ watch(() => isCollapsePanel.value, (newValue) => {
     isShowToolbarNotes.value = true;
   }
 });
+const isCollapseFolder = ref<boolean>(false);
+const handleClickCollapseFolder = () => {
+  isCollapseFolder.value = !isCollapseFolder.value;
+}
 const isShowFormatToolbar = ref<boolean>(false);
 const handleClickFormatToolbar = () => {
   isShowFormatToolbar.value = !isShowFormatToolbar.value;
@@ -707,6 +717,9 @@ const handleClickSwitchEditor = async (nodeId: string) => {
       editorName.value = 'CodeMirror';
       break;
     case 'CodeMirror':
+      editorName.value = 'Crepe';
+      break;
+    case 'Crepe':
       editorName.value = 'Tiptap';
       break;
     default:
@@ -747,6 +760,9 @@ const handleClickCloseModalInsertImage = () => {
 }
 const handleConfirmInsertImage = (data: any) => {
   formNotesRef.value?.handleInsertImage(data);
+}
+const handleAlertMessage = (message: string) => {
+  showErrorSnackbar(message);
 }
 
 // search notes feature
@@ -1241,26 +1257,28 @@ const syncErrorClass = ref<string>("");
 
     <!-- cols personal -->
     <div class="hidden lg:block lg:float-left cols-personal w-20 bg-base-300">
-      <ColsPersonal :activeFolderId="activeFolderId" @clickNotes="handleClickFolderName('')"
-        @clickTrash="handleClickBottombarTrash" @clickSetting="handleClickSetting"
-        @clickUpdateData="handleClickUpdateData" />
+      <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder"
+        @clickNotes="handleClickFolderName('')" @clickTrash="handleClickBottombarTrash"
+        @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData"
+        @clickCollapseFolder="handleClickCollapseFolder" />
     </div>
 
     <!-- cols folders -->
     <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300"
-      :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel }"
+      :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder }"
       :style="{ width: colsFoldersWidth + 'px' }">
       <div>
-        <ToolbarFolder v-if="isShowToolbarNotes" :isSyncing="isSyncAll" @clickAddFolder="handleClickAddFolder"
+        <ToolbarFolder :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
+          :isShowToolbarFolder="isShowToolbarNotes" @clickAddFolder="handleClickAddFolder"
           @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData" />
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
         <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
-          :actionObjectKeys="actionObjectKeys" @clickFolderName="handleClickFolderName"
-          @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
-          @reorderFolderName="handleReorderFolderName" />
+          :actionObjectKeys="actionObjectKeys" :isCollapseFolder="isCollapseFolder"
+          @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
+          @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName" />
       </div>
       <!-- <hr class="border-base-300"> -->
       <!-- <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" /> -->
@@ -1308,7 +1326,8 @@ const syncErrorClass = ref<string>("");
           :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt"
           @confirmPassword="handleConfirmPassword" @changeContent="handleChangeContent"
           @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleClickCloseModalInsertLink"
-          @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleClickCloseModalInsertImage" />
+          @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleClickCloseModalInsertImage"
+          @alertMessage="handleAlertMessage" />
       </div>
     </div>
   </div>

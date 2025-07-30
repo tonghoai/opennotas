@@ -1,0 +1,187 @@
+.milkdown {
+  /* --crepe-color-background: var(--b1); */
+  /* --crepe-color-on-background: #e6e6e6; */
+  --crepe-color-on-background: oklch(var(--p));
+  --crepe-color-surface: oklch(var(--b3));
+  /* --crepe-color-surface-low: #1c1c1c; */
+  --crepe-color-surface-low: oklch(var(--b2));
+  /* --crepe-color-on-surface: #d1d1d1; */
+  --crepe-color-on-surface: oklch(var(--p));
+  /* --crepe-color-on-surface-variant: #a9a9a9; */
+  --crepe-color-on-surface-variant: oklch(var(--p) / 0.8);
+  /* --crepe-color-outline: #757575; */
+  --crepe-color-outline: oklch(var(--p) / 0.8);
+  --crepe-color-primary: oklch(var(--p));
+  --crepe-color-secondary: #4d4d4d;
+  --crepe-color-on-secondary: #d6d6d6;
+  --crepe-color-inverse: #e5e5e5;
+  --crepe-color-on-inverse: #2a2a2a;
+  --crepe-color-inline-code: #ff6666;
+  --crepe-color-error: #ff6666;
+  --crepe-color-hover: oklch(var(--p) / 0.2);
+  --crepe-color-selected: #2f2f2f;
+  --crepe-color-inline-area: #2b2b2b;
+
+  --crepe-font-title: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --crepe-font-default: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --crepe-font-code: "Space Mono", Fira Code, Menlo, Monaco, "Courier New",
+    Courier, monospace;
+  /* 
+  --crepe-shadow-1:
+    0px 1px 2px 0px rgba(255, 255, 255, 0.3),
+    0px 1px 3px 1px rgba(255, 255, 255, 0.15);
+  --crepe-shadow-2:
+    0px 1px 2px 0px rgba(255, 255, 255, 0.3),
+    0px 2px 6px 2px rgba(255, 255, 255, 0.15); */
+}
+
+.milkdown .ProseMirror {
+  padding: 0 !important;
+}
+
+/* Text color */
+.milkdown .editor {
+  color: oklch(var(--p)) !important;
+}
+.milkdown .crepe-placeholder::before {
+  color: oklch(var(--p) / 0.7) !important;
+}
+
+/* Selection */
+.milkdown .editor p::selection,
+.milkdown .editor h1::selection,
+.milkdown .editor h2::selection,
+.milkdown .editor h3::selection,
+.milkdown .editor h4::selection, 
+.milkdown .editor h5::selection,
+.milkdown .editor h6::selection,
+.milkdown .editor strong::selection,
+.milkdown .editor em::selection,
+.milkdown .editor del::selection,
+.milkdown .editor code::selection,
+.milkdown .editor blockquote::selection,
+.milkdown .editor li::selection,
+.milkdown .editor a::selection {
+  color: oklch(var(--p)) !important;
+  background-color: oklch(var(--p) / 0.2) !important;
+}
+
+/* Các thẻ h1, h2, h3, h4, h5, h6 */
+.milkdown .editor h1,
+.milkdown .editor h2,
+.milkdown .editor h3,
+.milkdown .editor h4,
+.milkdown .editor h5,
+.milkdown .editor h6 {
+  font-weight: 600 !important;
+}
+
+/* Code block */
+.milkdown .editor .milkdown-code-block {
+  border-radius: 0.5rem !important;
+  margin: 0.5rem 0 !important;
+  padding: 0.5rem !important;
+}
+.milkdown .editor .milkdown-code-block .cm-scroller {
+  overflow: auto !important;
+}
+.milkdown .editor .milkdown-code-block .cm-content {
+  margin-bottom: 0 !important;
+}
+.milkdown .editor .milkdown-code-block .tools .language-button {
+  opacity: 1 !important;
+}
+.milkdown .ProseMirror code {
+  background-color: oklch(var(--p) / 0.05) !important;
+}
+.milkdown .milkdown-code-block .list-wrapper {
+  border-radius: 0.5rem !important;
+}
+.milkdown .milkdown-code-block .language-list {
+  height: 100px !important;
+}
+
+/* image */
+.milkdown .milkdown-image-block .image-edit {
+  border-radius: 0.5rem !important;
+  padding: 0.5rem !important;
+}
+.milkdown .milkdown-image-block .image-edit .confirm {
+  border-radius: 0.5rem !important;
+}
+
+/* Link preview */
+.milkdown .milkdown-link-preview .link-preview {
+  height: auto !important;
+  padding: 0.5rem !important;
+  border: 1px solid var(--neutral) !important;
+}
+.milkdown .milkdown-link-edit .link-edit {
+  height: auto !important;
+  padding: 0.5rem !important;
+  border: 1px solid var(--neutral) !important;
+}
+
+/* Toolbar */
+.milkdown .milkdown-toolbar {
+  border: 1px solid var(--neutral) !important;
+}
+
+/* Slash menu */
+.milkdown .milkdown-slash-menu {
+  border: 1px solid var(--neutral) !important;
+}
+.milkdown .milkdown-slash-menu .tab-group,
+.milkdown .milkdown-slash-menu .menu-groups {
+  padding: 0.5rem !important;
+}
+.milkdown .milkdown-slash-menu .tab-group {
+  border-bottom: 1px solid var(--neutral) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups {
+  max-height: 260px !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group + .menu-group::before {
+  background-color: var(--neutral) !important;
+}
+.milkdown .milkdown-slash-menu .tab-group ul li.selected {
+  color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover {
+  color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover svg {
+  fill: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-slash-menu .tab-group ul li:hover {
+  /* color: oklch(var(--pc)) !important; */
+  background-color: initial !important;
+}
+
+/* Table */
+.ProseMirror table {
+  border-radius: none;
+}
+.milkdown .milkdown-table-block th,
+.milkdown .milkdown-table-block td {
+  border: 1px solid var(--neutral) !important;
+}
+
+/* Block handle */
+.milkdown .milkdown-block-handle {
+  display: none !important;
+}
+
+/* cm */
+.ͼ29 .cm-activeLineGutter {
+  background-color: oklch(var(--p) / 0.1) !important;
+}
+.ͼ4 .cm-line {
+  color: oklch(var(--p) / 0.8) !important;
+}
+.ͼ29 .cm-activeLine {
+  background-color: oklch(var(--p) / 0.05) !important;
+  color: oklch(var(--p)) !important;
+}

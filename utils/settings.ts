@@ -3,7 +3,7 @@ function getDefaultSettings() {
     general: {
       lang: 'en',
       theme: 'system',
-      defaultEditor: 'CodeMirror',
+      defaultEditor: 'Crepe',
       editorView: 'compact',
     },
     sync: {

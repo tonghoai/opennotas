@@ -21,6 +21,7 @@
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.36.6",
     "@libsql/client": "^0.5.6",
+    "@milkdown/crepe": "^7.13.1",
     "@nuxtjs/i18n": "^8.5.6",
     "@nuxtjs/tailwindcss": "^6.13.2",
     "@tiptap/extension-code-block": "^2.11.7",
