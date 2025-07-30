@@ -156,7 +156,10 @@ const initedApp = ref<boolean>(false);
 watch(() => initedApp.value, (newVal) => {
   if (newVal) {
     if (settings.value.sync?.adapter !== 'LocalForage' && navigator.onLine) {
-      showInfoSnackbar($i18n.t('app.message_sync_init'));
+      // showInfoSnackbar($i18n.t('app.message_sync_init'));
+      isSyncToast.value = true;
+      syncToastMessage.value = $i18n.t('app.message_sync_init');
+      syncToastClass.value = 'info';
     }
 
     idleSync(true, newVal);
@@ -1167,7 +1170,13 @@ const idleSync = async (immediate = false, initedApp = false) => {
     await pullPush()
       .then(() => {
         if (immediate && initedApp && settings.value?.sync.adapter !== 'LocalForage') {
-          showInfoSnackbar($i18n.t('app.message_sync_success'));
+          // showInfoSnackbar($i18n.t('app.message_sync_success'));
+          isSyncToast.value = true;
+          syncToastMessage.value = $i18n.t('app.message_sync_success');
+          syncToastClass.value = 'success';
+          setTimeout(() => {
+            isSyncToast.value = false;
+          }, 3000);
         }
 
         isSyncError.value = false;
@@ -1228,6 +1237,10 @@ watch(() => lastPull.value, async (newVal: number) => {
 const isSyncError = ref<boolean>(false);
 const syncErrorMessage = ref<string>("");
 const syncErrorClass = ref<string>("");
+
+const isSyncToast = ref<boolean>(false);
+const syncToastMessage = ref<string>("");
+const syncToastClass = ref<string>("");
 </script>
 
 <template>
@@ -1287,7 +1300,7 @@ const syncErrorClass = ref<string>("");
 
     <!-- cols notes -->
     <div class="cols-notes transition-all duration-300" :style="{ width: colsNotesWidth + 'px' }"
-      :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[72px] absolute': isMobile, 'lg:w-3/12 lg:float-left bg-base-200 h-full': !isMobile, '!w-0': isCollapsePanel }">
+      :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[64px] absolute': isMobile, 'lg:w-3/12 lg:float-left bg-base-200 h-full': !isMobile, '!w-0': isCollapsePanel }">
       <div class="hidden lg:block">
         <ToolbarNotes v-if="isShowToolbarNotes" ref="toolbarNotesRef" @clickAddNote="handleClickAddNote"
           @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch" />
@@ -1298,6 +1311,10 @@ const syncErrorClass = ref<string>("");
         <div v-if="isSyncError" class="m-2 rounded text-xs text-center py-1"
           :class="{ 'bg-warning': syncErrorClass === 'warning', 'text-warning-content': syncErrorClass === 'warning', 'bg-error': syncErrorClass === 'error', 'text-error-content': syncErrorClass === 'error' }">
           {{ syncErrorMessage }}
+        </div>
+        <div v-if="!isSyncError && isSyncToast" class="m-2 rounded text-xs text-center py-1"
+          :class="{ 'bg-info': syncToastClass === 'info', 'text-info-content': syncToastClass === 'info', 'bg-success': syncToastClass === 'success', 'text-success-content': syncToastClass === 'success' }">
+          {{ syncToastMessage }}
         </div>
         <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
           :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
