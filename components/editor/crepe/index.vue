@@ -24,7 +24,7 @@ const isLoading = ref(true);
 let editor: Crepe;
 onMounted(() => {
   editor = new Crepe({
-    root: document.querySelector("#cm-editor")!,
+    root: document.querySelector("#crepe-editor")!,
     features: {
       [Crepe.Feature.Toolbar]: true,
       [Crepe.Feature.Latex]: false,
@@ -76,12 +76,7 @@ onMounted(() => {
     }))
 
     editor.on((listener) => {
-      listener.markdownUpdated((markdown) => {
-        console.log("Markdown updated:");
-      });
-
-      listener.updated((doc) => {
-        console.log("Document updated");
+      listener.updated(() => {
         emit('changeContent', editor.getMarkdown());
       });
     });
@@ -129,7 +124,7 @@ defineExpose({
     <div class="loader"></div>
   </div>
 
-  <div v-show="!isLoading" id="cm-editor"
+  <div v-show="!isLoading" id="crepe-editor"
     class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] animate-fade-right animate-duration-100"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }">
 
