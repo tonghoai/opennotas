@@ -138,4 +138,8 @@ defineExpose({
   background-color: oklch(var(--p)) !important;
   color: oklch(var(--pc)) !important;
 }
+
+.ͼ4 .cm-line {
+  color: oklch(var(--bc)) !important;
+}
 </style>
