@@ -51,7 +51,7 @@ const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
   settings.value = newValue;
   adapterSelect.value = settings.value.sync.adapter;
-});
+}, { deep: true });
 
 // onMounted(() => {
 //   document.getElementById('setting-content') && new (window as any)

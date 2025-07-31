@@ -155,16 +155,19 @@ const reloadFolder = async (isFirst: boolean = false, focus = true) => {
 const initedApp = ref<boolean>(false);
 watch(() => initedApp.value, (newVal) => {
   if (newVal) {
-    if (settings.value.sync?.adapter !== 'LocalForage' && navigator.onLine) {
-      // showInfoSnackbar($i18n.t('app.message_sync_init'));
-      isSyncToast.value = true;
-      syncToastMessage.value = $i18n.t('app.message_sync_init');
-      syncToastClass.value = 'info';
-    }
+    // delay 1000ms before sync to avoid sync when app is not ready
+    setTimeout(() => {
+      if (settings.value.sync?.adapter !== 'LocalForage' && navigator.onLine) {
+        // showInfoSnackbar($i18n.t('app.message_sync_init'));
+        isSyncToast.value = true;
+        syncToastMessage.value = $i18n.t('app.message_sync_init');
+        syncToastClass.value = 'info';
+      }
 
-    idleSync(true, newVal);
-    // handle interact cols
-    handleInteractCols(isMobile.value, navbarTopRef, colsFoldersWidth, colsNotesWidth, setColsWidthData);
+      idleSync(true, newVal);
+      // handle interact cols
+      handleInteractCols(isMobile.value, navbarTopRef, colsFoldersWidth, colsNotesWidth, setColsWidthData);
+    }, 1000);
   }
 });
 const colsFoldersWidth = ref<number>(234);
