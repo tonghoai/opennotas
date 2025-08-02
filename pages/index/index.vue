@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 const { $i18n } = useNuxtApp();
 const { locale } = useI18n();
 
@@ -123,6 +123,9 @@ onMounted(async () => {
 // reloadNotes & reloadFolder using for reload all data display on screen
 const listNotesKey = ref<number>(0);
 const reloadNotes = async (focus = true, isTrash = false) => {
+  // scroll to top
+  document.getElementById('notes-instance')?.scrollTo({ top: 0, behavior: 'smooth' });
+
   await nextTick();
   listNotes.value = isTrash ? await loadTrashNotes() : await loadNotes();
   activeNoteId.value = await loadActiveNote() || "";
@@ -152,13 +155,19 @@ const reloadFolder = async (isFirst: boolean = false, focus = true) => {
 const initedApp = ref<boolean>(false);
 watch(() => initedApp.value, (newVal) => {
   if (newVal) {
-    if (settings.value.sync?.adapter !== 'LocalForage' && navigator.onLine) {
-      showInfoSnackbar($i18n.t('app.message_sync_init'));
-    }
+    // delay 1000ms before sync to avoid sync when app is not ready
+    setTimeout(() => {
+      if (settings.value.sync?.adapter !== 'LocalForage' && navigator.onLine) {
+        // showInfoSnackbar($i18n.t('app.message_sync_init'));
+        isSyncToast.value = true;
+        syncToastMessage.value = $i18n.t('app.message_sync_init');
+        syncToastClass.value = 'info';
+      }
 
-    idleSync(true, newVal);
-    // handle interact cols
-    handleInteractCols(isMobile.value, navbarTopRef, colsFoldersWidth, colsNotesWidth, setColsWidthData);
+      idleSync(true, newVal);
+      // handle interact cols
+      handleInteractCols(isMobile.value, navbarTopRef, colsFoldersWidth, colsNotesWidth, setColsWidthData);
+    }, 1000);
   }
 });
 const colsFoldersWidth = ref<number>(234);
@@ -233,17 +242,24 @@ const activeFolderName = computed(() => {
 });
 const handleClickFolderName = async (folderId: string) => {
   navbarTopRef.value?.resetSearchInput();
+  toolbarNotesRef.value?.resetSearchInput();
   activeFolderId.value = folderId;
   setActiveFolder(folderId);
 
   reloadNotes();
 };
 const isShowModalMenuFolder = ref<boolean>(false);
+const menuFolderKey = ref<number>(0);
 const handleRightClickFolderName = (data: any) => {
+  // ẩn menu note
+  hideMenuNote();
+
   if (isMobile.value) {
     handleClickFolderName(data.folderId);
+    menuFolderKey.value += 1;
     toggleModalMenuFolder(true, isShowModalMenuFolder);
   } else {
+    menuFolderKey.value += 1;
     handleClickFolderName(data.folderId);
     offsetMenuFolder(data);
   }
@@ -352,15 +368,32 @@ const handleClickAddNote = async () => {
 };
 const handleClickSearch = async (value: string) => {
   if (!value) {
+    listNotes.value = await loadNotes();
     navbarTopRef.value?.searchLoadingDone();
     toolbarNotesRef.value?.searchLoadingDone();
     return;
   }
 
   const currentNotes = await loadNotes();
-  const result = flexsearch!.search(value);
+  const result = flexsearch!.search({
+    query: value,
+    highlight: {
+      template: "<b>$1</b>",
+      boundary: {
+        before: 3,
+        after: 3,
+      }
+    },
+  });
   // await reloadNotes(false, activeFolderId.value === 'bottombar-trash');
-  listNotes.value = currentNotes.filter((item: any) => result[0]?.result?.includes(item.id));
+  // listNotes.value = currentNotes.filter((item: any) => result[0]?.result?.includes(item.id));
+  listNotes.value = result[0]?.result.reduce((acc: any[], item: any) => {
+    const currentNote = currentNotes.find((note: any) => note.id === item.id);
+    currentNote.highlight = item.highlight;
+    acc.push(currentNote);
+
+    return acc;
+  }, []);
   navbarTopRef.value?.searchLoadingDone();
   toolbarNotesRef.value?.searchLoadingDone();
 
@@ -395,11 +428,15 @@ const handleClickNote = async (noteId: string, inEditor: boolean = false) => {
 };
 const isShowModalMenuNote = ref<boolean>(false);
 const handleRightClickNote = (data: any) => {
+  // ẩn menu folder
+  hideMenuFolder();
+
   if (isMobile.value) {
     handleClickNote(data.noteId);
     menuNoteKey.value += 1;
     toggleModalMenuNote(true, isShowModalMenuNote);
   } else {
+    menuNoteKey.value += 1;
     handleClickNote(data.noteId, true);
     offsetMenuNote(data);
   }
@@ -439,6 +476,12 @@ const handleClickPinNote = async (data: any) => {
   setActionObject('note', updatedNote);
 
   listNotes.value = await loadNotes();
+
+  // scroll to top id notes-instance
+  const notesInstance = document.getElementById('notes-instance');
+  if (notesInstance) {
+    notesInstance.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 const isShowModalUnlockNotes = ref<boolean>(false);
 const handleClickCloseModalUnlockNotes = () => {
@@ -631,6 +674,40 @@ const handleClickUndo = async () => {
 const handleClickRedo = async () => {
   formNotesRef.value?.redo();
 }
+const isCollapsePanel = ref<boolean>(false);
+const handleClickCollapsePanel = () => {
+  isCollapsePanel.value = !isCollapsePanel.value;
+}
+const isShowToolbarNotes = ref<boolean>(true);
+watch(() => activeFolderId.value, () => {
+  if (activeFolderId.value === 'bottombar-trash') {
+    isCollapsePanel.value = true;
+    isCollapsePanel.value = false;
+  }
+});
+watch(() => isCollapsePanel.value, (newValue) => {
+  if (newValue) {
+    setTimeout(() => {
+      isShowToolbarNotes.value = !newValue;
+    }, 290);
+  } else {
+    isShowToolbarNotes.value = true;
+  }
+});
+const isCollapseFolder = ref<boolean>(false);
+const handleClickCollapseFolder = () => {
+  isCollapseFolder.value = !isCollapseFolder.value;
+}
+const isShowFormatToolbar = ref<boolean>(false);
+const handleClickFormatToolbar = () => {
+  isShowFormatToolbar.value = !isShowFormatToolbar.value;
+}
+watch(() => activeNoteId.value, () => {
+  isShowFormatToolbar.value = false;
+});
+watch(() => activeFolderId.value, () => {
+  isShowFormatToolbar.value = false;
+});
 
 const editorName = ref<string>(settings.value.general.defaultEditor);
 watch(() => settings.value.general.defaultEditor, (newValue) => {
@@ -646,6 +723,9 @@ const handleClickSwitchEditor = async (nodeId: string) => {
       editorName.value = 'CodeMirror';
       break;
     case 'CodeMirror':
+      editorName.value = 'Crepe';
+      break;
+    case 'Crepe':
       editorName.value = 'Tiptap';
       break;
     default:
@@ -687,6 +767,9 @@ const handleClickCloseModalInsertImage = () => {
 const handleConfirmInsertImage = (data: any) => {
   formNotesRef.value?.handleInsertImage(data);
 }
+const handleAlertMessage = (message: string) => {
+  showErrorSnackbar(message);
+}
 
 // search notes feature
 // flow: load notes with content -> create Document instance -> search
@@ -701,16 +784,17 @@ onMounted(() => {
     flexsearch = newFlexSearch();
 
     listNotesToSearch.value.forEach((note: any) => {
-      addToFlexSearch(flexsearch, note);
+      addToFlexSearch(flexsearch, toRaw(note));
     });
   }, 1000);
 });
 watch(() => activeFolderId.value, async () => {
+  await new Promise(resolve => setTimeout(resolve, 500));
   listNotesToSearch.value = await loadNotesWithContent(activeFolderId.value);
   flexsearch = newFlexSearch();
 
   listNotesToSearch.value.forEach((note: any) => {
-    addToFlexSearch(flexsearch, note);
+    addToFlexSearch(flexsearch, toRaw(note));
   });
 });
 
@@ -1089,7 +1173,13 @@ const idleSync = async (immediate = false, initedApp = false) => {
     await pullPush()
       .then(() => {
         if (immediate && initedApp && settings.value?.sync.adapter !== 'LocalForage') {
-          showInfoSnackbar($i18n.t('app.message_sync_success'));
+          // showInfoSnackbar($i18n.t('app.message_sync_success'));
+          isSyncToast.value = true;
+          syncToastMessage.value = $i18n.t('app.message_sync_success');
+          syncToastClass.value = 'success';
+          setTimeout(() => {
+            isSyncToast.value = false;
+          }, 3000);
         }
 
         isSyncError.value = false;
@@ -1150,6 +1240,10 @@ watch(() => lastPull.value, async (newVal: number) => {
 const isSyncError = ref<boolean>(false);
 const syncErrorMessage = ref<string>("");
 const syncErrorClass = ref<string>("");
+
+const isSyncToast = ref<boolean>(false);
+const syncToastMessage = ref<string>("");
+const syncToastClass = ref<string>("");
 </script>
 
 <template>
@@ -1158,7 +1252,7 @@ const syncErrorClass = ref<string>("");
     <p class="absolute bottom-4">{{ runtimeConfig.public.version }}</p>
   </div>
 
-  <div class="w-screen overflow-hidden bg-base-100"
+  <div class="w-screen overflow-hidden bg-background"
     style="height: calc(var(--vh, 1vh) * 100);-webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;"
     v-else>
     <!-- mobile nav top -->
@@ -1177,38 +1271,53 @@ const syncErrorClass = ref<string>("");
         @clickMenuSidebar="handleClickMenuSidebar" />
     </div>
 
-    <!-- cols folders -->
-    <div class="hidden lg:block lg:float-left cols-folders" :style="{ width: colsFoldersWidth + 'px' }">
-      <div class="border-r border-base-300">
-        <ToolbarFolder :isSyncing="isSyncAll" @clickAddFolder="handleClickAddFolder" @clickSetting="handleClickSetting"
-          @clickUpdateData="handleClickUpdateData" />
-      </div>
-      <hr class="hidden lg:block border-base-300">
+    <!-- cols personal -->
+    <div class="hidden lg:block lg:float-left cols-personal w-20 bg-base-300">
+      <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder"
+        @clickNotes="handleClickFolderName('')" @clickTrash="handleClickBottombarTrash"
+        @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData"
+        @clickCollapseFolder="handleClickCollapseFolder" />
+    </div>
 
-      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 41px - 75px)">
-        <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
-          :actionObjectKeys="actionObjectKeys" @clickFolderName="handleClickFolderName"
-          @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
-          @reorderFolderName="handleReorderFolderName" />
+    <!-- cols folders -->
+    <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300"
+      :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder }"
+      :style="{ width: colsFoldersWidth + 'px' }">
+      <div>
+        <ToolbarFolder :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
+          :isShowToolbarFolder="isShowToolbarNotes" @clickAddFolder="handleClickAddFolder"
+          @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData" />
       </div>
-      <hr class="border-base-300">
-      <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" />
+      <!-- <hr class="hidden lg:block border-base-300"> -->
+
+      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
+        <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
+          :actionObjectKeys="actionObjectKeys" :isCollapseFolder="isCollapseFolder"
+          @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
+          @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName" />
+      </div>
+      <!-- <hr class="border-base-300"> -->
+      <!-- <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" /> -->
     </div>
 
 
     <!-- cols notes -->
-    <div class="cols-notes" :style="{ width: colsNotesWidth + 'px' }"
-      :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[72px] absolute': isMobile, 'lg:w-3/12 lg:float-left border-r border-base-300': !isMobile }">
+    <div class="cols-notes transition-all duration-300" :style="{ width: colsNotesWidth + 'px' }"
+      :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[64px] absolute': isMobile, 'lg:w-3/12 lg:float-left bg-base-200 h-full': !isMobile, '!w-0': isCollapsePanel }">
       <div class="hidden lg:block">
-        <ToolbarNotes ref="toolbarNotesRef" @clickAddNote="handleClickAddNote" @clickSearch="handleClickSearch"
-          @clickCancelSearch="handleClickCancelSearch" />
+        <ToolbarNotes v-if="isShowToolbarNotes" ref="toolbarNotesRef" @clickAddNote="handleClickAddNote"
+          @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch" />
       </div>
-      <hr class="hidden lg:block border-base-300">
+      <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
         <div v-if="isSyncError" class="m-2 rounded text-xs text-center py-1"
           :class="{ 'bg-warning': syncErrorClass === 'warning', 'text-warning-content': syncErrorClass === 'warning', 'bg-error': syncErrorClass === 'error', 'text-error-content': syncErrorClass === 'error' }">
           {{ syncErrorMessage }}
+        </div>
+        <div v-if="!isSyncError && isSyncToast" class="m-2 rounded text-xs text-center py-1"
+          :class="{ 'bg-info': syncToastClass === 'info', 'text-info-content': syncToastClass === 'info', 'bg-success': syncToastClass === 'success', 'text-success-content': syncToastClass === 'success' }">
+          {{ syncToastMessage }}
         </div>
         <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
           :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
@@ -1219,29 +1328,33 @@ const syncErrorClass = ref<string>("");
 
     <!-- cols editor -->
     <div
-      :class="{ 'block w-full pt-[72px]': isMobile && isInEditor, 'hidden': isMobile && !isInEditor, 'lg:block lg:w-[inherit]': !isMobile }">
+      :class="{ 'block w-full pt-[64px]': isMobile && isInEditor, 'hidden': isMobile && !isInEditor, 'lg:block lg:w-[inherit]': !isMobile }">
       <div>
         <ToolbarFormNotes :noteId="formNotes.id" :editorName="editorName" :isLocked="formNotes.isLocked"
-          @copyToClipboard="handleCopyToClipboard" @clickInfo="handleClickFormNotesInfo"
-          @clickResize="handleClickResizeApp" @clickSwitchEditor="handleClickSwitchEditor" />
+          :formNotes="formNotes" @pinNote="handleClickPinNote" @copyNote="handleCopyToClipboard"
+          @lockNote="handleClickLockNote" @deleteNote="handleClickDeleteNote" @copyToClipboard="handleCopyToClipboard"
+          @clickInfo="handleClickFormNotesInfo" @clickResize="handleClickResizeApp"
+          @clickSwitchEditor="handleClickSwitchEditor" @clickCollapsePanel="handleClickCollapsePanel"
+          @clickFormatToolbar="handleClickFormatToolbar" />
       </div>
-      <hr class="hidden lg:block border-base-300">
+      <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="form-editors" class="bg-svg cursor-text overflow-auto" :class="{ 'overflow-x-hidden': isMobile }"
-        style="height: calc(100vh - 55px)">
+      <div id="form-editors" class="cursor-text overflow-auto bg-base-100" :class="{ 'overflow-x-hidden': isMobile }"
+        style="height: calc(100vh - 80px)">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
-          :isDeleted="!!formNotes.deletedAt" @confirmPassword="handleConfirmPassword"
-          @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"
-          @closeInsertLink="handleClickCloseModalInsertLink" @clickInsertImage="handleClickInsertImage"
-          @closeInsertImage="handleClickCloseModalInsertImage" />
+          :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt"
+          @confirmPassword="handleConfirmPassword" @changeContent="handleChangeContent"
+          @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleClickCloseModalInsertLink"
+          @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleClickCloseModalInsertImage"
+          @alertMessage="handleAlertMessage" />
       </div>
     </div>
   </div>
 
   <!-- menu folder & note -->
   <div id="menu-folder" class="hidden absolute">
-    <MenuFolder :folderId="activeFolderId" @renameFolder="handleClickRenameFolder"
+    <MenuFolder :key="menuFolderKey" :folderId="activeFolderId" @renameFolder="handleClickRenameFolder"
       @deleteFolder="handleClickDeleteFolder" />
   </div>
   <div id="menu-note" class="hidden absolute">

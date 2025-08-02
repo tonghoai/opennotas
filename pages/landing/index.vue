@@ -223,7 +223,7 @@ const _scrollTo = (elm: Element) => {
       </div>
 
       <div class="app-thumbnail" style="bottom: 0;">
-        <img :src="'/img/opennotas.webp'" alt="OpenNotas Thumbnail" />
+        <img :src="'/img/opennotas-2.webp'" alt="OpenNotas Thumbnail" />
       </div>
     </div>
 
@@ -268,7 +268,7 @@ const _scrollTo = (elm: Element) => {
             <p class="mt-4">{{ $t('landing.signature_easy_desc') }}</p>
           </div>
           <div class="lg:col-span-3 lg:col-start-3 mt-4 lg:mt-0">
-            <img :src="'/img/opennotas.webp'" alt="Feature 1" />
+            <img :src="'/img/opennotas-2.webp'" alt="Feature 1" />
           </div>
         </div>
       </div>

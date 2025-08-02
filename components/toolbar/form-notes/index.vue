@@ -1,57 +1,79 @@
 <script lang="ts" setup>
 import Info from '../assets/svg/info.svg?component';
-import Clipboard from '../assets/svg/clipboard.svg?component';
-import Square from '../assets/svg/maximize.svg?component';
-import Repeat from '../assets/svg/repeat.svg?component';
+import Menu from '../assets/svg/menu-vertical.svg?component';
+import PanelLeft from '../assets/svg/panel-left.svg?component';
+import Aa from '../assets/svg/aa.svg?component';
 
 const props = defineProps([
   'noteId',
   'editorName',
   'isLocked',
+  'formNotes',
 ]);
 
 const emit = defineEmits([
-  'copyToClipboard',
   'clickInfo',
-  'clickResize',
+  'clickCollapsePanel',
+  'clickFormatToolbar',
+  'copyNote',
   'clickSwitchEditor',
 ]);
 
-const handleClickCopyToClipboard = () => {
-  emit('copyToClipboard', props.noteId);
-}
 const handleClickInfo = () => {
   emit('clickInfo', props.noteId);
 }
-// const handleClickResize = () => {
-//   emit('clickResize');
-// }
-const handleClickSwitchEditor = () => {
+const handleClickCollapsePanel = () => {
+  emit('clickCollapsePanel');
+}
+const handleClickFormatToolbar = () => {
+  emit('clickFormatToolbar', props.noteId);
+}
+const handleClickCopyNote = () => {
+  emit('copyNote', props.noteId);
+}
+const handleClickChangeEditor = () => {
   emit('clickSwitchEditor', props.noteId);
 }
 </script>
 
 <template>
-  <div class="hidden lg:flex p-2 flex justify-end items-center h-12">
-    <!-- <span class="tooltip tooltip-right" :data-tip="$t('app.toolbar_form_note_resize_tooltip')">
-      <Square class="press hidden lg:block cursor-pointer opacity-80" @click="handleClickResize" />
-    </span> -->
+  <div class="hidden lg:flex px-4 flex justify-between items-center h-20 bg-base-100">
+    <div class="flex items-center gap-4 cursor-pointer">
+      <PanelLeft v-if="props.noteId" @click="handleClickCollapsePanel" />
+    </div>
 
-    <div v-if="!props.isLocked" class="flex">
-      <span v-if="props.noteId" class="press badge badge-md badge-neutral mr-4 cursor-pointer select-none"
-        @click="handleClickSwitchEditor">
-        {{ props.editorName }}
-      </span>
-      <span class="tooltip tooltip-left" :data-tip="$t('app.toolbar_form_note_swap_editor_tooltip')">
-        <Repeat v-if="props.noteId" class="press mr-4 cursor-pointer opacity-80" @click="handleClickSwitchEditor" />
-      </span>
-      <span class="tooltip tooltip-left" :data-tip="$t('app.toolbar_form_note_copy_tooltip')">
-        <Clipboard v-if="props.noteId" class="press mr-4 cursor-pointer opacity-80"
-          @click="handleClickCopyToClipboard" />
-      </span>
-      <span class="tooltip tooltip-left" :data-tip="$t('app.toolbar_form_note_info')">
-        <Info v-if="props.noteId" class="press cursor-pointer opacity-80" @click="handleClickInfo" />
-      </span>
+    <div v-if="!props.isLocked" class="flex items-center gap-4">
+      <div v-if="['Tiptap', 'Crepe'].includes(props.editorName)" class="mr-2" @click="handleClickFormatToolbar">
+        <Aa v-if="props.noteId" class="press cursor-pointer" />
+      </div>
+
+      <div class="" @click="handleClickInfo">
+        <Info v-if="props.noteId" class="press cursor-pointer" />
+      </div>
+
+      <div class="flex items-center">
+        <div class="dropdown dropdown-bottom dropdown-end">
+          <div tabindex="0" role="button" class="m-1">
+            <Menu v-if="props.noteId" class="press cursor-pointer" />
+          </div>
+
+          <ul tabindex="0"
+            class="dropdown-content menu bg-base-200 z-[1] w-44 p-2 shadow rounded-lg border border-neutral">
+            <li class="" @click="handleClickCopyNote">
+              <a>
+                {{ $t('app.menu_note_copy') }}
+              </a>
+            </li>
+            <li class="" @click="handleClickChangeEditor">
+              <a>
+                {{ $t('app.menu_note_change_editor') }}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class=""></div>
     </div>
   </div>
 </template>

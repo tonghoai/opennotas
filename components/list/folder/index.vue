@@ -8,6 +8,7 @@ const props = defineProps([
   'listFolders',
   'activeFolderId',
   'actionObjectKeys',
+  'isCollapseFolder'
 ]);
 
 const emit = defineEmits(['clickFolderName', 'rightClickFolderName', 'renameFolderName', 'reorderFolderName']);
@@ -52,26 +53,30 @@ const onEnd = () => {
     <img :src="'/logo-icon.png'" width="128" height="128" class="mb-4" alt="OpenNotas Logo" />
   </div>
 
-  <ul
-    class="menu block lg:border-r lg:border-base-300 w-full p-0 p-2 transition-all h-[calc(100vh_-_222px)] overflow-auto lg:h-full lg:overflow-auto">
+  <ul class="menu block w-full p-2 transition-all h-[calc(100vh_-_222px)] overflow-auto lg:h-full lg:overflow-auto">
     <draggable :delay="100" :prevent-on-filter="false" :touch-start-threshold="50" :list="props.listFolders"
       @end="onEnd" :move="onMove" item-key="id">
       <template #item="{ element: folder }">
-        <li class="menu-items w-full" :key="folder.id" @contextmenu="handleRightClickFolderName($event, folder.id)"
+        <li class="menu-items w-full py-0.5 animate-fade-right animate-duration-100" :key="folder.id"
+          @contextmenu="handleRightClickFolderName($event, folder.id)"
           @click="handleClickFolderName($event, folder.id)">
-          <div class="flex flex-row justify-between rounded w-full bg-base-100 active:!bg-neutral active:!text-neutral-content"
+          <div class="flex flex-row justify-between rounded w-full active:!bg-neutral active:!text-neutral-content"
             :class="{ 'bg-primary text-primary-content hover:bg-primary': activeFolderId === folder.id, 'bg-warning text-warning-content': futureIndex && (futureIndex === folder.id), 'fade-warning-animation': onMoveFolder && (onMoveFolder === folder.id) }"
             :id="'folder-' + folder.id">
-            <div class="flex items-baseline w-5/6">
-              <div class="w-4 h-4 mr-2">
-                <Folder />
+            <div class="flex items-center gap-4 w-5/6">
+              <div class="w-6 h-6">
+                <div class="avatar placeholder">
+                  <div class="bg-primary text-neutral-content w-6 h-6 rounded-full" :class="{ 'bg-primary-content text-primary': activeFolderId === folder.id }">
+                    <span class="text-sm font-semibold">{{ folder.name.charAt(0) }}</span>
+                  </div>
+                </div>
               </div>
-              <span class="truncate overflow-hidden folder-name"
-                :class="{ 'text-warning': props.actionObjectKeys?.includes(folder.id) }" :folderId="folder.id">
+              <span v-if="!isCollapseFolder" class="truncate overflow-hidden folder-name"
+                :class="{ 'text-warning-sync': props.actionObjectKeys?.includes(folder.id) }" :folderId="folder.id">
                 {{ folder.name }}
               </span>
             </div>
-            <div class="more-tools" @click.stop="handleRightClickFolderName($event, folder.id)">
+            <div v-if="!isCollapseFolder" class="more-tools" @click.stop="handleRightClickFolderName($event, folder.id)">
               <MoreHorizontal class="press w-3 h-3 opacity-80" />
             </div>
           </div>

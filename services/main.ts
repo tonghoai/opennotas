@@ -61,7 +61,7 @@ async function getNotes(folderId: string) {
   const notes = await storage.getNotes(folderId);
   const reformatNotes = notes.map((note: any) => {
     const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : 'Tiêu đề đã khóa';
-    const content = !note.isLocked ? note.content.split('\n').slice(1).join('\n').substr(0, 60)?.replace(/(?:\r\n|\r|\n)/g, '')?.trim() : 'Nội dung đã khóa';
+    const content = !note.isLocked ? note.content.split('\n').slice(1).join('\n').substr(0, 60)?.replace(/(?:\r\n|\r|\n)/g, ' ')?.trim() : 'Nội dung đã khóa';
     return {
       ...note,
       title,
@@ -72,7 +72,7 @@ async function getNotes(folderId: string) {
   const sortNotes = reformatNotes.sort((a: any, b: any) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
-    return b.updatedAt - a.updatedAt;
+    return b.createdAt - a.createdAt;
   });
 
   return sortNotes;

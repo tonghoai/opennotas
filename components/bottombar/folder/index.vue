@@ -46,7 +46,7 @@ const handleClickMenuSidebar = () => {
     </li> -->
 
     <!-- <hr class="lg:hidden my-2 border-base-300"> -->
-    <hr class="lg:hidden border-base-300">
+    <hr class="lg:hidden border-neutral">
 
     <li class="flex flex-row gap-2 w-full px-2 py-2 lg:px-0 lg:py-0 animate-fade-down animate-duration-200" key="bottombar-trash">
       <div class="flex-1 rounded hover:bg-inherit"

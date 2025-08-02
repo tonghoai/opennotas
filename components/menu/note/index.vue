@@ -34,51 +34,74 @@ const handleClickDeleteNoteForever = () => {
 </script>
 
 <template>
-  <div class="border border-base-300 bg-base-100 shadow-sm rounded">
+  <div class="">
     <!-- case active notes -->
-    <ul v-if="!formNotes.deletedAt" class="p-1">
-      <li class="px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer"
+    <!-- <ul v-if="!formNotes.deletedAt" class="px-1.5 py-2">
+      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer"
         @click="handleClickPinNote(props.formNotes.isPinned)">
         {{ props.formNotes.isPinned ? $t('app.menu_note_unpin') : $t('app.menu_note_pin') }}
       </li>
-      <li>
-        <hr class="border-base-300">
-      </li>
-      <li class="px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer" @click="handleClickCopyNote">
+
+      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer" @click="handleClickCopyNote">
         {{ $t('app.menu_note_copy') }}
       </li>
-      <li>
-        <hr class="border-base-300">
-      </li>
-      <li class="px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer"
+
+      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer"
         @click="handleClickLockNote(props.formNotes.isLocked)">
         {{ props.formNotes.isLocked ? $t('app.menu_note_unlock') : $t('app.menu_note_lock') }}
       </li>
-      <li>
-        <hr class="border-base-300">
-      </li>
-      <li class="px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer text-rose-500" @click="handleClickDeleteNote">
+
+      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer text-rose-500" @click="handleClickDeleteNote">
         {{ $t('app.menu_note_delete') }}
+      </li>
+    </ul> -->
+
+    <ul v-if="!formNotes.deletedAt"
+      class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
+      <li class="" @click="handleClickPinNote(props.formNotes.isPinned)">
+        <a>
+          {{ props.formNotes.isPinned ? $t('app.menu_note_unpin') : $t('app.menu_note_pin') }}
+        </a>
+      </li>
+
+      <li class="" @click="handleClickCopyNote">
+        <a>
+          {{ $t('app.menu_note_copy') }}
+        </a>
+      </li>
+
+      <li class="" @click="handleClickLockNote(props.formNotes.isLocked)">
+        <a>
+          {{ props.formNotes.isLocked ? $t('app.menu_note_unlock') : $t('app.menu_note_lock') }}
+        </a>
+      </li>
+
+      <li class="text-rose-500" @click="handleClickDeleteNote">
+        <a>
+          {{ $t('app.menu_note_delete') }}
+        </a>
       </li>
     </ul>
 
     <!-- case deleted notes -->
-    <ul v-if="formNotes.deletedAt" class="p-1">
-      <li class="px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer" @click="handleClickRestoreNote">
-        {{ $t('app.menu_note_restore') }}
+    <ul v-if="formNotes.deletedAt"
+      class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
+      <li class="" @click="handleClickRestoreNote">
+        <a>
+          {{ $t('app.menu_note_restore') }}
+        </a>
       </li>
-      <li>
-        <hr class="border-base-300">
+
+      <li class="" @click="handleClickCopyNote">
+        <a>
+          {{ $t('app.menu_note_copy') }}
+        </a>
       </li>
-      <li class="px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer" @click="handleClickCopyNote">
-        {{ $t('app.menu_note_copy') }}
-      </li>
-      <li>
-        <hr class="border-base-300">
-      </li>
-      <li class="px-5 py-1 hover:bg-base-300 rounded-sm cursor-pointer text-rose-500"
-        @click="handleClickDeleteNoteForever">
-        {{ $t('app.menu_note_delete_forever') }}
+
+      <li class="text-rose-500" @click="handleClickDeleteNoteForever">
+        <a>
+          {{ $t('app.menu_note_delete_forever') }}
+        </a>
       </li>
     </ul>
   </div>

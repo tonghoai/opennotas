@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  .bg-background {
+    background-color: oklch(var(--b1)) !important;
+  }
+
+  .border-neutral {
+    border-color: var(--neutral) !important;
+  }
+
+  .text-warning-sync {
+    color: var(--text-warning-sync) !important;
+  }
+
+  .text-info-sync {
+    color: var(--text-info-sync) !important;
+  }
+}
+
+[data-theme="light"] {
+  --neutral: oklch(0.87 0.00 0);
+  --text-warning-sync: oklch(0.77 0.16 70);
+  --text-info-sync: oklch(0.62 0.19 260);
+}
+
+[data-theme="dark"] {
+  --neutral: oklch(0.37 0.00 0);
+  --text-warning-sync: oklch(0.67 0.16 58);
+  --text-info-sync: oklch(0.71 0.14 255);
+}

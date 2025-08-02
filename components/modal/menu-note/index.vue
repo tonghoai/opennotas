@@ -35,10 +35,30 @@ const handleClickDeleteNoteForever = () => {
 
 <template>
   <dialog id="modal-menu-note" class="modal">
-    <div class="modal-box p-0 w-5/6">
+    <div class="modal-box p-0 w-5/6 border border-neutral">
       <div class="bg-base-100 shadow-sm rounded">
         <!-- case active notes -->
-        <ul v-if="!formNotes.deletedAt" class="p-1">
+        <ul v-if="!formNotes.deletedAt"
+          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100">
+          <li class="w-full text-center" @click="handleClickPinNote(props.formNotes.isPinned)">
+            <a class="w-full block text-center">{{ props.formNotes.isPinned ? $t('app.modal_menu_note_unpin') :
+              $t('app.modal_menu_note_pin') }}</a>
+          </li>
+
+          <li class="w-full text-center" @click="handleClickCopyNote">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
+          </li>
+
+          <li class="w-full text-center" @click="handleClickLockNote(props.formNotes.isLocked)">
+            <a class="w-full block text-center">{{ props.formNotes.isLocked ? $t('app.modal_menu_note_unlock') :
+              $t('app.modal_menu_note_lock') }}</a>
+          </li>
+
+          <li class="text-rose-500 w-full" @click="handleClickDeleteNote">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_delete') }}</a>
+          </li>
+        </ul>
+        <!-- <ul v-if="!formNotes.deletedAt" class="p-1">
           <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer"
             @click="handleClickPinNote(props.formNotes.isPinned)">
             {{ props.formNotes.isPinned ? $t('app.modal_menu_note_unpin') : $t('app.modal_menu_note_pin') }}
@@ -63,10 +83,24 @@ const handleClickDeleteNoteForever = () => {
             @click="handleClickDeleteNote">
             {{ $t('app.modal_menu_note_delete') }}
           </li>
-        </ul>
+        </ul> -->
 
         <!-- case deleted notes -->
-        <ul v-if="formNotes.deletedAt" class="p-1">
+        <ul v-if="formNotes.deletedAt"
+          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100">
+          <li class="w-full text-center" @click="handleClickRestoreNote">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_restore') }}</a>
+          </li>
+
+          <li class="w-full text-center" @click="handleClickCopyNote">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
+          </li>
+
+          <li class="text-rose-500 w-full" @click="handleClickDeleteNoteForever">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_delete_forever') }}</a>
+          </li>
+        </ul>
+        <!-- <ul v-if="formNotes.deletedAt" class="p-1">
           <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer" @click="handleClickRestoreNote">
             {{ $t('app.modal_menu_note_restore') }}
           </li>
@@ -83,7 +117,7 @@ const handleClickDeleteNoteForever = () => {
             @click="handleClickDeleteNoteForever">
             {{ $t('app.modal_menu_note_delete_forever') }}
           </li>
-        </ul>
+        </ul> -->
       </div>
     </div>
     <form method="dialog" class="modal-backdrop">
