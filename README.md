@@ -27,7 +27,7 @@ OpenNotas is an **open-source** note-taking application, **cross-platform** base
 
 OpenNotas **supports Markdown**, utilizing open-source text editing tools that can easily be expanded with additional features and utilities.
 
-![OpenNotas](https://i.postimg.cc/7Zyz8Jfd/Screenshot-2025-08-02-at-06-40-20.png)
+![OpenNotas](https://opennotas.io/img/opennotas-2.webp)
 
 * **Easy to Use** - OpenNotas is designed to be easy to use. Just a tap and you can start writing notes immediately.
 
@@ -48,6 +48,7 @@ OpenNotas **supports Markdown**, utilizing open-source text editing tools that c
 <details>
 <summary>Build from source code</summary>
 <br>
+
 [Read the docs](https://docs.opennotas.io/started/install) for any further information.
 </details>
 
