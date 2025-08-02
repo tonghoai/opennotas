@@ -12,9 +12,9 @@
 
 <p align="center">
   <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/tonghoai/opennotas">
-  <a title="Rust" target="_blank" href="https://opennotas.io"><img alt="Static Badge" src="https://img.shields.io/badge/Website-opennotas.io-%230a0a0a"></a>
-  <a title="Rust" target="_blank" href="https://docs.opennotas.io"><img alt="Static Badge" src="https://img.shields.io/badge/Docs-Docusaurus-%232e8555"></a>
-  <a title="Rust" target="_blank" href="https://t.me/opennotas"><img alt="Static Badge" src="https://img.shields.io/badge/Telegram-%40opennotas-%230088CC"></a>
+  <a title="Website" target="_blank" href="https://opennotas.io"><img alt="Static Badge" src="https://img.shields.io/badge/Website-opennotas.io-%230a0a0a"></a>
+  <a title="Docs" target="_blank" href="https://docs.opennotas.io"><img alt="Static Badge" src="https://img.shields.io/badge/Docs-Docusaurus-%232e8555"></a>
+  <a title="Telegram" target="_blank" href="https://t.me/opennotas"><img alt="Static Badge" src="https://img.shields.io/badge/Telegram-%40opennotas-%230088CC"></a>
 </p>
 
 ---
@@ -42,7 +42,7 @@ OpenNotas **supports Markdown**, utilizing open-source text editing tools that c
 <details>
 <summary>Install the PWA application</summary>
 <br>
-<img alt="Static Badge" src="https://img.shields.io/badge/PWA-OpenNotas-%230a0a0a?style=for-the-badge&logo=pwa">
+<a title="PWA" target="_blank" href="https://opennotas.io/install"><img alt="Static Badge" src="https://img.shields.io/badge/PWA-OpenNotas-%230a0a0a?style=for-the-badge&logo=pwa"></a>
 </details>
 
 <details>
