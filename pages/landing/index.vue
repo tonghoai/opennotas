@@ -61,6 +61,9 @@ useHead({
 const { setLocale } = useI18n();
 
 onMounted(() => {
+  setTimeout(() => {
+    document.querySelector('html')?.setAttribute('data-theme', "light");
+  }, 10);
   // add overflow auto to body
   document.body.style.overflow = 'auto';
 });
