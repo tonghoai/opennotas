@@ -14,7 +14,7 @@
     "try_web_version": "Dùng thử bản Web",
     "accept_terms": "Bằng cách nhấp vào nút, bạn đồng ý với",
     "browser_not_support": "Rất tiếc, trình duyệt của bạn chưa được hỗ trợ. Hãy thử một trình duyệt mới hơn!",
-    "slogan": "Ứng dụng ghi chú cá nhân tốt nhất, nhanh, bảo mật và hoàn toàn miễn phí",
+    "slogan": "Ứng dụng ghi chú cá nhân đơn giản, nhẹ, nhanh, bảo mật và hoàn toàn miễn phí",
     "read_more": "Tìm hiểu thêm",
     "feature_title": "Tính năng",
     "feature_simple": "Đơn giản",
@@ -64,7 +64,7 @@
   },
   "app": {
     "version": "Phiên bản",
-    "slogan": "Ứng dụng ghi chú cá nhân tốt nhất, nhanh, bảo mật và hoàn toàn miễn phí",
+    "slogan": "Ứng dụng ghi chú cá nhân đơn giản, nhẹ, nhanh, bảo mật và hoàn toàn miễn phí",
     "toolbar_folder_setting_tooltip": "Cài đặt",
     "toolbar_folder_sync_tooltip": "Đồng bộ dữ liệu",
     "toolbar_folder_add": "Thêm",
