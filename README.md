@@ -74,7 +74,7 @@ Join the OpenNotas community channel at https://t.me/opennotas.
 
 Alternatively, you can open an [Issues](https://github.com/tonghoai/opennotas/issues) on Github.
 
-## A Confession and a Thank You.
+## A Confession and a Thank You
 
 I use coffee daily for work, and I also have a hobby of collecting coffee brewing tools, check out my blog posts at [Coffee Enthusiasts](https://2coffee.dev/en/topics/coffee-enthusiasts) and [Coffee Brewing Tools](https://2coffee.dev/en/store/coffee-brewing-tools) if you don't believe me.
 
