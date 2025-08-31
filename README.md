@@ -74,6 +74,14 @@ Join the OpenNotas community channel at https://t.me/opennotas.
 
 Alternatively, you can open an [Issues](https://github.com/tonghoai/opennotas/issues) on Github.
 
+## A Confession and a Thank You.
+
+I use coffee daily for work, and I also have a hobby of collecting coffee brewing tools, check out my blog posts at [Coffee Enthusiasts](https://2coffee.dev/en/topics/coffee-enthusiasts) and [Coffee Brewing Tools](https://2coffee.dev/en/store/coffee-brewing-tools) if you don't believe me.
+
+If you like what I do, you can buy me a cup of coffee to show your support, I would really appreciate that, by clicking on the Github Sponsors below:
+
+* [GitHub Sponsors](https://github.com/sponsors/tonghoai) (personal; monthly or one-time)
+
 ## License
 
 OpenNotas is AGPL-3.0-or-later License.
