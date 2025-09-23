@@ -1271,6 +1271,18 @@ const syncErrorClass = ref<string>("");
 const isSyncToast = ref<boolean>(false);
 const syncToastMessage = ref<string>("");
 const syncToastClass = ref<string>("");
+
+watch(() => colorMode.preference, () => {
+  const metaThemeColor = document.querySelector("meta[name=theme-color]");
+
+  setTimeout(() => {
+    if (colorMode.preference === "dark") {
+      metaThemeColor?.setAttribute("content", "#090909");
+    } else {
+      metaThemeColor?.setAttribute("content", "#e4e4e4");
+    }
+  }, 1000);
+});
 </script>
 
 <template>
