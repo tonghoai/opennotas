@@ -37,7 +37,7 @@ const handleClickCollapseFolder = () => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col">
+  <div class="h-screen flex flex-col bg-base-300">
     <!-- Logo -->
     <div class="flex items-center justify-center h-20">
       <img src="/logo.png" alt="Logo" class="w-10 h-10" />

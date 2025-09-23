@@ -60,7 +60,7 @@ const onEnd = () => {
         <li class="menu-items w-full py-0.5 animate-fade-right animate-duration-100" :key="folder.id"
           @contextmenu="handleRightClickFolderName($event, folder.id)"
           @click="handleClickFolderName($event, folder.id)">
-          <div class="flex flex-row justify-between rounded w-full active:!bg-neutral active:!text-neutral-content"
+          <div class="flex flex-row justify-between rounded-xl w-full active:!bg-neutral active:!text-neutral-content"
             :class="{ 'bg-primary text-primary-content hover:bg-primary': activeFolderId === folder.id, 'bg-warning text-warning-content': futureIndex && (futureIndex === folder.id), 'fade-warning-animation': onMoveFolder && (onMoveFolder === folder.id) }"
             :id="'folder-' + folder.id">
             <div class="flex items-center gap-4 w-5/6">

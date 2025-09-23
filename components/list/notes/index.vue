@@ -29,8 +29,8 @@ const handleRightClickNote = (e: any, noteId: number) => {
       class="menu-items relative w-full animate-fade-right animate-duration-100">
 
       <div class="w-full lg:p-2 flex justify-between">
-        <div class="w-11/12 p-2.5 hover:cursor-pointer lg:bg-base-200 lg:rounded-l-md"
-          :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-l-md': activeNoteId === note.id }"
+        <div class="w-11/12 p-2.5 hover:cursor-pointer lg:bg-base-200 lg:rounded-l-xl"
+          :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-l-xl': activeNoteId === note.id }"
           @click="handleClickNote(note.id)" @contextmenu="handleRightClickNote($event, note.id)">
           <div class="w-full font-semibold mb-2 select-none truncate overflow-hidden transition-all"
             :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
@@ -43,11 +43,11 @@ const handleRightClickNote = (e: any, noteId: number) => {
           </div>
         </div>
 
-        <div class="right-menu w-1/12 p-2.5 flex flex-col justify-between lg:bg-base-200 lg:rounded-r-md"
-          :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-r-md': activeNoteId === note.id }">
+        <div class="right-menu w-1/12 p-2.5 flex flex-col justify-between lg:bg-base-200 lg:rounded-r-xl"
+          :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-r-xl': activeNoteId === note.id }">
           <div class="flex justify-end items-end flex-col">
-            <Pin class="w-3 h-3 mb-2" v-if="note.isPinned" />
-            <Lock class="w-3 h-3" v-if="note.isLocked" />
+            <Pin class="w-3 h-3 mb-2 text-error" v-if="note.isPinned" />
+            <Lock class="w-3 h-3 text-warning" v-if="note.isLocked" />
           </div>
           <div class="flex justify-end items-end flex-col more-tools"
             @click.stop="handleRightClickNote($event, note.id)">
@@ -55,6 +55,8 @@ const handleRightClickNote = (e: any, noteId: number) => {
           </div>
         </div>
       </div>
+
+      <hr class="ml-2 border-neutral/5">
     </li>
   </ul>
 </template>

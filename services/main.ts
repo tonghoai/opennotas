@@ -57,7 +57,7 @@ async function setActiveFolder(folderId: string) {
 async function getAllNotes() {
   return storage.getAllNotes();
 }
-async function getNotes(folderId: string) {
+async function getNotes(folderId: string, sortType: 'createdAt' | 'updatedAt') {
   const notes = await storage.getNotes(folderId);
   const reformatNotes = notes.map((note: any) => {
     const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : 'Tiêu đề đã khóa';
@@ -72,7 +72,11 @@ async function getNotes(folderId: string) {
   const sortNotes = reformatNotes.sort((a: any, b: any) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
-    return b.createdAt - a.createdAt;
+    if (sortType === 'createdAt') {
+      return b.createdAt - a.createdAt;
+    } else {
+      return b.updatedAt - a.updatedAt;
+    }
   });
 
   return sortNotes;
@@ -107,6 +111,12 @@ async function getActiveNote() {
 }
 async function setActiveNote(noteId: string) {
   return storage.setActiveNote(noteId);
+}
+async function getSortNote() {
+  return storage.getSortNote();
+}
+async function setSortNote(sort: 'createdAt' | 'updatedAt') {
+  return storage.setSortNote(sort);
 }
 
 async function getNoteDetail(noteId: string) {
@@ -230,7 +240,8 @@ export {
 
   getActiveNote,
   setActiveNote,
-
+  getSortNote,
+  setSortNote,
   getNoteDetail,
 
   getDeletedNotes,

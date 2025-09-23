@@ -3,6 +3,7 @@ import type {
   FolderType,
   FolderUpdateType,
   NoteCreateType,
+  NoteSortType,
   NoteType,
   NoteUpdateType,
 } from "./storage.type";
@@ -55,6 +56,12 @@ class NotasStorage {
     throw new Error('Not implemented');
   }
   async setActiveNote(noteId: string): Promise<string> {
+    throw new Error('Not implemented');
+  }
+  async getSortNote(): Promise<NoteSortType> {
+    throw new Error('Not implemented');
+  }
+  async setSortNote(sort: NoteSortType): Promise<NoteSortType> {
     throw new Error('Not implemented');
   }
 

@@ -36,6 +36,8 @@ import {
   setImportData,
   checkIsFirstInit,
   setFirstInit,
+  setSortNote,
+  getSortNote,
 } from '../../services/main';
 import Mutex from "~/utils/mutex";
 
@@ -127,6 +129,7 @@ const reloadNotes = async (focus = true, isTrash = false) => {
   document.getElementById('notes-instance')?.scrollTo({ top: 0, behavior: 'smooth' });
 
   await nextTick();
+  sortType.value = await getSortNote();
   listNotes.value = isTrash ? await loadTrashNotes() : await loadNotes();
   activeNoteId.value = await loadActiveNote() || "";
 
@@ -314,7 +317,7 @@ const handleConfirmDeleteFolder = async (folderId: string) => {
   });
   setActionObject('folder', updatedFolder);
 
-  const notesInFolder = await getNotes(folderId);
+  const notesInFolder = await getNotes(folderId, sortType.value);
   for (const note of notesInFolder) {
     const updatedNote = await updateNote(note.id, {
       deletedAt: nowUnix(),
@@ -345,11 +348,31 @@ const isShowModalMenuSidebar = ref<boolean>(false);
 const handleClickMenuSidebar = (e: any) => {
   toggleModalMenuSidebar(true, isShowModalMenuSidebar);
 }
+// sort notes
+const sortType = ref<'createdAt' | 'updatedAt'>('createdAt');
+const handleClickSort = async (type: 'createdAt' | 'updatedAt') => {
+  sortType.value = type as 'createdAt' | 'updatedAt';
+  await setSortNote(type);
 
+  listNotes.value = await loadNotes();
+}
+const handleClickRetrySync = async () => {
+  isSyncError.value = false;
+  syncErrorMessage.value = "";
+  syncErrorClass.value = "";
+
+  isSyncToast.value = true;
+  syncToastMessage.value = $i18n.t('app.message_sync_init');
+  syncToastClass.value = 'info';
+
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  idleSync(true, true);
+}
 
 // all logic for notes
 const loadNotes = async () => {
-  return getNotes(activeFolderId.value);
+  return getNotes(activeFolderId.value, sortType.value);
 }
 const loadActiveNote = async () => {
   return getActiveNote();
@@ -613,6 +636,10 @@ const handleChangeContent = async ({ content: newVal, id }: { content: string, i
       const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === id);
       listNotes.value[findNoteIndex].title = substrTitle(newVal)
       listNotes.value[findNoteIndex].content = substrContent(newVal);
+    }
+
+    // only reload folder to sort notes again when sort type is updatedAt
+    if (sortType.value === 'updatedAt') {
       reloadFolder(false, false);
     }
   }, 1000);
@@ -1280,7 +1307,7 @@ const syncToastClass = ref<string>("");
     </div>
 
     <!-- cols folders -->
-    <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300"
+    <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300/80"
       :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder }"
       :style="{ width: colsFoldersWidth + 'px' }">
       <div>
@@ -1311,14 +1338,10 @@ const syncToastClass = ref<string>("");
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
-        <div v-if="isSyncError" class="m-2 rounded text-xs text-center py-1"
-          :class="{ 'bg-warning': syncErrorClass === 'warning', 'text-warning-content': syncErrorClass === 'warning', 'bg-error': syncErrorClass === 'error', 'text-error-content': syncErrorClass === 'error' }">
-          {{ syncErrorMessage }}
-        </div>
-        <div v-if="!isSyncError && isSyncToast" class="m-2 rounded text-xs text-center py-1"
-          :class="{ 'bg-info': syncToastClass === 'info', 'text-info-content': syncToastClass === 'info', 'bg-success': syncToastClass === 'success', 'text-success-content': syncToastClass === 'success' }">
-          {{ syncToastMessage }}
-        </div>
+        <ToolbarNotesSecondBar :sortType="sortType" :isSyncError="isSyncError" :syncErrorClass="syncErrorClass"
+          :syncErrorMessage="syncErrorMessage" :isSyncToast="isSyncToast" :syncToastClass="syncToastClass"
+          :syncToastMessage="syncToastMessage" @clickSort="handleClickSort" @clickRetrySync="handleClickRetrySync" />
+
         <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
           :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
           @rightClickNote="handleRightClickNote" />
