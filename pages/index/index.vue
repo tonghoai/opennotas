@@ -1245,7 +1245,15 @@ const pullPush = async () => {
     idPulled,
     actionObject,
     isPasswordExist,
+    activeNoteId,
   );
+
+  // if need reload active note, update form notes and slient update value
+  if (pull.needReloadActiveNote) {
+    formNotes.value = await getNoteDetail(activeNoteId.value);
+    formNotesRef.value?.slientUpdateValue(formNotes.value.content);
+  }
+
   await pushData(
     settings.value,
     privateKey.value,

@@ -89,21 +89,31 @@ const redo = () => {
   });
 }
 
+// slient update value
+// use to update value without trigger change event
+// to keep the cursor position
+const slientUpdateValue = (value: string) => {
+  return;
+}
+
 defineExpose({
   focus,
   readonly,
   undo,
   redo,
+  slientUpdateValue,
 });
 </script>
 
 <template>
-  <div id="cm-editor" class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] animate-fade-right animate-duration-100"
+  <div id="cm-editor"
+    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] animate-fade-right animate-duration-100"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }" />
 </template>
 
 <style lang="postcss">
-#cm-editor, .ͼ1.cm-focused {
+#cm-editor,
+.ͼ1.cm-focused {
   outline: none !important;
 }
 

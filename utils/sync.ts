@@ -41,7 +41,8 @@ async function pullData(
   lastPull: Ref<number>,
   idPulled: Ref<string[]>,
   actionObject: Ref<any>,
-  isPasswordExist: Ref<boolean>
+  isPasswordExist: Ref<boolean>,
+  activeNoteId: Ref<string>
 ) {
   // if local then ignore
   if (settings?.sync?.adapter === "LocalForage") {
@@ -59,6 +60,7 @@ async function pullData(
   let lastDataAt = -Infinity;
 
   try {
+    let needReloadActiveNote = false;
     let pullFolders = await syncAdapter.pullFolders(lastPull.value);
     let pullNotes = await syncAdapter.pullNotes(lastPull.value);
     let pullSettings = await syncAdapter.pullSettings(lastPull.value);
@@ -114,6 +116,10 @@ async function pullData(
         if (lastDataAt < +note.updatedAt) {
           lastDataAt = +note.updatedAt;
         }
+
+        if (note.id === activeNoteId.value) {
+          needReloadActiveNote = true;
+        }
       }
     }
 
@@ -139,6 +145,7 @@ async function pullData(
     if (lastDataAt !== -Infinity) {
       return {
         ok: true,
+        needReloadActiveNote,
         now,
       };
     } else {

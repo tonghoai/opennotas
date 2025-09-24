@@ -174,6 +174,13 @@ onUnmounted(() => {
   editor.destroy();
 });
 
+// slient update value
+// use to update value without trigger change event
+// to keep the cursor position
+const slientUpdateValue = (value: string) => {
+  return;
+}
+
 defineExpose({
   focus,
   readonly,
@@ -183,6 +190,7 @@ defineExpose({
   handleInsertLink,
   clickInsertImage,
   handleInsertImage,
+  slientUpdateValue,
 });
 
 const CustomTaskItem = TaskItem.extend({

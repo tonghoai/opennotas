@@ -92,6 +92,11 @@ watch(props.settings, () => {
   editorTiptapKey.value++;
 });
 
+// slient update value
+const slientUpdateValue = (value: string) => {
+  editorRef.value?.slientUpdateValue(value);
+}
+
 defineExpose({
   focusPassword,
   focus,
@@ -102,6 +107,7 @@ defineExpose({
   resetPassword,
   handleInsertLink,
   handleInsertImage,
+  slientUpdateValue,
 })
 </script>
 
