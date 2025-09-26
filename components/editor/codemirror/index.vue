@@ -119,7 +119,7 @@ defineExpose({
 
 .ͼ1 .cm-scroller {
   outline: none !important;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: inherit !important;
 }
 
 .cm-content {

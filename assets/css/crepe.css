@@ -37,6 +37,10 @@
     0px 2px 6px 2px rgba(255, 255, 255, 0.15); */
 }
 
+.milkdown {
+  font-family: inherit !important;
+}
+
 .milkdown .ProseMirror {
   padding: 0 !important;
 }
@@ -54,7 +58,7 @@
 .milkdown .editor h1::selection,
 .milkdown .editor h2::selection,
 .milkdown .editor h3::selection,
-.milkdown .editor h4::selection, 
+.milkdown .editor h4::selection,
 .milkdown .editor h5::selection,
 .milkdown .editor h6::selection,
 .milkdown .editor strong::selection,
@@ -76,6 +80,15 @@
 .milkdown .editor h5,
 .milkdown .editor h6 {
   font-weight: 600 !important;
+}
+
+.milkdown .ProseMirror h1,
+.milkdown .ProseMirror h2,
+.milkdown .ProseMirror h3,
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 {
+  font-family: inherit !important;
 }
 
 /* Code block */
@@ -184,17 +197,20 @@
 }
 
 /* cm */
-.ͼ29 .cm-activeLineGutter {
+.ͼ29 .cm-activeLineGutter,
+.ͼo .cm-activeLineGutter {
   background-color: oklch(var(--p) / 0.1) !important;
 }
 .ͼ4 .cm-line {
   color: oklch(var(--p) / 0.8) !important;
 }
-.ͼ29 .cm-activeLine {
+.ͼ29 .cm-activeLine,
+.ͼo .cm-activeLine {
   background-color: oklch(var(--b2)) !important;
   color: oklch(var(--p)) !important;
 }
-.ͼ29 .cm-activeLine::selection {
+.ͼ29 .cm-activeLine::selection,
+.ͼo .cm-activeLine::selection {
   background-color: oklch(var(--p) / 0.1) !important;
   color: oklch(var(--p)) !important;
 }

@@ -54,7 +54,7 @@ const onEnd = () => {
   </div>
 
   <ul class="menu block w-full p-2 transition-all h-[calc(100vh_-_222px)] overflow-auto lg:h-full lg:overflow-auto">
-    <draggable :delay="100" :prevent-on-filter="false" :touch-start-threshold="50" :list="props.listFolders"
+    <draggable :delay="300" :prevent-on-filter="false" :touch-start-threshold="50" :list="props.listFolders"
       @end="onEnd" :move="onMove" item-key="id">
       <template #item="{ element: folder }">
         <li class="menu-items w-full py-0.5 animate-fade-right animate-duration-100" :key="folder.id"

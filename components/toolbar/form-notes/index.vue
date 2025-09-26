@@ -58,7 +58,7 @@ const handleClickChangeEditor = () => {
           </div>
 
           <ul tabindex="0"
-            class="dropdown-content menu bg-base-200 z-[1] w-44 p-2 shadow rounded-xl border border-neutral">
+            class="dropdown-content menu bg-base-200 z-[1] w-48 p-2 shadow rounded-xl border border-neutral">
             <li class="" @click="handleClickCopyNote">
               <a>
                 {{ $t('app.menu_note_copy') }}

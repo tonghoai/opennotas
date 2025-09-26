@@ -835,6 +835,8 @@ const handleChangeDefaultEditor = async () => {
 const handleSaveSettings = async (data: any) => {
   settings.value = data;
   await setSettings(data);
+
+  changeFontFamily(data.general?.fontFamily);
 }
 const modalSettingRef = ref<any>(null);
 const modalSetPasswordRef = ref<any>(null);
@@ -1280,16 +1282,46 @@ const isSyncToast = ref<boolean>(false);
 const syncToastMessage = ref<string>("");
 const syncToastClass = ref<string>("");
 
-watch(() => colorMode.preference, () => {
+const changeThemeColor = () => {
   const metaThemeColor = document.querySelector("meta[name=theme-color]");
 
   setTimeout(() => {
     if (colorMode.preference === "dark") {
-      metaThemeColor?.setAttribute("content", "#090909");
+      if (isMobile.value) {
+        metaThemeColor?.setAttribute("content", "#262626");
+      } else {
+        metaThemeColor?.setAttribute("content", "#090909");
+      }
     } else {
-      metaThemeColor?.setAttribute("content", "#e4e4e4");
+      if (isMobile.value) {
+        metaThemeColor?.setAttribute("content", "#fcfcfc");
+      } else {
+        metaThemeColor?.setAttribute("content", "#e4e4e4");
+      }
     }
   }, 1000);
+}
+onMounted(() => {
+  changeThemeColor();
+});
+watch(() => colorMode.preference, () => {
+  changeThemeColor();
+});
+
+const changeFontFamily = (fontFamilyName: string) => {
+  if (!fontFamilyName || (fontFamilyName && fontFamilyName.toLowerCase() === 'system')) return;
+
+  const fontName = fontFamilyName.replace(/ /g, '+');
+  const fontFamily = fontName.replace(/\+/g, ' ');
+
+  const font = document.createElement('link');
+  font.href = `https://fonts.googleapis.com/css2?family=${fontName}:ital,wght@0,300..800;1,300..800&display=swap`;
+  font.rel = 'stylesheet';
+  document.head.appendChild(font);
+  document.body.style.fontFamily = `${fontFamily}, sans-serif`;
+}
+watch(() => settings.value.general.fontFamily, (newVal) => {
+  changeFontFamily(newVal);
 });
 </script>
 
@@ -1382,8 +1414,8 @@ watch(() => colorMode.preference, () => {
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="form-editors" class="cursor-text overflow-auto bg-base-100" :class="{ 'overflow-x-hidden': isMobile }"
-        style="height: calc(100vh - 80px)">
+      <div id="form-editors" class="cursor-text overflow-auto bg-base-100 h-[calc(100vh_-_64px)] lg:h-[calc(100vh_-_80px)]"
+        :class="{ 'overflow-x-hidden': isMobile }">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
           :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt"

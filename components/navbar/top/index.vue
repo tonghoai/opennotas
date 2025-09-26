@@ -239,7 +239,7 @@ defineExpose({
 
     <!-- drawer home -->
     <div v-if="!props.isInEditor" class="drawer-content flex flex-col">
-      <div class="navbar p-0 bg-primary text-primary-content">
+      <div class="navbar p-0">
         <div class="flex-none">
           <div class="px-4">
             <label for="my-drawer-3" aria-label="open sidebar">
@@ -261,7 +261,7 @@ defineExpose({
                 class="loading loading-spinner loading-sm absolute right-1.5 top-1.5"></span>
             </div>
 
-            <button class="flex-none btn bg-base-100 text-base-content btn-sm" @click="handleToggleSearch">
+            <button class="flex-none btn bg-primary text-primary-content btn-sm" @click="handleToggleSearch">
               <!-- {{ $t('app.toolbar_note_search_cancel') }} -->
               <X />
             </button>
@@ -276,7 +276,7 @@ defineExpose({
     </div>
 
     <!-- drawer in editor -->
-    <div v-if="props.isInEditor" class="navbar p-0 bg-primary text-primary-content">
+    <div v-if="props.isInEditor" class="navbar p-0">
       <div class="flex-none">
         <div class="px-4" @click="handleClickBack">
           <ArrowLeft class="press cursor-pointer opacity-80" />
@@ -368,6 +368,7 @@ defineExpose({
                 @change="handleChangeDefaultEditor">
                 <option value="Tiptap">{{ $t('app.setting_general_default_editor_tiptap') }}</option>
                 <option value="CodeMirror">{{ $t('app.setting_general_default_editor_codemirror') }}</option>
+                <option value="Crepe">Crepe</option>
               </select>
             </label>
 

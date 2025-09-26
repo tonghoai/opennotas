@@ -5,6 +5,7 @@ function getDefaultSettings() {
       theme: 'system',
       defaultEditor: 'Crepe',
       editorView: 'compact',
+      fontFamily: 'System',
     },
     sync: {
       frequency: '5',
