@@ -374,6 +374,15 @@ defineExpose({
 
             <label class="form-control w-full pt-2">
               <div class="label">
+                <span class="font-semibold label-text">{{ $t('app.setting_general_font_title') }}</span>
+              </div>
+              <input v-model="settings.general.fontFamily" type="text"
+                class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveSettings"
+                autocomplete="off" />
+            </label>
+
+            <label class="form-control w-full pt-2">
+              <div class="label">
                 <span class="font-semibold label-text">{{ $t('app.setting_general_security_title') }}</span>
               </div>
               <button class="btn btn-sm btn-primary" @click="handleClickSetPassword">

@@ -1211,6 +1211,15 @@ const idleSync = async (immediate = false, initedApp = false) => {
           }, 3000);
         }
 
+        // reset message
+        if (isSyncError.value) {
+          isSyncToast.value = true;
+          syncToastMessage.value = $i18n.t('app.message_sync_success');
+          syncToastClass.value = 'success';
+          setTimeout(() => {
+            isSyncToast.value = false;
+          }, 3000);
+        }
         isSyncError.value = false;
         syncErrorMessage.value = "";
         syncErrorClass.value = "";
@@ -1315,7 +1324,7 @@ const changeFontFamily = (fontFamilyName: string) => {
   const fontFamily = fontName.replace(/\+/g, ' ');
 
   const font = document.createElement('link');
-  font.href = `https://fonts.googleapis.com/css2?family=${fontName}:ital,wght@0,300..800;1,300..800&display=swap`;
+  font.href = `https://fonts.googleapis.com/css2?family=${fontName}&display=swap`;
   font.rel = 'stylesheet';
   document.head.appendChild(font);
   document.body.style.fontFamily = `${fontFamily}, sans-serif`;
@@ -1414,7 +1423,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="form-editors" class="cursor-text overflow-auto bg-base-100 h-[calc(100vh_-_64px)] lg:h-[calc(100vh_-_80px)]"
+      <div id="form-editors"
+        class="cursor-text overflow-auto bg-base-100 h-[calc(100vh_-_64px)] lg:h-[calc(100vh_-_80px)]"
         :class="{ 'overflow-x-hidden': isMobile }">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
