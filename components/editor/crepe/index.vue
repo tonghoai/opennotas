@@ -109,6 +109,12 @@ const undo = () => {
 const redo = () => {
   redoCommand.run();
 }
+const focusState = () => {
+  editor.editor.action((ctx) => {
+    const view = ctx.get(editorViewCtx);
+    view.focus();
+  });
+}
 
 onUnmounted(() => {
   editor.destroy();
@@ -212,6 +218,7 @@ defineExpose({
   undo,
   redo,
   slientUpdateValue,
+  focusState,
 });
 </script>
 
@@ -223,12 +230,12 @@ defineExpose({
   </div>
 
   <div v-show="!isLoading" id="crepe-editor"
-    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] animate-fade-right animate-duration-100"
+    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_-_160px)] animate-fade-right animate-duration-100"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }">
 
   </div>
 
-  <div v-if="props.isShowFormatToolbar" class="sticky bottom-16 left-0 w-fit max-w-screen-md mx-auto">
+  <div v-if="props.isShowFormatToolbar" class="sticky bottom-4 left-0 w-fit max-w-screen-md mx-auto">
     <ToolbarFormNotesFormat :editorType="'crepe'" :editor="editor?.editor" />
   </div>
 </template>

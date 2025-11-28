@@ -40,6 +40,7 @@ import {
   getSortNote,
 } from '../../services/main';
 import Mutex from "~/utils/mutex";
+import { removeMarkdownEscape } from "~/utils/string";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
@@ -634,8 +635,8 @@ const handleChangeContent = async ({ content: newVal, id }: { content: string, i
   debounceChangeContent = setTimeout(async () => {
     if (!note.isLocked) {
       const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === id);
-      listNotes.value[findNoteIndex].title = substrTitle(newVal)
-      listNotes.value[findNoteIndex].content = substrContent(newVal);
+      listNotes.value[findNoteIndex].title = removeSpecialChar(substrTitle(newVal))
+      listNotes.value[findNoteIndex].content = removeSpecialChar(substrContent(newVal));
     }
 
     // only reload folder to sort notes again when sort type is updatedAt
@@ -657,7 +658,7 @@ const handleCopyToClipboard = async () => {
   }
 
   const note = await getNoteDetail(activeNoteId.value);
-  navigator.clipboard.writeText(note.content);
+  navigator.clipboard.writeText(removeMarkdownEscape(note.content));
   showInfoSnackbar($i18n.t('app.message_note_copied_clipboard'));
 };
 const noteInfo = ref<any>({
@@ -728,6 +729,7 @@ const handleClickCollapseFolder = () => {
 const isShowFormatToolbar = ref<boolean>(false);
 const handleClickFormatToolbar = () => {
   isShowFormatToolbar.value = !isShowFormatToolbar.value;
+  formNotesRef.value?.focusState();
 }
 watch(() => activeNoteId.value, () => {
   isShowFormatToolbar.value = false;
@@ -757,6 +759,19 @@ const handleClickSwitchEditor = async (nodeId: string) => {
       break;
     default:
       break;
+  }
+}
+const beforeChangeEditorName = ref<string>('');
+const handleClickPlainText = () => {
+  if (editorName.value === 'CodeMirror' && beforeChangeEditorName.value === 'CodeMirror') {
+    return;
+  }
+
+  if (editorName.value !== 'CodeMirror') {
+    beforeChangeEditorName.value = editorName.value;
+    editorName.value = 'CodeMirror';
+  } else {
+    editorName.value = beforeChangeEditorName.value;
   }
 }
 const isShowModalInsertLink = ref<boolean>(false);
@@ -1419,7 +1434,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
           @lockNote="handleClickLockNote" @deleteNote="handleClickDeleteNote" @copyToClipboard="handleCopyToClipboard"
           @clickInfo="handleClickFormNotesInfo" @clickResize="handleClickResizeApp"
           @clickSwitchEditor="handleClickSwitchEditor" @clickCollapsePanel="handleClickCollapsePanel"
-          @clickFormatToolbar="handleClickFormatToolbar" />
+          @clickFormatToolbar="handleClickFormatToolbar" @clickPlainText="handleClickPlainText" />
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 

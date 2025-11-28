@@ -6,8 +6,10 @@ import {
   turnIntoTextCommand,
   wrapInBulletListCommand,
   wrapInHeadingCommand,
-  wrapInOrderedListCommand,
+  wrapInBlockTypeCommand,
+  listItemSchema,
 } from "@milkdown/kit/preset/commonmark";
+import { commandsCtx, editorViewCtx } from "@milkdown/kit/core";
 import { toggleStrikethroughCommand } from "@milkdown/kit/preset/gfm";
 import { callCommand } from "@milkdown/kit/utils";
 import { insert } from "@milkdown/kit/utils";
@@ -33,6 +35,14 @@ const clickInsertImage = () => {
   emit('insertImage');
 };
 
+// helper to focus the crepe editor after executing a command
+const focusCrepeEditor = () => {
+  props.editor?.action((ctx: any) => {
+    const view = ctx.get(editorViewCtx);
+    view.focus();
+  });
+};
+
 const handleClickHeading = (level: number) => {
   switch (props.editorType) {
     case 'tiptap':
@@ -40,6 +50,7 @@ const handleClickHeading = (level: number) => {
       break;
     case 'crepe':
       props.editor?.action(callCommand(wrapInHeadingCommand.key, level));
+      focusCrepeEditor();
       break;
   }
 };
@@ -51,6 +62,7 @@ const handleClickParagraph = () => {
       break;
     case 'crepe':
       props.editor?.action(callCommand(turnIntoTextCommand.key));
+      focusCrepeEditor();
       break;
   }
 };
@@ -61,7 +73,16 @@ const handleClickTaskList = () => {
       props.editor?.chain().focus().toggleTaskList().run();
       break;
     case 'crepe':
-      props.editor?.action(callCommand(wrapInOrderedListCommand.key));
+      props.editor?.action((ctx: any) => {
+        const commands = ctx.get(commandsCtx);
+        const listItem = listItemSchema.type(ctx);
+        commands.call(wrapInBlockTypeCommand.key, {
+          nodeType: listItem,
+          attrs: { checked: false },
+        });
+        const view = ctx.get(editorViewCtx);
+        view.focus();
+      });
       break;
   }
 };
@@ -73,6 +94,7 @@ const handleClickBulletList = () => {
       break;
     case 'crepe':
       props.editor?.action(callCommand(wrapInBulletListCommand.key));
+      focusCrepeEditor();
       break;
   }
 };
@@ -84,6 +106,7 @@ const handleClickBold = () => {
       break;
     case 'crepe':
       props.editor?.action(callCommand(toggleStrongCommand.key));
+      focusCrepeEditor();
       break;
   }
 };
@@ -95,6 +118,7 @@ const handleClickItalic = () => {
       break;
     case 'crepe':
       props.editor?.action(callCommand(toggleEmphasisCommand.key));
+      focusCrepeEditor();
       break;
   }
 };
@@ -106,6 +130,7 @@ const handleClickStrike = () => {
       break;
     case 'crepe':
       props.editor?.action(callCommand(toggleStrikethroughCommand.key));
+      focusCrepeEditor();
       break;
   }
 };
@@ -117,6 +142,7 @@ const handleClickImage = () => {
       break;
     case 'crepe':
       props.editor?.action(insert('![]()'));
+      focusCrepeEditor();
       break;
   }
 };
@@ -128,6 +154,7 @@ const handleClickCodeBlock = () => {
       break;
     case 'crepe':
       props.editor?.action(callCommand(createCodeBlockCommand.key));
+      focusCrepeEditor();
       break;
   }
 };

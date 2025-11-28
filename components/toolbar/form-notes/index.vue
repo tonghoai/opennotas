@@ -2,7 +2,8 @@
 import Info from '../assets/svg/info.svg?component';
 import Menu from '../assets/svg/menu-vertical.svg?component';
 import PanelLeft from '../assets/svg/panel-left.svg?component';
-import Aa from '../assets/svg/aa.svg?component';
+import Type from '../assets/svg/type.svg?component';
+import ToolCase from '../assets/svg/tool-case.svg?component';
 
 const props = defineProps([
   'noteId',
@@ -17,6 +18,8 @@ const emit = defineEmits([
   'clickFormatToolbar',
   'copyNote',
   'clickSwitchEditor',
+  'clickPlainText',
+  'handleClickPlainText',
 ]);
 
 const handleClickInfo = () => {
@@ -34,27 +37,36 @@ const handleClickCopyNote = () => {
 const handleClickChangeEditor = () => {
   emit('clickSwitchEditor', props.noteId);
 }
+const handleClickPlainText = () => {
+  emit('clickPlainText', props.noteId);
+}
 </script>
 
 <template>
   <div class="hidden lg:flex px-4 flex justify-between items-center h-20 bg-base-100">
-    <div class="flex items-center gap-4 cursor-pointer">
-      <PanelLeft v-if="props.noteId" @click="handleClickCollapsePanel" />
+    <div v-if="props.noteId" class="flex items-center gap-4 cursor-pointer p-2 rounded-full bg-base-300">
+      <PanelLeft @click="handleClickCollapsePanel" />
     </div>
 
-    <div v-if="!props.isLocked" class="flex items-center gap-4">
-      <div v-if="['Tiptap', 'Crepe'].includes(props.editorName)" class="mr-2" @click="handleClickFormatToolbar">
-        <Aa v-if="props.noteId" class="press cursor-pointer" />
+    <div v-if="!props.isLocked" class="flex items-center gap-3">
+      <div v-if="['Tiptap', 'Crepe'].includes(props.editorName) && props.noteId" class="p-2 rounded-full bg-base-300"
+        @click="handleClickFormatToolbar">
+        <ToolCase class="press cursor-pointer" />
       </div>
 
-      <div class="" @click="handleClickInfo">
-        <Info v-if="props.noteId" class="press cursor-pointer" />
+      <div v-if="props.noteId" class="p-2 rounded-full bg-base-300"
+        @click="handleClickPlainText">
+        <Type class="press cursor-pointer" />
+      </div>
+
+      <div v-if="props.noteId" class="p-2 rounded-full bg-base-300" @click="handleClickInfo">
+        <Info class="press cursor-pointer" />
       </div>
 
       <div class="flex items-center">
         <div class="dropdown dropdown-bottom dropdown-end">
-          <div tabindex="0" role="button" class="m-1">
-            <Menu v-if="props.noteId" class="press cursor-pointer" />
+          <div v-if="props.noteId" tabindex="0" role="button" class="m-1 p-2 rounded-full bg-base-300">
+            <Menu class="press cursor-pointer" />
           </div>
 
           <ul tabindex="0"

@@ -80,6 +80,9 @@ const undo = () => {
 const redo = () => {
   editorRef.value?.redo();
 }
+const focusState = () => {
+  editorRef.value?.focusState();
+}
 
 const editorName = ref<string>(props.editorName);
 watch(() => props.editorName, (newValue) => {
@@ -108,6 +111,7 @@ defineExpose({
   handleInsertLink,
   handleInsertImage,
   slientUpdateValue,
+  focusState,
 })
 </script>
 

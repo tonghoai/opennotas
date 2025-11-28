@@ -26,7 +26,7 @@ const handleClickRetrySync = async () => {
 </script>
 
 <template>
-  <div class="h-10 lg:h-6 flex justify-between items-center">
+  <div class="min-h-8 lg:h-6 flex justify-between items-center sticky top-0 bg-base-100 lg:bg-base-200 z-[8] py-1">
     <div class="flex-1">
       <div v-show="props.isSyncError" class="h-6 mx-2 rounded-lg text-xs text-center py-1 cursor-pointer"
         :class="{ 'bg-warning': props.syncErrorClass === 'warning', 'text-warning-content': props.syncErrorClass === 'warning', 'bg-error': props.syncErrorClass === 'error', 'text-error-content': props.syncErrorClass === 'error' }"

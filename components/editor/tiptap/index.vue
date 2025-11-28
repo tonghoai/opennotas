@@ -170,6 +170,9 @@ const redo = () => {
   editor.commands.redo();
 }
 
+const focusState = () => {
+}
+
 onUnmounted(() => {
   editor.destroy();
 });
@@ -191,6 +194,7 @@ defineExpose({
   clickInsertImage,
   handleInsertImage,
   slientUpdateValue,
+  focusState,
 });
 
 const CustomTaskItem = TaskItem.extend({

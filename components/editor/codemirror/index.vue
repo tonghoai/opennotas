@@ -88,6 +88,8 @@ const redo = () => {
     dispatch: editor.dispatch,
   });
 }
+const focusState = () => {
+}
 
 // slient update value
 // use to update value without trigger change event
@@ -102,6 +104,7 @@ defineExpose({
   undo,
   redo,
   slientUpdateValue,
+  focusState,
 });
 </script>
 

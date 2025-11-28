@@ -127,7 +127,7 @@ async function getDeletedNotes() {
   const notes = await storage.getDeletedNotes();
   const reformatNotes = notes.map((note: any) => {
     const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : 'Tiêu đề đã khóa';
-    const content = !note.isLocked ? note.content.split('\n').slice(1).join('\n').substr(0, 60) : 'Nội dung đã khóa';
+    const content = !note.isLocked ? removeSpecialChar(note.content.split('\n').slice(1).join('\n').substr(0, 60)) : 'Nội dung đã khóa';
     return {
       ...note,
       title,
