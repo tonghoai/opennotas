@@ -202,6 +202,21 @@
         "message_sync_init": "正在同步資料...",
         "message_sync_success": "同步成功",
         "message_search_no_result": "找不到符合的筆記",
-        "message_note_can_not_save": "無法儲存筆記, 請嘗試切換到另一個編輯器如 CodeMirror"
+        "message_note_can_not_save": "無法儲存筆記, 請嘗試切換到另一個編輯器如 CodeMirror",
+        "setting_image_sync_title": "圖片同步",
+        "setting_image_sync_enable": "啟用圖片同步",
+        "setting_image_sync_s3_endpoint": "S3 Endpoint",
+        "setting_image_sync_s3_access_key": "S3 存取金鑰",
+        "setting_image_sync_s3_secret_key": "S3 祕密金鑰",
+        "setting_image_sync_s3_bucket": "S3 桶子",
+        "setting_image_sync_worker_url": "代理工作器 URL",
+        "setting_image_sync_worker_url_optional": "(選擇性)",
+        "setting_image_sync_worker_url_placeholder": "留空使用預設",
+        "setting_image_sync_test_connection": "測試連接",
+        "setting_image_sync_connected": "已連接",
+        "setting_image_sync_failed": "連線失敗",
+        "setting_image_sync_hint": "請輸入您的 S3 相容儲存憑證。圖片將在離線時儲存在本機，並在線時同步。您可以部署自己的代理工作器或使用預設的代理工作器。",
+        "message_image_sync_success": "圖片同步成功",
+        "message_image_sync_failed": "圖片同步失敗"
     }
 }

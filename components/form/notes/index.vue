@@ -129,8 +129,8 @@ defineExpose({
       :isDeleted="props.isDeleted" :settings="settings" @changeContent="handleChangeContent" />
 
     <EditorCrepe v-if="editorName === 'Crepe'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
-      :settings="settings" :isShowFormatToolbar="props.isShowFormatToolbar" @changeContent="handleChangeContent"
-      @alertMessage="handleAlertMessage" />
+      :settings="settings" :isShowFormatToolbar="props.isShowFormatToolbar" :noteId="props.id"
+      @changeContent="handleChangeContent" @alertMessage="handleAlertMessage" />
   </div>
 
   <div class="flex justify-center pt-8 pb-1 bg-svg h-full transition-all" v-show="id && isLocked">

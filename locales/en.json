@@ -202,6 +202,21 @@
     "message_sync_init": "Synchronizing data...",
     "message_sync_success": "Synchronization successful",
     "message_search_no_result": "No results found",
-    "message_note_can_not_save": "Cannot save notes, try switching to another editor like CodeMirror"
+    "message_note_can_not_save": "Cannot save notes, try switching to another editor like CodeMirror",
+    "setting_image_sync_title": "Image Sync",
+    "setting_image_sync_enable": "Enable Image Sync",
+    "setting_image_sync_s3_endpoint": "S3 Endpoint",
+    "setting_image_sync_s3_access_key": "S3 Access Key",
+    "setting_image_sync_s3_secret_key": "S3 Secret Key",
+    "setting_image_sync_s3_bucket": "S3 Bucket",
+    "setting_image_sync_worker_url": "Proxy Worker URL",
+    "setting_image_sync_worker_url_optional": "(Optional)",
+    "setting_image_sync_worker_url_placeholder": "Leave empty to use default",
+    "setting_image_sync_test_connection": "Test Connection",
+    "setting_image_sync_connected": "Connected",
+    "setting_image_sync_failed": "Connection Failed",
+    "setting_image_sync_hint": "Enter your S3-compatible storage credentials. Images will be stored locally when offline and synced when online. You can deploy your own proxy worker or use the default one.",
+    "message_image_sync_success": "Images synced successfully",
+    "message_image_sync_failed": "Failed to sync images"
   }
 }

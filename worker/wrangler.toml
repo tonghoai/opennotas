@@ -1,0 +1,6 @@
+name = "opennotas-image-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# This worker is stateless and receives S3 credentials from the client.
+# No secrets needed - all configuration is passed per-request.

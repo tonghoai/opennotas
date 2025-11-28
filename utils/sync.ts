@@ -10,6 +10,7 @@ import {
   updateFolder,
   updateNote,
 } from "~/services/main";
+import { syncImages } from "~/utils/image-sync";
 
 function selectAdapter(
   adapter: string = "LocalForage",
@@ -167,6 +168,8 @@ async function pushData(
   now: number
 ) {
   if (settings?.sync?.adapter === "LocalForage") {
+    // Still sync images even with LocalForage adapter if image sync is enabled
+    await syncImages(settings);
     return;
   }
 
@@ -214,6 +217,9 @@ async function pushData(
     lastPushData.value = now;
     delete actionObject.value[key];
   }
+
+  // Sync images after syncing notes
+  await syncImages(settings);
 }
 
 export { pullData, pushData };

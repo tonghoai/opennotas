@@ -2,7 +2,6 @@
 import { Crepe } from "@milkdown/crepe";
 import { editorViewCtx } from "@milkdown/core";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
-import { imageBlockConfig } from '@milkdown/kit/component/image-block'
 import { replaceAll, getMarkdown } from '@milkdown/utils'
 import { TextSelection } from '@milkdown/prose/state'
 import * as Diff from 'diff'
@@ -10,11 +9,18 @@ import * as Diff from 'diff'
 import "@milkdown/crepe/theme/common/style.css";
 import "../../../assets/css/crepe.css";
 
+import {
+  saveImage,
+  resolveImageUrl,
+  isOpenNotasImageUrl,
+} from '~/services/image';
+
 const props = defineProps([
   'value',
   'isDeleted',
   'settings',
   'isShowFormatToolbar',
+  'noteId',
 ]);
 
 const emit = defineEmits([
@@ -25,6 +31,35 @@ const emit = defineEmits([
 const isLoading = ref(true);
 
 let editor: Crepe;
+
+const handleImageUpload = async (file: File): Promise<string> => {
+  if (!props.noteId) {
+    emit('alertMessage', 'Không thể lưu ảnh khi chưa có note');
+    return URL.createObjectURL(file);
+  }
+  
+  try {
+    const imageUrl = await saveImage(props.noteId, file);
+    return imageUrl;
+  } catch (error) {
+    console.error('Failed to save image:', error);
+    emit('alertMessage', 'Lỗi khi lưu ảnh');
+    return URL.createObjectURL(file);
+  }
+};
+
+const handleProxyDomURL = async (src: string): Promise<string> => {
+  if (isOpenNotasImageUrl(src)) {
+    try {
+      return await resolveImageUrl(src, props.settings);
+    } catch (error) {
+      console.error('Failed to resolve image URL:', error);
+      return src;
+    }
+  }
+  return src;
+};
+
 onMounted(() => {
   editor = new Crepe({
     root: document.querySelector("#crepe-editor")!,
@@ -55,6 +90,10 @@ onMounted(() => {
           divider: null,
         },
       },
+      [Crepe.Feature.ImageBlock]: {
+        onUpload: handleImageUpload,
+        proxyDomURL: handleProxyDomURL,
+      },
     },
     defaultValue: props.value,
   });
@@ -69,14 +108,6 @@ onMounted(() => {
       focus();
     }, 100);
     isLoading.value = false;
-
-    editor.editor.ctx.update(imageBlockConfig.key, (defaultConfig) => ({
-      ...defaultConfig,
-      onUpload: async (file: File) => {
-        emit('alertMessage', 'Hình ảnh tải lên sẽ không được đồng bộ');
-        return Promise.resolve(URL.createObjectURL(file));
-      },
-    }))
 
     editor.on((listener) => {
       listener.updated(() => {
