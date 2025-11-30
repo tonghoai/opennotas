@@ -101,7 +101,28 @@ async function resolveImageUrl(url: string, settings?: any): Promise<string> {
   }
 
   const meta = await imageRepository.getImageMeta(imageId);
+
+  // If no meta exists, try to fetch from remote S3 storage
+  // This handles the case when an image was synced from another device
   if (!meta) {
+    if (settings && isS3ConfigValid(settings)) {
+      try {
+        const adapter = createS3Adapter(settings);
+        if (adapter) {
+          const { blob, mimeType, remoteUrl } = await adapter.getImageById(imageId);
+
+          // Save to local storage for future use
+          await imageRepository.saveImageFromRemote(imageId, blob, mimeType, remoteUrl);
+
+          // Create blob URL and cache it
+          const blobUrl = URL.createObjectURL(blob);
+          blobUrlCache.set(imageId, blobUrl);
+          return blobUrl;
+        }
+      } catch (error) {
+        console.error('Failed to fetch image from remote:', error);
+      }
+    }
     return url;
   }
 

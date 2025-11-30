@@ -133,6 +133,39 @@ class ImageRepository {
       }
     }
   }
+
+  async saveImageFromRemote(
+    imageId: string,
+    blob: Blob,
+    mimeType: string,
+    remoteUrl: string
+  ): Promise<ImageMetaType> {
+    await imageStore.setItem(`image-blob-${imageId}`, blob);
+
+    const now = Date.now();
+    const meta: ImageMetaType = {
+      id: imageId,
+      noteId: '', // We don't know the noteId when fetching from remote
+      mimeType,
+      size: blob.size,
+      syncStatus: 'synced',
+      remoteUrl,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const metas = await this.getAllImagesMeta();
+    const existingIndex = metas.findIndex((m) => m.id === imageId);
+
+    if (existingIndex >= 0) {
+      metas[existingIndex] = meta;
+    } else {
+      metas.push(meta);
+    }
+
+    await localForage.setItem('imagesMeta', JSON.stringify(metas));
+    return meta;
+  }
 }
 
 export default ImageRepository;

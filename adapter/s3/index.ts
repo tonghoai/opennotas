@@ -110,6 +110,29 @@ class S3ProxyAdapter implements NotasImageAdapter {
     return URL.createObjectURL(blob);
   }
 
+  async getImageById(imageId: string): Promise<{ blob: Blob; mimeType: string; remoteUrl: string }> {
+    const response = await fetch(`${this.workerUrl}/get-by-id`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        imageId,
+        s3Config: this.s3Config,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get image by ID: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    const mimeType = response.headers.get('Content-Type') || 'image/jpeg';
+    const remoteUrl = response.headers.get('X-Remote-Url') || '';
+
+    return { blob, mimeType, remoteUrl };
+  }
+
   async checkConnection(): Promise<boolean> {
     try {
       const response = await fetch(`${this.workerUrl}/health`, {

@@ -286,6 +286,82 @@ async function handleGet(request: Request): Promise<Response> {
   }
 }
 
+async function handleGetById(request: Request): Promise<Response> {
+  try {
+    const body = await request.json() as { imageId: string; s3Config: S3Config };
+    const { imageId, s3Config } = body;
+
+    if (!imageId) {
+      return new Response(JSON.stringify({ error: 'Missing imageId' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!validateS3Config(s3Config)) {
+      return new Response(JSON.stringify({ error: 'Invalid or incomplete S3 configuration' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const endpoint = s3Config.endpoint.replace(/\/$/, '');
+
+    // Try common extensions to find the image
+    const extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    
+    for (const ext of extensions) {
+      const key = `images/${imageId}.${ext}`;
+      const s3Url = new URL(`${endpoint}/${s3Config.bucket}/${key}`);
+      
+      const headers: Record<string, string> = {
+        'Host': s3Url.host,
+      };
+      
+      const signedHeaders = await signRequest(
+        'GET',
+        s3Url,
+        headers,
+        null,
+        s3Config.accessKey,
+        s3Config.secretKey
+      );
+      
+      const s3Response = await fetch(s3Url.toString(), {
+        method: 'GET',
+        headers: signedHeaders,
+      });
+      
+      if (s3Response.ok) {
+        const imageData = await s3Response.arrayBuffer();
+        const contentType = s3Response.headers.get('Content-Type') || `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+        const remoteUrl = `${endpoint}/${s3Config.bucket}/${key}`;
+        
+        return new Response(imageData, {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': contentType,
+            'X-Remote-Url': remoteUrl,
+            'Cache-Control': 'public, max-age=31536000',
+          },
+        });
+      }
+    }
+    
+    return new Response(JSON.stringify({ error: 'Image not found' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Get image by ID error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
+
 async function handleDelete(request: Request): Promise<Response> {
   try {
     const body = await request.json() as { imageId: string; s3Config: S3Config };
@@ -378,6 +454,10 @@ export default {
     
     if (path === '/get' && request.method === 'POST') {
       return handleGet(request);
+    }
+    
+    if (path === '/get-by-id' && request.method === 'POST') {
+      return handleGetById(request);
     }
     
     if (path === '/delete' && request.method === 'POST') {
