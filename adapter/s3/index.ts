@@ -136,7 +136,13 @@ class S3ProxyAdapter implements NotasImageAdapter {
   async checkConnection(): Promise<boolean> {
     try {
       const response = await fetch(`${this.workerUrl}/health`, {
-        method: 'GET',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          s3Config: this.s3Config,
+        }),
       });
 
       if (!response.ok) {

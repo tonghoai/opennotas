@@ -363,7 +363,7 @@ const handleSaveImageSyncSettings = () => {
                 </div>
 
                 <!-- Image Sync Settings -->
-                <div class="border-t border-neutral mt-6 pt-6"></div>
+                <div class="border-t border-neutral mt-6 pt-4"></div>
 
                 <label class="form-control w-full">
                   <div class="label cursor-pointer justify-start gap-4">
@@ -424,15 +424,17 @@ const handleSaveImageSyncSettings = () => {
                   </label>
 
                   <label class="form-control w-full pt-4">
-                    <button class="btn btn-primary w-full btn-sm !text-sm" @click="handleTestImageSyncConnection"
+                    <button class="btn btn-primary w-full btn-sm !text-sm"
+                      :class="{ 'btn-success': imageSyncTestStatus === 'success', 'btn-error': imageSyncTestStatus === 'failed' }"
+                      @click="handleTestImageSyncConnection"
                       :disabled="imageSyncTestStatus === 'testing' || !isS3ConfigComplete">
                       <span class="text-sm" v-if="imageSyncTestStatus === 'idle'">{{
                         $t('app.setting_image_sync_test_connection') }}</span>
                       <span v-else-if="imageSyncTestStatus === 'testing'"
                         class="text-sm loading loading-spinner loading-sm"></span>
-                      <span v-else-if="imageSyncTestStatus === 'success'" class="text-sm text-success">{{
+                      <span v-else-if="imageSyncTestStatus === 'success'" class="text-sm">{{
                         $t('app.setting_image_sync_connected') }}</span>
-                      <span v-else-if="imageSyncTestStatus === 'failed'" class="text-sm text-error">{{
+                      <span v-else-if="imageSyncTestStatus === 'failed'" class="text-sm">{{
                         $t('app.setting_image_sync_failed') }}</span>
                     </button>
                   </label>
