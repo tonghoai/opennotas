@@ -630,6 +630,7 @@ const handleChangeContent = async ({ content: newVal, id }: { content: string, i
       lastSync: nowUnix(),
     }),
   });
+  formNotes.value.content = newVal;
 
   clearTimeout(debounceChangeContent);
   debounceChangeContent = setTimeout(async () => {
