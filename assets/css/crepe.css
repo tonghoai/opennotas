@@ -133,6 +133,14 @@
 .milkdown .milkdown-image-block .image-edit {
   border-radius: 0.75rem !important;
 }
+.milkdown .milkdown-image-block.selected > .image-wrapper::before {
+  border-radius: 0.5rem !important;
+}
+.milkdown .milkdown-image-block .image-wrapper .operation > .operation-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* Link preview */
 .milkdown .milkdown-link-preview .link-preview {

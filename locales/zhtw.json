@@ -217,6 +217,7 @@
         "setting_image_sync_failed": "連線失敗",
         "setting_image_sync_hint": "請輸入您的 S3 相容儲存憑證。圖片將在離線時儲存在本機，並在線時同步。您可以部署自己的代理工作器或使用預設的代理工作器。",
         "message_image_sync_success": "圖片同步成功",
-        "message_image_sync_failed": "圖片同步失敗"
+        "message_image_sync_failed": "圖片同步失敗",
+        "message_image_sync_disabled": "圖片未同步，請在設定中啟用圖片同步"
     }
 }

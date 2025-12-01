@@ -6,6 +6,8 @@ import { replaceAll, getMarkdown } from '@milkdown/utils'
 import { TextSelection } from '@milkdown/prose/state'
 import * as Diff from 'diff'
 
+const { $i18n } = useNuxtApp();
+
 import "@milkdown/crepe/theme/common/style.css";
 import "../../../assets/css/crepe.css";
 
@@ -34,16 +36,20 @@ let editor: Crepe;
 
 const handleImageUpload = async (file: File): Promise<string> => {
   if (!props.noteId) {
-    emit('alertMessage', 'Không thể lưu ảnh khi chưa có note');
+    emit('alertMessage', $i18n.t('app.message_image_sync_failed'));
     return URL.createObjectURL(file);
   }
-  
+
   try {
     const imageUrl = await saveImage(props.noteId, file);
+    if (!props.settings?.imageSync?.enabled) {
+      emit('alertMessage', $i18n.t('app.message_image_sync_disabled'));
+    }
+
     return imageUrl;
   } catch (error) {
     console.error('Failed to save image:', error);
-    emit('alertMessage', 'Lỗi khi lưu ảnh');
+    emit('alertMessage', $i18n.t('app.message_image_sync_failed'));
     return URL.createObjectURL(file);
   }
 };
@@ -93,6 +99,8 @@ onMounted(() => {
       [Crepe.Feature.ImageBlock]: {
         onUpload: handleImageUpload,
         proxyDomURL: handleProxyDomURL,
+        blockCaptionIcon: '💬',
+        blockImageIcon: '🖼️',
       },
     },
     defaultValue: props.value,

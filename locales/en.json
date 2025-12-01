@@ -217,6 +217,7 @@
     "setting_image_sync_failed": "Connection Failed",
     "setting_image_sync_hint": "Enter your S3-compatible storage credentials. Images will be stored locally when offline and synced when online. You can deploy your own proxy worker or use the default one.",
     "message_image_sync_success": "Images synced successfully",
-    "message_image_sync_failed": "Failed to sync images"
+    "message_image_sync_failed": "Failed to sync images",
+    "message_image_sync_disabled": "Images are not synced, please enable image sync in settings"
   }
 }

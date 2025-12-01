@@ -217,6 +217,7 @@
     "setting_image_sync_failed": "Kết nối thất bại",
     "setting_image_sync_hint": "Nhập thông tin S3-compatible storage của bạn. Hình ảnh sẽ được lưu cục bộ khi offline và đồng bộ khi online. Bạn có thể tự triển khai proxy worker hoặc dùng mặc định.",
     "message_image_sync_success": "Đồng bộ hình ảnh thành công",
-    "message_image_sync_failed": "Đồng bộ hình ảnh thất bại"
+    "message_image_sync_failed": "Đồng bộ hình ảnh thất bại",
+    "message_image_sync_disabled": "Hình ảnh không được đồng bộ, vui lòng bật đồng bộ hình ảnh trong cài đặt"
   }
 }
