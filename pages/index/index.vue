@@ -762,7 +762,7 @@ const handleClickSwitchEditor = async (nodeId: string) => {
       break;
   }
 }
-const beforeChangeEditorName = ref<string>('');
+const beforeChangeEditorName = ref<string>('Crepe');
 const handleClickPlainText = () => {
   if (editorName.value === 'CodeMirror' && beforeChangeEditorName.value === 'CodeMirror') {
     return;
@@ -1363,7 +1363,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <div class="lg:hidden">
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
         :activeFolderId="activeFolderId" :formNotes="formNotes" :isSyncing="isSyncAll" :settings="settings"
-        :isPasswordExist="isPasswordExist" @clickFolderName="handleClickFolderName"
+        :isPasswordExist="isPasswordExist" :editorName="editorName" @clickFolderName="handleClickFolderName"
         @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
         @reorderFolderName="handleReorderFolderName" @clickSetting="handleClickSetting" @clickBack="handleClickBack"
         @clickUpdateData="handleClickUpdateData" @clickTrash="handleClickBottombarTrash"

@@ -114,7 +114,7 @@
         "setting_general_theme_dark": "OpenNotas 深色主題",
         "setting_general_default_editor_title": "預設編輯器",
         "setting_general_default_editor_codemirror": "CodeMirror",
-        "setting_general_default_editor_tiptap": "TipTap",
+        "setting_general_default_editor_tiptap": "TipTap (已棄用)",
         "setting_general_editor_view_title": "編輯器視圖",
         "setting_general_editor_view_full": "全屏",
         "setting_general_editor_view_compact": "細節",

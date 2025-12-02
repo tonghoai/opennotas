@@ -24,6 +24,7 @@ const props = defineProps([
   'isSyncing',
   'settings',
   'isPasswordExist',
+  'editorName',
 ]);
 
 const emit = defineEmits([
@@ -331,12 +332,13 @@ defineExpose({
         <div class="font-semibold text-xl ml-1">{{ $t('app.navbar_top_note_title') }}</div>
 
         <div class="flex">
-          <Undo class="press mr-4 cursor-pointer opacity-80" @click="handleClickUndo" />
-          <Redo class="press mr-4 cursor-pointer opacity-80" @click="handleClickRedo" />
           <!-- <Clipboard class="press mr-4 cursor-pointer opacity-80" @click="handleClickCopyToClipboard" />
           <Info class="press mr-4 cursor-pointer opacity-80" @click="handleClickInfo" /> -->
-          <ToolCase class="press mr-4 cursor-pointer opacity-80" @click="handleClickFormatToolbar" />
+          <ToolCase v-if="['Tiptap', 'Crepe'].includes(props.editorName)" class="press mr-4 cursor-pointer opacity-80"
+            @click="handleClickFormatToolbar" />
           <Type class="press mr-4 cursor-pointer opacity-80" @click="handleClickPlainText" />
+          <Undo class="press mr-4 cursor-pointer opacity-80" @click="handleClickUndo" />
+          <Redo class="press mr-4 cursor-pointer opacity-80" @click="handleClickRedo" />
           <div class="dropdown dropdown-bottom dropdown-end mr-2">
             <div tabindex="0" role="button">
               <MenuVertical class="press cursor-pointer" />

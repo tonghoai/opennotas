@@ -114,7 +114,7 @@
     "setting_general_theme_dark": "OpenNotas Dark",
     "setting_general_default_editor_title": "Default Editor",
     "setting_general_default_editor_codemirror": "CodeMirror",
-    "setting_general_default_editor_tiptap": "TipTap",
+    "setting_general_default_editor_tiptap": "TipTap (Deprecated)",
     "setting_general_editor_view_title": "Editor View",
     "setting_general_editor_view_full": "Full",
     "setting_general_editor_view_compact": "Compact",
