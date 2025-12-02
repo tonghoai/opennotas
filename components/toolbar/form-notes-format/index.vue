@@ -163,12 +163,12 @@ const handleClickCodeBlock = () => {
 <template>
   <div
     class="flex gap-6 flex-row justify-between items-center bg-primary p-1 rounded-lg shadow-lg animate-fade-up animate-duration-300 border border-neutral">
-    <div class="flex flex-row gap-2">
-      <div class="dropdown dropdown-top dropdown-start">
+    <div class="flex flex-row gap-2 items-center">
+      <div class="dropdown dropdown-top dropdown-start flex items-center">
         <div tabindex="0" role="button"
-          class="btn btn-sm btn-square border-none bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+          class="btn btn-xs lg:btn-sm btn-square border-none bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
           :class="{ '!bg-primary-content !text-primary': false }">
-          <H class="cursor-pointer" />
+          <H class="size-4 lg:size-5 cursor-pointer" />
         </div>
         <ul tabindex="0" class="dropdown-content menu bg-base-200 border border-neutral rounded-box z-[1] shadow">
           <li @click="() => handleClickHeading(1)"><a>H1</a></li>
@@ -177,46 +177,46 @@ const handleClickCodeBlock = () => {
         </ul>
       </div>
 
-      <button class="btn btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+      <button class="btn btn-xs lg:btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
         :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickTaskList()">
-        <Task class="cursor-pointer" />
+        <Task class="size-4 lg:size-5 cursor-pointer" />
       </button>
 
-      <button class="btn btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+      <button class="btn btn-xs lg:btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
         :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickBulletList()">
-        <BulletList class="cursor-pointer" />
+        <BulletList class="size-4 lg:size-5 cursor-pointer" />
       </button>
 
-      <button class="btn btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+      <button class="btn btn-xs lg:btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
         :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickParagraph()">
-        <Pilcrow class="cursor-pointer" />
+        <Pilcrow class="size-4 lg:size-5 cursor-pointer" />
       </button>
     </div>
     <div class="flex flex-row gap-2">
-      <button class="btn btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+      <button class="btn btn-xs lg:btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
         :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickBold()">
-        <Bold class="cursor-pointer" />
+        <Bold class="size-4 lg:size-5 cursor-pointer" />
       </button>
 
-      <button class="btn btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+      <button class="btn btn-xs lg:btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
         :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickItalic()">
-        <ItalicSVG class="cursor-pointer" />
+        <ItalicSVG class="size-4 lg:size-5 cursor-pointer" />
       </button>
 
-      <button class="btn btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+      <button class="btn btn-xs lg:btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
         :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickStrike()">
-        <Strike class="cursor-pointer" />
+        <Strike class="size-4 lg:size-5 cursor-pointer" />
       </button>
     </div>
     <div class="flex flex-row gap-2">
-      <button class="btn btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+      <button class="btn btn-xs lg:btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
         :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickImage()">
-        <ImageUp class="cursor-pointer" />
+        <ImageUp class="size-4 lg:size-5 cursor-pointer" />
       </button>
 
-      <button class="btn btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+      <button class="btn btn-xs lg:btn-sm btn-square bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
         :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickCodeBlock()">
-        <CodeSVG class="cursor-pointer" />
+        <CodeSVG class="size-4 lg:size-5 cursor-pointer" />
       </button>
     </div>
   </div>

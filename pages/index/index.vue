@@ -1372,7 +1372,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
         @clickAddFolder="handleClickAddFolder" @clickSwitchEditor="handleClickSwitchEditor" @clickUndo="handleClickUndo"
         @clickRedo="handleClickRedo" @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch"
         @clickSetPassword="handleClickSetPassword" @clickImportNotes="handleClickImportNotes"
-        @clickMenuSidebar="handleClickMenuSidebar" />
+        @clickMenuSidebar="handleClickMenuSidebar" @clickFormatToolbar="handleClickFormatToolbar"
+        @clickPlainText="handleClickPlainText" />
     </div>
 
     <!-- cols personal -->

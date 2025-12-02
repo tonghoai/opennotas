@@ -141,6 +141,10 @@
   align-items: center;
   justify-content: center;
 }
+/* Prevent scroll when resizing image on mobile */
+.milkdown .milkdown-image-block .image-resize-handle {
+  touch-action: none;
+}
 
 /* Link preview */
 .milkdown .milkdown-link-preview .link-preview {

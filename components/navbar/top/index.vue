@@ -8,10 +8,13 @@ import ArrowLeft from '../assets/svg/arrow-left.svg?component';
 import Info from '../assets/svg/info.svg?component';
 import Clipboard from '../assets/svg/clipboard.svg?component';
 import ChevronRight from '../assets/svg/chevron-right.svg?component';
-import Undo from '../assets/svg/undo.svg?component';
-import Redo from '../assets/svg/redo.svg?component';
+import Undo from '../assets/svg/corner-up-left.svg?component';
+import Redo from '../assets/svg/corner-up-right.svg?component';
 import Search from '../assets/svg/search.svg?component';
 import X from '../assets/svg/x.svg?component';
+import ToolCase from '../assets/svg/tool-case.svg?component';
+import MenuVertical from '../assets/svg/menu-vertical.svg?component';
+import Type from '../assets/svg/type.svg?component';
 
 const props = defineProps([
   'listFolders',
@@ -50,6 +53,8 @@ const emit = defineEmits([
   'clickSetPassword',
   'clickImportNotes',
   'clickMenuSidebar',
+  'clickFormatToolbar',
+  'clickPlainText',
 ]);
 
 const { $i18n } = useNuxtApp();
@@ -148,6 +153,12 @@ const handleClickCopyToClipboard = () => {
 }
 const handleClickInfo = () => {
   emit('clickInfo', props.formNotes.id);
+}
+const handleClickFormatToolbar = () => {
+  emit('clickFormatToolbar', props.formNotes.id);
+}
+const handleClickPlainText = () => {
+  emit('clickPlainText', props.formNotes.id);
 }
 
 const handleSaveSettings = () => {
@@ -322,8 +333,29 @@ defineExpose({
         <div class="flex">
           <Undo class="press mr-4 cursor-pointer opacity-80" @click="handleClickUndo" />
           <Redo class="press mr-4 cursor-pointer opacity-80" @click="handleClickRedo" />
-          <Clipboard class="press mr-4 cursor-pointer opacity-80" @click="handleClickCopyToClipboard" />
-          <Info class="press mr-4 cursor-pointer opacity-80" @click="handleClickInfo" />
+          <!-- <Clipboard class="press mr-4 cursor-pointer opacity-80" @click="handleClickCopyToClipboard" />
+          <Info class="press mr-4 cursor-pointer opacity-80" @click="handleClickInfo" /> -->
+          <ToolCase class="press mr-4 cursor-pointer opacity-80" @click="handleClickFormatToolbar" />
+          <Type class="press mr-4 cursor-pointer opacity-80" @click="handleClickPlainText" />
+          <div class="dropdown dropdown-bottom dropdown-end mr-2">
+            <div tabindex="0" role="button">
+              <MenuVertical class="press cursor-pointer" />
+            </div>
+
+            <ul tabindex="0"
+              class="dropdown-content menu menu-sm bg-base-200 z-[1] w-48 p-2 shadow rounded-xl border border-neutral">
+              <li class="" @click="handleClickCopyToClipboard">
+                <a>
+                  {{ $t('app.menu_note_copy') }}
+                </a>
+              </li>
+              <li class="" @click="handleClickInfo">
+                <a>
+                  {{ $t('app.toolbar_form_note_info') }}
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -490,7 +522,8 @@ defineExpose({
                 </div>
               </label>
 
-              <a href="https://docs.opennotas.io/started/setup-sync/s3-storage" class="text-xs underline inline-block mt-2">
+              <a href="https://docs.opennotas.io/started/setup-sync/s3-storage"
+                class="text-xs underline inline-block mt-2">
                 {{ $t('app.setting_image_sync_setup_guide') }}
               </a>
 
