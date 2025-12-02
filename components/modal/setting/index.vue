@@ -373,6 +373,11 @@ const handleSaveImageSyncSettings = () => {
                   </div>
                 </label>
 
+                <a href="https://docs.opennotas.io/started/setup-sync/s3-storage" target="_blank"
+                  class="text-xs underline inline-block mt-2">
+                  {{ $t('app.setting_image_sync_setup_guide') }}
+                </a>
+
                 <div v-if="settings.imageSync?.enabled">
                   <!-- S3 Configuration -->
                   <label class="form-control w-full pt-2">

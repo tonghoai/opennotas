@@ -123,6 +123,7 @@
         "setting_general_security_change_password": "變更筆記密碼",
         "setting_sync_adapter_title": "選擇同步轉接器",
         "setting_sync_adapter_setup_guide": "轉接器設定指南",
+        "setting_image_sync_setup_guide": "圖片同步設定指南",
         "setting_sync_adapter_save": "儲存",
         "setting_sync_sync_frequency_title": "同步頻率",
         "setting_sync_sync_frequency_unit": "秒",
