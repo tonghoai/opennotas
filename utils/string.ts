@@ -23,7 +23,13 @@ function getSecondLineSubstrWord(text: string, numWords: number): string {
 }
 
 function removeSpecialChar(text: string): string {
-  return text?.replace(/[^\p{L}\p{N}\s]/gu, '') || '';
+  // only keep letters, numbers and spaces
+  return text?.replaceAll('<br />', '').replace(/[^\p{L}\p{N}\s]/gu, '') || '';
+}
+
+// Remove escape characters added by GFM serializer before markdown special chars
+function removeMarkdownEscape(text: string): string {
+  return text?.replace(/\\([*_[\](){}#+\-.!|>~`\\])/g, '$1') || '';
 }
 
 export {
@@ -34,4 +40,5 @@ export {
   getFirstLineSubstrWord,
   getSecondLineSubstrWord,
   removeSpecialChar,
+  removeMarkdownEscape,
 }

@@ -62,6 +62,8 @@ type NoteUpdateType = {
   deleteCompletelyAt: number | null;
 }
 
+type NoteSortType = 'createdAt' | 'updatedAt';
+
 export type {
   FolderType,
   FolderCreateType,
@@ -70,4 +72,5 @@ export type {
   NoteType,
   NoteCreateType,
   NoteUpdateType,
+  NoteSortType,
 }

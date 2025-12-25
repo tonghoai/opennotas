@@ -10,6 +10,7 @@ import {
   updateFolder,
   updateNote,
 } from "~/services/main";
+import { syncImages } from "~/utils/image-sync";
 
 function selectAdapter(
   adapter: string = "LocalForage",
@@ -41,7 +42,8 @@ async function pullData(
   lastPull: Ref<number>,
   idPulled: Ref<string[]>,
   actionObject: Ref<any>,
-  isPasswordExist: Ref<boolean>
+  isPasswordExist: Ref<boolean>,
+  activeNoteId: Ref<string>
 ) {
   // if local then ignore
   if (settings?.sync?.adapter === "LocalForage") {
@@ -59,6 +61,7 @@ async function pullData(
   let lastDataAt = -Infinity;
 
   try {
+    let needReloadActiveNote = false;
     let pullFolders = await syncAdapter.pullFolders(lastPull.value);
     let pullNotes = await syncAdapter.pullNotes(lastPull.value);
     let pullSettings = await syncAdapter.pullSettings(lastPull.value);
@@ -114,6 +117,10 @@ async function pullData(
         if (lastDataAt < +note.updatedAt) {
           lastDataAt = +note.updatedAt;
         }
+
+        if (note.id === activeNoteId.value) {
+          needReloadActiveNote = true;
+        }
       }
     }
 
@@ -139,6 +146,7 @@ async function pullData(
     if (lastDataAt !== -Infinity) {
       return {
         ok: true,
+        needReloadActiveNote,
         now,
       };
     } else {
@@ -160,6 +168,8 @@ async function pushData(
   now: number
 ) {
   if (settings?.sync?.adapter === "LocalForage") {
+    // Still sync images even with LocalForage adapter if image sync is enabled
+    await syncImages(settings);
     return;
   }
 
@@ -207,6 +217,9 @@ async function pushData(
     lastPushData.value = now;
     delete actionObject.value[key];
   }
+
+  // Sync images after syncing notes
+  await syncImages(settings);
 }
 
 export { pullData, pushData };

@@ -2,16 +2,27 @@
 import { Crepe } from "@milkdown/crepe";
 import { editorViewCtx } from "@milkdown/core";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
-import { imageBlockConfig } from '@milkdown/kit/component/image-block'
+import { replaceAll, getMarkdown } from '@milkdown/utils'
+import { TextSelection } from '@milkdown/prose/state'
+import * as Diff from 'diff'
+
+const { $i18n } = useNuxtApp();
 
 import "@milkdown/crepe/theme/common/style.css";
 import "../../../assets/css/crepe.css";
+
+import {
+  saveImage,
+  resolveImageUrl,
+  isOpenNotasImageUrl,
+} from '~/services/image';
 
 const props = defineProps([
   'value',
   'isDeleted',
   'settings',
   'isShowFormatToolbar',
+  'noteId',
 ]);
 
 const emit = defineEmits([
@@ -22,6 +33,39 @@ const emit = defineEmits([
 const isLoading = ref(true);
 
 let editor: Crepe;
+
+const handleImageUpload = async (file: File): Promise<string> => {
+  if (!props.noteId) {
+    emit('alertMessage', $i18n.t('app.message_image_sync_failed'));
+    return URL.createObjectURL(file);
+  }
+
+  try {
+    const imageUrl = await saveImage(props.noteId, file);
+    if (!props.settings?.imageSync?.enabled) {
+      emit('alertMessage', $i18n.t('app.message_image_sync_disabled'));
+    }
+
+    return imageUrl;
+  } catch (error) {
+    console.error('Failed to save image:', error);
+    emit('alertMessage', $i18n.t('app.message_image_sync_failed'));
+    return URL.createObjectURL(file);
+  }
+};
+
+const handleProxyDomURL = async (src: string): Promise<string> => {
+  if (isOpenNotasImageUrl(src)) {
+    try {
+      return await resolveImageUrl(src, props.settings);
+    } catch (error) {
+      console.error('Failed to resolve image URL:', error);
+      return src;
+    }
+  }
+  return src;
+};
+
 onMounted(() => {
   editor = new Crepe({
     root: document.querySelector("#crepe-editor")!,
@@ -52,6 +96,12 @@ onMounted(() => {
           divider: null,
         },
       },
+      [Crepe.Feature.ImageBlock]: {
+        onUpload: handleImageUpload,
+        proxyDomURL: handleProxyDomURL,
+        blockCaptionIcon: '💬',
+        blockImageIcon: '🖼️',
+      },
     },
     defaultValue: props.value,
   });
@@ -67,16 +117,10 @@ onMounted(() => {
     }, 100);
     isLoading.value = false;
 
-    editor.editor.ctx.update(imageBlockConfig.key, (defaultConfig) => ({
-      ...defaultConfig,
-      onUpload: async (file: File) => {
-        emit('alertMessage', 'Hình ảnh tải lên sẽ không được đồng bộ');
-        return Promise.resolve(URL.createObjectURL(file));
-      },
-    }))
-
     editor.on((listener) => {
       listener.updated(() => {
+        if (silent.value) return;
+
         emit('changeContent', editor.getMarkdown());
       });
     });
@@ -104,16 +148,116 @@ const undo = () => {
 const redo = () => {
   redoCommand.run();
 }
+const focusState = () => {
+  editor.editor.action((ctx) => {
+    const view = ctx.get(editorViewCtx);
+    view.focus();
+  });
+}
 
 onUnmounted(() => {
   editor.destroy();
 });
+
+const silent = ref<boolean>(false);
+
+// slient update value
+// use to update value without trigger change event
+// to keep the cursor position
+const slientUpdateValue = async (value: string) => {
+  if (!editor) return
+  silent.value = true
+
+  // try catch to avoid error
+  try {
+    await editor.editor.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+
+      // 1) Get cursor position by plain text (without block separators)
+      const sel = view.state.selection
+      const prevPos = sel.empty ? sel.from : sel.to
+      const oldPlainBefore = view.state.doc.textBetween(0, prevPos, '', '')
+      const oldPlain = view.state.doc.textBetween(0, view.state.doc.content.size, '', '')
+      const oldOffset = oldPlainBefore.length
+
+      // 2) Replace all content
+      replaceAll(value, true)(ctx)
+
+      // 3) Tính offset mới bằng diff
+      const newPlain = view.state.doc.textBetween(0, view.state.doc.content.size, '', '')
+      const parts = Diff.diffChars(oldPlain, newPlain)
+      let oldPos = 0
+      let newPos = 0
+      let newOffset = 0
+      let found = false
+      for (const p of parts) {
+        const len = p.value.length
+        if (p.added) {
+          newPos += len
+          continue
+        }
+        if (p.removed) {
+          // nếu caret nằm trong phần bị xoá -> snap về vị trí newPos tại điểm đó
+          if (!found && oldOffset <= oldPos + len) {
+            newOffset = newPos
+            found = true
+            break
+          }
+          oldPos += len
+          continue
+        }
+        // unchanged
+        if (!found && oldOffset <= oldPos + len) {
+          newOffset = newPos + (oldOffset - oldPos)
+          found = true
+          break
+        }
+        oldPos += len
+        newPos += len
+      }
+      if (!found) newOffset = newPos
+
+      // 4) Convert plain-text offset -> ProseMirror position
+      const doc = view.state.doc
+      const totalPlain = newPlain.length
+      const target = Math.max(0, Math.min(newOffset, totalPlain))
+
+      let acc = 0
+      let pmPos: number | null = null
+      doc.descendants((node, pos) => {
+        if (pmPos != null) return false
+        if (node.isText && node.text) {
+          const len = node.text.length
+          if (acc + len >= target) {
+            const within = target - acc
+            pmPos = pos + within
+            return false
+          }
+          acc += len
+        }
+        return true
+      })
+
+      // 5) Set cursor position
+      const finalPos = pmPos == null ? doc.content.size : Math.max(0, Math.min(pmPos, doc.content.size))
+      const tr = view.state.tr.setSelection(
+        finalPos >= doc.content.size ? TextSelection.atEnd(doc) : TextSelection.create(doc, finalPos)
+      )
+      view.dispatch(tr)
+      view.focus()
+    })
+  } catch (_) { }
+
+  silent.value = false
+}
 
 defineExpose({
   focus,
   readonly,
   undo,
   redo,
+  slientUpdateValue,
+  focusState,
 });
 </script>
 
@@ -125,12 +269,12 @@ defineExpose({
   </div>
 
   <div v-show="!isLoading" id="crepe-editor"
-    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] animate-fade-right animate-duration-100"
+    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_-_160px)] animate-fade-right animate-duration-100"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }">
 
   </div>
 
-  <div v-if="props.isShowFormatToolbar" class="sticky bottom-16 left-0 w-fit max-w-screen-md mx-auto">
+  <div v-if="props.isShowFormatToolbar" class="sticky bottom-4 left-0 w-fit max-w-screen-md mx-auto">
     <ToolbarFormNotesFormat :editorType="'crepe'" :editor="editor?.editor" />
   </div>
 </template>

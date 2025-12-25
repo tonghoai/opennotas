@@ -361,16 +361,6 @@
   padding: 0 2rem;
 }
 
-.ProseMirror ol:first-child,
-.ProseMirror ul:first-child {
-  margin-top: 0;
-}
-
-.ProseMirror ol:last-child,
-.ProseMirror ul:last-child {
-  margin-bottom: 0;
-}
-
 .ProseMirror ol li,
 .ProseMirror ol ol,
 .ProseMirror ol ul,
@@ -391,11 +381,6 @@
 .ProseMirror > ul {
   margin-top: 1rem;
   margin-bottom: 1rem;
-}
-
-.ProseMirror > ol:first-child,
-.ProseMirror > ul:first-child {
-  margin-top: 0;
 }
 
 .ProseMirror > ol:last-child,

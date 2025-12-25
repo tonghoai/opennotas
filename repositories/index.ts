@@ -6,6 +6,7 @@ import type {
   FolderType,
   FolderUpdateType,
   NoteCreateType,
+  NoteSortType,
   NoteType,
   NoteUpdateType,
 } from "./storage.type";
@@ -116,6 +117,13 @@ class LocalForageRepository implements NotasRepository {
   async setActiveNote(noteId: string): Promise<string> {
     await localForage.setItem('activeNote', noteId);
     return noteId;
+  }
+  async getSortNote(): Promise<NoteSortType> {
+    return await localForage.getItem('sortNote') || 'createdAt';
+  }
+  async setSortNote(sort: NoteSortType): Promise<NoteSortType> {
+    await localForage.setItem('sortNote', sort);
+    return sort;
   }
 
   // password | settings

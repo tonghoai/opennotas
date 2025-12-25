@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { defineProps, onMounted } from 'vue';
 
+import S3ProxyAdapter from '~/adapter/s3';
 import Menu from '../assets/svg/menu.svg?component';
 import Setting from '../assets/svg/settings.svg?component';
 import ArrowLeft from '../assets/svg/arrow-left.svg?component';
 import Info from '../assets/svg/info.svg?component';
 import Clipboard from '../assets/svg/clipboard.svg?component';
 import ChevronRight from '../assets/svg/chevron-right.svg?component';
-// import PlusCircle from '../assets/svg/plus-circle.svg?component';
-import Undo from '../assets/svg/undo.svg?component';
-import Redo from '../assets/svg/redo.svg?component';
+import Undo from '../assets/svg/corner-up-left.svg?component';
+import Redo from '../assets/svg/corner-up-right.svg?component';
 import Search from '../assets/svg/search.svg?component';
 import X from '../assets/svg/x.svg?component';
+import ToolCase from '../assets/svg/tool-case.svg?component';
+import MenuVertical from '../assets/svg/menu-vertical.svg?component';
+import Type from '../assets/svg/type.svg?component';
 
 const props = defineProps([
   'listFolders',
@@ -21,6 +24,7 @@ const props = defineProps([
   'isSyncing',
   'settings',
   'isPasswordExist',
+  'editorName',
 ]);
 
 const emit = defineEmits([
@@ -50,6 +54,8 @@ const emit = defineEmits([
   'clickSetPassword',
   'clickImportNotes',
   'clickMenuSidebar',
+  'clickFormatToolbar',
+  'clickPlainText',
 ]);
 
 const { $i18n } = useNuxtApp();
@@ -149,6 +155,12 @@ const handleClickCopyToClipboard = () => {
 const handleClickInfo = () => {
   emit('clickInfo', props.formNotes.id);
 }
+const handleClickFormatToolbar = () => {
+  emit('clickFormatToolbar', props.formNotes.id);
+}
+const handleClickPlainText = () => {
+  emit('clickPlainText', props.formNotes.id);
+}
 
 const handleSaveSettings = () => {
   emit('saveSettings', settings.value);
@@ -200,6 +212,40 @@ const handleClickResetServiceWorker = () => {
   });
 }
 
+const imageSyncTestStatus = ref<'idle' | 'testing' | 'success' | 'failed'>('idle');
+
+const isS3ConfigComplete = computed(() => {
+  const cfg = settings.value.imageSync;
+  return cfg?.s3Endpoint && cfg?.s3AccessKey && cfg?.s3SecretKey && cfg?.s3Bucket;
+});
+
+const handleTestImageSyncConnection = async () => {
+  imageSyncTestStatus.value = 'testing';
+
+  try {
+    const adapter = new S3ProxyAdapter({
+      workerUrl: settings.value.imageSync?.workerUrl || '',
+      s3Endpoint: settings.value.imageSync?.s3Endpoint || '',
+      s3AccessKey: settings.value.imageSync?.s3AccessKey || '',
+      s3SecretKey: settings.value.imageSync?.s3SecretKey || '',
+      s3Bucket: settings.value.imageSync?.s3Bucket || '',
+    });
+
+    const isConnected = await adapter.checkConnection();
+    imageSyncTestStatus.value = isConnected ? 'success' : 'failed';
+  } catch {
+    imageSyncTestStatus.value = 'failed';
+  }
+
+  setTimeout(() => {
+    imageSyncTestStatus.value = 'idle';
+  }, 3000);
+}
+
+const handleSaveImageSyncSettings = () => {
+  handleSaveSettings();
+}
+
 const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
   settings.value = newValue;
@@ -239,7 +285,7 @@ defineExpose({
 
     <!-- drawer home -->
     <div v-if="!props.isInEditor" class="drawer-content flex flex-col">
-      <div class="navbar p-0 bg-primary text-primary-content">
+      <div class="navbar p-0">
         <div class="flex-none">
           <div class="px-4">
             <label for="my-drawer-3" aria-label="open sidebar">
@@ -261,7 +307,7 @@ defineExpose({
                 class="loading loading-spinner loading-sm absolute right-1.5 top-1.5"></span>
             </div>
 
-            <button class="flex-none btn bg-base-100 text-base-content btn-sm" @click="handleToggleSearch">
+            <button class="flex-none btn bg-primary text-primary-content btn-sm" @click="handleToggleSearch">
               <!-- {{ $t('app.toolbar_note_search_cancel') }} -->
               <X />
             </button>
@@ -276,7 +322,7 @@ defineExpose({
     </div>
 
     <!-- drawer in editor -->
-    <div v-if="props.isInEditor" class="navbar p-0 bg-primary text-primary-content">
+    <div v-if="props.isInEditor" class="navbar p-0">
       <div class="flex-none">
         <div class="px-4" @click="handleClickBack">
           <ArrowLeft class="press cursor-pointer opacity-80" />
@@ -286,10 +332,32 @@ defineExpose({
         <div class="font-semibold text-xl ml-1">{{ $t('app.navbar_top_note_title') }}</div>
 
         <div class="flex">
+          <!-- <Clipboard class="press mr-4 cursor-pointer opacity-80" @click="handleClickCopyToClipboard" />
+          <Info class="press mr-4 cursor-pointer opacity-80" @click="handleClickInfo" /> -->
+          <ToolCase v-if="['Tiptap', 'Crepe'].includes(props.editorName)" class="press mr-4 cursor-pointer opacity-80"
+            @click="handleClickFormatToolbar" />
+          <Type class="press mr-4 cursor-pointer opacity-80" @click="handleClickPlainText" />
           <Undo class="press mr-4 cursor-pointer opacity-80" @click="handleClickUndo" />
           <Redo class="press mr-4 cursor-pointer opacity-80" @click="handleClickRedo" />
-          <Clipboard class="press mr-4 cursor-pointer opacity-80" @click="handleClickCopyToClipboard" />
-          <Info class="press mr-4 cursor-pointer opacity-80" @click="handleClickInfo" />
+          <div class="dropdown dropdown-bottom dropdown-end mr-2">
+            <div tabindex="0" role="button">
+              <MenuVertical class="press cursor-pointer" />
+            </div>
+
+            <ul tabindex="0"
+              class="dropdown-content menu menu-sm bg-base-200 z-[1] w-48 p-2 shadow rounded-xl border border-neutral">
+              <li class="" @click="handleClickCopyToClipboard">
+                <a>
+                  {{ $t('app.menu_note_copy') }}
+                </a>
+              </li>
+              <li class="" @click="handleClickInfo">
+                <a>
+                  {{ $t('app.toolbar_form_note_info') }}
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -368,7 +436,17 @@ defineExpose({
                 @change="handleChangeDefaultEditor">
                 <option value="Tiptap">{{ $t('app.setting_general_default_editor_tiptap') }}</option>
                 <option value="CodeMirror">{{ $t('app.setting_general_default_editor_codemirror') }}</option>
+                <option value="Crepe">Crepe</option>
               </select>
+            </label>
+
+            <label class="form-control w-full pt-2">
+              <div class="label">
+                <span class="font-semibold label-text">{{ $t('app.setting_general_font_title') }}</span>
+              </div>
+              <input v-model="settings.general.fontFamily" type="text"
+                class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveSettings"
+                autocomplete="off" />
             </label>
 
             <label class="form-control w-full pt-2">
@@ -434,6 +512,93 @@ defineExpose({
                   class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveSettings"
                   autocomplete="off" />
               </label>
+            </div>
+
+            <!-- Image Sync Settings -->
+            <div class="border-t border-neutral mt-4 pt-2">
+              <label class="form-control w-full">
+                <div class="label cursor-pointer justify-start gap-4">
+                  <input type="checkbox" v-model="settings.imageSync.enabled" class="toggle toggle-sm"
+                    @change="handleSaveImageSyncSettings" />
+                  <span class="font-semibold label-text">{{ $t('app.setting_image_sync_enable') }}</span>
+                </div>
+              </label>
+
+              <a href="https://docs.opennotas.io/started/setup-sync/s3-storage"
+                class="text-xs underline inline-block mt-2">
+                {{ $t('app.setting_image_sync_setup_guide') }}
+              </a>
+
+              <div v-if="settings.imageSync?.enabled">
+                <!-- S3 Configuration -->
+                <label class="form-control w-full pt-2">
+                  <div class="label">
+                    <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_endpoint') }}</span>
+                  </div>
+                  <input v-model="settings.imageSync.s3Endpoint" type="text" placeholder="https://s3.amazonaws.com"
+                    class="input input-sm input-bordered w-full" @change="handleSaveImageSyncSettings"
+                    autocomplete="off" />
+                </label>
+
+                <label class="form-control w-full pt-2">
+                  <div class="label">
+                    <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_access_key') }}</span>
+                  </div>
+                  <input v-model="settings.imageSync.s3AccessKey" type="text" placeholder="AKIAIOSFODNN7EXAMPLE"
+                    class="input input-sm input-bordered w-full" @change="handleSaveImageSyncSettings"
+                    autocomplete="off" />
+                </label>
+
+                <label class="form-control w-full pt-2">
+                  <div class="label">
+                    <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_secret_key') }}</span>
+                  </div>
+                  <input v-model="settings.imageSync.s3SecretKey" type="password" placeholder="••••••••"
+                    class="input input-sm input-bordered w-full" @change="handleSaveImageSyncSettings"
+                    autocomplete="off" />
+                </label>
+
+                <label class="form-control w-full pt-2">
+                  <div class="label">
+                    <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_bucket') }}</span>
+                  </div>
+                  <input v-model="settings.imageSync.s3Bucket" type="text" placeholder="my-bucket"
+                    class="input input-sm input-bordered w-full" @change="handleSaveImageSyncSettings"
+                    autocomplete="off" />
+                </label>
+
+                <!-- Worker URL (optional) -->
+                <label class="form-control w-full pt-4">
+                  <div class="label">
+                    <span class="font-semibold label-text">{{ $t('app.setting_image_sync_worker_url') }}</span>
+                    <span class="label-text-alt">{{ $t('app.setting_image_sync_worker_url_optional') }}</span>
+                  </div>
+                  <input v-model="settings.imageSync.workerUrl" type="text"
+                    :placeholder="$t('app.setting_image_sync_worker_url_placeholder')"
+                    class="input input-sm input-bordered w-full" @change="handleSaveImageSyncSettings"
+                    autocomplete="off" />
+                </label>
+
+                <label class="form-control w-full pt-4">
+                  <button class="btn btn-primary w-full btn-sm !text-sm"
+                    :class="{ 'btn-success': imageSyncTestStatus === 'success', 'btn-error': imageSyncTestStatus === 'failed' }"
+                    @click="handleTestImageSyncConnection"
+                    :disabled="imageSyncTestStatus === 'testing' || !isS3ConfigComplete">
+                    <span class="text-sm" v-if="imageSyncTestStatus === 'idle'">{{
+                      $t('app.setting_image_sync_test_connection') }}</span>
+                    <span v-else-if="imageSyncTestStatus === 'testing'"
+                      class="text-sm loading loading-spinner loading-sm"></span>
+                    <span v-else-if="imageSyncTestStatus === 'success'" class="text-sm">{{
+                      $t('app.setting_image_sync_connected') }}</span>
+                    <span v-else-if="imageSyncTestStatus === 'failed'" class="text-sm">{{
+                      $t('app.setting_image_sync_failed') }}</span>
+                  </button>
+                </label>
+
+                <p class="text-xs text-base-content/60 mt-2">
+                  {{ $t('app.setting_image_sync_hint') }}
+                </p>
+              </div>
             </div>
           </div>
 

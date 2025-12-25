@@ -170,9 +170,19 @@ const redo = () => {
   editor.commands.redo();
 }
 
+const focusState = () => {
+}
+
 onUnmounted(() => {
   editor.destroy();
 });
+
+// slient update value
+// use to update value without trigger change event
+// to keep the cursor position
+const slientUpdateValue = (value: string) => {
+  return;
+}
 
 defineExpose({
   focus,
@@ -183,6 +193,8 @@ defineExpose({
   handleInsertLink,
   clickInsertImage,
   handleInsertImage,
+  slientUpdateValue,
+  focusState,
 });
 
 const CustomTaskItem = TaskItem.extend({

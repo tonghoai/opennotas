@@ -80,6 +80,9 @@ const undo = () => {
 const redo = () => {
   editorRef.value?.redo();
 }
+const focusState = () => {
+  editorRef.value?.focusState();
+}
 
 const editorName = ref<string>(props.editorName);
 watch(() => props.editorName, (newValue) => {
@@ -92,6 +95,11 @@ watch(props.settings, () => {
   editorTiptapKey.value++;
 });
 
+// slient update value
+const slientUpdateValue = (value: string) => {
+  editorRef.value?.slientUpdateValue(value);
+}
+
 defineExpose({
   focusPassword,
   focus,
@@ -102,6 +110,8 @@ defineExpose({
   resetPassword,
   handleInsertLink,
   handleInsertImage,
+  slientUpdateValue,
+  focusState,
 })
 </script>
 
@@ -119,8 +129,8 @@ defineExpose({
       :isDeleted="props.isDeleted" :settings="settings" @changeContent="handleChangeContent" />
 
     <EditorCrepe v-if="editorName === 'Crepe'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
-      :settings="settings" :isShowFormatToolbar="props.isShowFormatToolbar" @changeContent="handleChangeContent"
-      @alertMessage="handleAlertMessage" />
+      :settings="settings" :isShowFormatToolbar="props.isShowFormatToolbar" :noteId="props.id"
+      @changeContent="handleChangeContent" @alertMessage="handleAlertMessage" />
   </div>
 
   <div class="flex justify-center pt-8 pb-1 bg-svg h-full transition-all" v-show="id && isLocked">

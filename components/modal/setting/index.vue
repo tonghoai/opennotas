@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ChevronRight from '../assets/svg/chevron-right.svg?component';
+import S3ProxyAdapter from '~/adapter/s3';
 
 const { setLocale } = useI18n();
 const { $i18n } = useNuxtApp();
@@ -124,6 +125,43 @@ const handleClickResetServiceWorker = () => {
 
 const handleClickCloseSettings = () => {
   emit('closeSetting');
+}
+
+// Image sync settings
+const imageSyncTestStatus = ref<'idle' | 'testing' | 'success' | 'failed'>('idle');
+
+// Check if S3 config is complete
+const isS3ConfigComplete = computed(() => {
+  const cfg = settings.value.imageSync;
+  return cfg?.s3Endpoint && cfg?.s3AccessKey && cfg?.s3SecretKey && cfg?.s3Bucket;
+});
+
+const handleTestImageSyncConnection = async () => {
+  imageSyncTestStatus.value = 'testing';
+
+  try {
+    const adapter = new S3ProxyAdapter({
+      workerUrl: settings.value.imageSync?.workerUrl || '',
+      s3Endpoint: settings.value.imageSync?.s3Endpoint || '',
+      s3AccessKey: settings.value.imageSync?.s3AccessKey || '',
+      s3SecretKey: settings.value.imageSync?.s3SecretKey || '',
+      s3Bucket: settings.value.imageSync?.s3Bucket || '',
+    });
+
+    const isConnected = await adapter.checkConnection();
+    imageSyncTestStatus.value = isConnected ? 'success' : 'failed';
+  } catch {
+    imageSyncTestStatus.value = 'failed';
+  }
+
+  // Reset status after 3 seconds
+  setTimeout(() => {
+    imageSyncTestStatus.value = 'idle';
+  }, 3000);
+}
+
+const handleSaveImageSyncSettings = () => {
+  handleSaveSettings();
 }
 </script>
 
@@ -255,6 +293,15 @@ const handleClickCloseSettings = () => {
 
                 <label class="form-control w-full pt-2">
                   <div class="label">
+                    <span class="font-semibold label-text">{{ $t('app.setting_general_font_title') }}</span>
+                  </div>
+                  <input v-model="settings.general.fontFamily" type="text"
+                    class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveSettings"
+                    autocomplete="off" />
+                </label>
+
+                <label class="form-control w-full pt-2">
+                  <div class="label">
                     <span class="font-semibold label-text">{{ $t('app.setting_general_security_title') }}</span>
                   </div>
                   <button class="btn btn-primary" @click="handleClickSetPassword">
@@ -313,6 +360,95 @@ const handleClickCloseSettings = () => {
                       class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveSettings"
                       autocomplete="off" />
                   </label>
+                </div>
+
+                <!-- Image Sync Settings -->
+                <div class="border-t border-neutral mt-6 pt-4"></div>
+
+                <label class="form-control w-full">
+                  <div class="label cursor-pointer justify-start gap-4">
+                    <input type="checkbox" v-model="settings.imageSync.enabled" class="toggle"
+                      @change="handleSaveImageSyncSettings" />
+                    <span class="font-semibold label-text">{{ $t('app.setting_image_sync_enable') }}</span>
+                  </div>
+                </label>
+
+                <a href="https://docs.opennotas.io/started/setup-sync/s3-storage" target="_blank"
+                  class="text-xs underline inline-block mt-2">
+                  {{ $t('app.setting_image_sync_setup_guide') }}
+                </a>
+
+                <div v-if="settings.imageSync?.enabled">
+                  <!-- S3 Configuration -->
+                  <label class="form-control w-full pt-2">
+                    <div class="label">
+                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_endpoint') }}</span>
+                    </div>
+                    <input v-model="settings.imageSync.s3Endpoint" type="text" placeholder="https://s3.amazonaws.com"
+                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
+                      autocomplete="off" />
+                  </label>
+
+                  <label class="form-control w-full pt-2">
+                    <div class="label">
+                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_access_key') }}</span>
+                    </div>
+                    <input v-model="settings.imageSync.s3AccessKey" type="text" placeholder="AKIAIOSFODNN7EXAMPLE"
+                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
+                      autocomplete="off" />
+                  </label>
+
+                  <label class="form-control w-full pt-2">
+                    <div class="label">
+                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_secret_key') }}</span>
+                    </div>
+                    <input v-model="settings.imageSync.s3SecretKey" type="password" placeholder="••••••••"
+                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
+                      autocomplete="off" />
+                  </label>
+
+                  <label class="form-control w-full pt-2">
+                    <div class="label">
+                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_bucket') }}</span>
+                    </div>
+                    <input v-model="settings.imageSync.s3Bucket" type="text" placeholder="my-bucket"
+                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
+                      autocomplete="off" />
+                  </label>
+
+                  <!-- Worker URL (optional) -->
+                  <label class="form-control w-full pt-4">
+                    <div class="label">
+                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_worker_url') }}</span>
+                      <span class="label-text-alt">{{ $t('app.setting_image_sync_worker_url_optional') }}</span>
+                    </div>
+                    <input v-model="settings.imageSync.workerUrl" type="text"
+                      :placeholder="$t('app.setting_image_sync_worker_url_placeholder')"
+                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
+                      autocomplete="off" />
+                  </label>
+
+                  <label class="form-control w-full pt-4">
+                    <button class="btn btn-primary w-full btn-sm !text-sm"
+                      :class="{ 'btn-success': imageSyncTestStatus === 'success', 'btn-error': imageSyncTestStatus === 'failed' }"
+                      @click="handleTestImageSyncConnection"
+                      :disabled="imageSyncTestStatus === 'testing' || !isS3ConfigComplete">
+                      <span class="text-sm" v-if="imageSyncTestStatus === 'idle'">{{
+                        $t('app.setting_image_sync_test_connection') }}</span>
+                      <span v-else-if="imageSyncTestStatus === 'testing'"
+                        class="text-sm loading loading-spinner loading-sm"></span>
+                      <span v-else-if="imageSyncTestStatus === 'success'" class="text-sm">{{
+                        $t('app.setting_image_sync_connected') }}</span>
+                      <span v-else-if="imageSyncTestStatus === 'failed'" class="text-sm">{{
+                        $t('app.setting_image_sync_failed') }}</span>
+                    </button>
+                  </label>
+
+                  <p class="text-xs text-base-content/60 mt-2">
+                    {{ $t('app.setting_image_sync_hint') }}
+                  </p>
+
+                  <div class="h-4"></div>
                 </div>
               </div>
 

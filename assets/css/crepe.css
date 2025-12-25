@@ -2,7 +2,7 @@
   /* --crepe-color-background: var(--b1); */
   /* --crepe-color-on-background: #e6e6e6; */
   --crepe-color-on-background: oklch(var(--p));
-  --crepe-color-surface: oklch(var(--b3));
+  --crepe-color-surface: oklch(var(--b2));
   /* --crepe-color-surface-low: #1c1c1c; */
   --crepe-color-surface-low: oklch(var(--b2));
   /* --crepe-color-on-surface: #d1d1d1; */
@@ -19,7 +19,7 @@
   --crepe-color-inline-code: #ff6666;
   --crepe-color-error: #ff6666;
   --crepe-color-hover: oklch(var(--p) / 0.2);
-  --crepe-color-selected: #2f2f2f;
+  --crepe-color-selected: oklch(var(--p));
   --crepe-color-inline-area: #2b2b2b;
 
   --crepe-font-title: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -35,6 +35,10 @@
   --crepe-shadow-2:
     0px 1px 2px 0px rgba(255, 255, 255, 0.3),
     0px 2px 6px 2px rgba(255, 255, 255, 0.15); */
+}
+
+.milkdown {
+  font-family: inherit !important;
 }
 
 .milkdown .ProseMirror {
@@ -54,7 +58,7 @@
 .milkdown .editor h1::selection,
 .milkdown .editor h2::selection,
 .milkdown .editor h3::selection,
-.milkdown .editor h4::selection, 
+.milkdown .editor h4::selection,
 .milkdown .editor h5::selection,
 .milkdown .editor h6::selection,
 .milkdown .editor strong::selection,
@@ -78,6 +82,15 @@
   font-weight: 600 !important;
 }
 
+.milkdown .ProseMirror h1,
+.milkdown .ProseMirror h2,
+.milkdown .ProseMirror h3,
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 {
+  font-family: inherit !important;
+}
+
 /* Code block */
 .milkdown .editor .milkdown-code-block {
   border-radius: 0.5rem !important;
@@ -97,6 +110,12 @@
   background-color: oklch(var(--p) / 0.05) !important;
 }
 .milkdown .milkdown-code-block .list-wrapper {
+  border-radius: 0.75rem !important;
+  border: 1px solid oklch(var(--p) / 0.2) !important;
+}
+.milkdown .milkdown-code-block .search-box {
+  outline: none !important;
+  border: 1px solid oklch(var(--p) / 0.2) !important;
   border-radius: 0.5rem !important;
 }
 .milkdown .milkdown-code-block .language-list {
@@ -110,6 +129,21 @@
 }
 .milkdown .milkdown-image-block .image-edit .confirm {
   border-radius: 0.5rem !important;
+}
+.milkdown .milkdown-image-block .image-edit {
+  border-radius: 0.75rem !important;
+}
+.milkdown .milkdown-image-block.selected > .image-wrapper::before {
+  border-radius: 0.5rem !important;
+}
+.milkdown .milkdown-image-block .image-wrapper .operation > .operation-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Prevent scroll when resizing image on mobile */
+.milkdown .milkdown-image-block .image-resize-handle {
+  touch-action: none;
 }
 
 /* Link preview */
@@ -175,13 +209,31 @@
 }
 
 /* cm */
-.ͼ29 .cm-activeLineGutter {
+.ͼ29 .cm-activeLineGutter,
+.ͼo .cm-activeLineGutter {
   background-color: oklch(var(--p) / 0.1) !important;
 }
 .ͼ4 .cm-line {
   color: oklch(var(--p) / 0.8) !important;
 }
-.ͼ29 .cm-activeLine {
-  background-color: oklch(var(--p) / 0.05) !important;
+.ͼ29 .cm-activeLine,
+.ͼo .cm-activeLine {
+  background-color: oklch(var(--b2)) !important;
   color: oklch(var(--p)) !important;
+}
+.ͼ29 .cm-activeLine::selection,
+.ͼo .cm-activeLine::selection {
+  background-color: oklch(var(--p) / 0.1) !important;
+  color: oklch(var(--p)) !important;
+}
+.cm-lineNumbers .cm-activeLineGutter {
+  border-top-left-radius: 0.5rem !important;
+  border-bottom-left-radius: 0.5rem !important;
+}
+.cm-foldGutter .cm-activeLineGutter {
+  border-top-right-radius: 0.5rem !important;
+  border-bottom-right-radius: 0.5rem !important;
+}
+.ͼ1 .cm-lineNumbers .cm-gutterElement {
+  line-height: 2 !important;
 }

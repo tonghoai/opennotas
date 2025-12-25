@@ -36,8 +36,11 @@ import {
   setImportData,
   checkIsFirstInit,
   setFirstInit,
+  setSortNote,
+  getSortNote,
 } from '../../services/main';
 import Mutex from "~/utils/mutex";
+import { removeMarkdownEscape } from "~/utils/string";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
@@ -127,6 +130,7 @@ const reloadNotes = async (focus = true, isTrash = false) => {
   document.getElementById('notes-instance')?.scrollTo({ top: 0, behavior: 'smooth' });
 
   await nextTick();
+  sortType.value = await getSortNote();
   listNotes.value = isTrash ? await loadTrashNotes() : await loadNotes();
   activeNoteId.value = await loadActiveNote() || "";
 
@@ -314,7 +318,7 @@ const handleConfirmDeleteFolder = async (folderId: string) => {
   });
   setActionObject('folder', updatedFolder);
 
-  const notesInFolder = await getNotes(folderId);
+  const notesInFolder = await getNotes(folderId, sortType.value);
   for (const note of notesInFolder) {
     const updatedNote = await updateNote(note.id, {
       deletedAt: nowUnix(),
@@ -345,11 +349,31 @@ const isShowModalMenuSidebar = ref<boolean>(false);
 const handleClickMenuSidebar = (e: any) => {
   toggleModalMenuSidebar(true, isShowModalMenuSidebar);
 }
+// sort notes
+const sortType = ref<'createdAt' | 'updatedAt'>('createdAt');
+const handleClickSort = async (type: 'createdAt' | 'updatedAt') => {
+  sortType.value = type as 'createdAt' | 'updatedAt';
+  await setSortNote(type);
 
+  listNotes.value = await loadNotes();
+}
+const handleClickRetrySync = async () => {
+  isSyncError.value = false;
+  syncErrorMessage.value = "";
+  syncErrorClass.value = "";
+
+  isSyncToast.value = true;
+  syncToastMessage.value = $i18n.t('app.message_sync_init');
+  syncToastClass.value = 'info';
+
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  idleSync(true, true);
+}
 
 // all logic for notes
 const loadNotes = async () => {
-  return getNotes(activeFolderId.value);
+  return getNotes(activeFolderId.value, sortType.value);
 }
 const loadActiveNote = async () => {
   return getActiveNote();
@@ -606,13 +630,18 @@ const handleChangeContent = async ({ content: newVal, id }: { content: string, i
       lastSync: nowUnix(),
     }),
   });
+  formNotes.value.content = newVal;
 
   clearTimeout(debounceChangeContent);
   debounceChangeContent = setTimeout(async () => {
     if (!note.isLocked) {
       const findNoteIndex = listNotes.value.findIndex((note: any) => note.id === id);
-      listNotes.value[findNoteIndex].title = substrTitle(newVal)
-      listNotes.value[findNoteIndex].content = substrContent(newVal);
+      listNotes.value[findNoteIndex].title = removeSpecialChar(substrTitle(newVal))
+      listNotes.value[findNoteIndex].content = removeSpecialChar(substrContent(newVal));
+    }
+
+    // only reload folder to sort notes again when sort type is updatedAt
+    if (sortType.value === 'updatedAt') {
       reloadFolder(false, false);
     }
   }, 1000);
@@ -630,7 +659,7 @@ const handleCopyToClipboard = async () => {
   }
 
   const note = await getNoteDetail(activeNoteId.value);
-  navigator.clipboard.writeText(note.content);
+  navigator.clipboard.writeText(removeMarkdownEscape(note.content));
   showInfoSnackbar($i18n.t('app.message_note_copied_clipboard'));
 };
 const noteInfo = ref<any>({
@@ -701,6 +730,7 @@ const handleClickCollapseFolder = () => {
 const isShowFormatToolbar = ref<boolean>(false);
 const handleClickFormatToolbar = () => {
   isShowFormatToolbar.value = !isShowFormatToolbar.value;
+  formNotesRef.value?.focusState();
 }
 watch(() => activeNoteId.value, () => {
   isShowFormatToolbar.value = false;
@@ -730,6 +760,19 @@ const handleClickSwitchEditor = async (nodeId: string) => {
       break;
     default:
       break;
+  }
+}
+const beforeChangeEditorName = ref<string>('Crepe');
+const handleClickPlainText = () => {
+  if (editorName.value === 'CodeMirror' && beforeChangeEditorName.value === 'CodeMirror') {
+    return;
+  }
+
+  if (editorName.value !== 'CodeMirror') {
+    beforeChangeEditorName.value = editorName.value;
+    editorName.value = 'CodeMirror';
+  } else {
+    editorName.value = beforeChangeEditorName.value;
   }
 }
 const isShowModalInsertLink = ref<boolean>(false);
@@ -808,6 +851,8 @@ const handleChangeDefaultEditor = async () => {
 const handleSaveSettings = async (data: any) => {
   settings.value = data;
   await setSettings(data);
+
+  changeFontFamily(data.general?.fontFamily);
 }
 const modalSettingRef = ref<any>(null);
 const modalSetPasswordRef = ref<any>(null);
@@ -1182,6 +1227,15 @@ const idleSync = async (immediate = false, initedApp = false) => {
           }, 3000);
         }
 
+        // reset message
+        if (isSyncError.value) {
+          isSyncToast.value = true;
+          syncToastMessage.value = $i18n.t('app.message_sync_success');
+          syncToastClass.value = 'success';
+          setTimeout(() => {
+            isSyncToast.value = false;
+          }, 3000);
+        }
         isSyncError.value = false;
         syncErrorMessage.value = "";
         syncErrorClass.value = "";
@@ -1218,7 +1272,15 @@ const pullPush = async () => {
     idPulled,
     actionObject,
     isPasswordExist,
+    activeNoteId,
   );
+
+  // if need reload active note, update form notes and slient update value
+  if (pull.needReloadActiveNote) {
+    formNotes.value = await getNoteDetail(activeNoteId.value);
+    formNotesRef.value?.slientUpdateValue(formNotes.value.content);
+  }
+
   await pushData(
     settings.value,
     privateKey.value,
@@ -1244,6 +1306,48 @@ const syncErrorClass = ref<string>("");
 const isSyncToast = ref<boolean>(false);
 const syncToastMessage = ref<string>("");
 const syncToastClass = ref<string>("");
+
+const changeThemeColor = () => {
+  const metaThemeColor = document.querySelector("meta[name=theme-color]");
+
+  setTimeout(() => {
+    if (colorMode.preference === "dark") {
+      if (isMobile.value) {
+        metaThemeColor?.setAttribute("content", "#262626");
+      } else {
+        metaThemeColor?.setAttribute("content", "#090909");
+      }
+    } else {
+      if (isMobile.value) {
+        metaThemeColor?.setAttribute("content", "#fcfcfc");
+      } else {
+        metaThemeColor?.setAttribute("content", "#e4e4e4");
+      }
+    }
+  }, 1000);
+}
+onMounted(() => {
+  changeThemeColor();
+});
+watch(() => colorMode.preference, () => {
+  changeThemeColor();
+});
+
+const changeFontFamily = (fontFamilyName: string) => {
+  if (!fontFamilyName || (fontFamilyName && fontFamilyName.toLowerCase() === 'system')) return;
+
+  const fontName = fontFamilyName.replace(/ /g, '+');
+  const fontFamily = fontName.replace(/\+/g, ' ');
+
+  const font = document.createElement('link');
+  font.href = `https://fonts.googleapis.com/css2?family=${fontName}&display=swap`;
+  font.rel = 'stylesheet';
+  document.head.appendChild(font);
+  document.body.style.fontFamily = `${fontFamily}, sans-serif`;
+}
+watch(() => settings.value.general.fontFamily, (newVal) => {
+  changeFontFamily(newVal);
+});
 </script>
 
 <template>
@@ -1259,7 +1363,7 @@ const syncToastClass = ref<string>("");
     <div class="lg:hidden">
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
         :activeFolderId="activeFolderId" :formNotes="formNotes" :isSyncing="isSyncAll" :settings="settings"
-        :isPasswordExist="isPasswordExist" @clickFolderName="handleClickFolderName"
+        :isPasswordExist="isPasswordExist" :editorName="editorName" @clickFolderName="handleClickFolderName"
         @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
         @reorderFolderName="handleReorderFolderName" @clickSetting="handleClickSetting" @clickBack="handleClickBack"
         @clickUpdateData="handleClickUpdateData" @clickTrash="handleClickBottombarTrash"
@@ -1268,7 +1372,8 @@ const syncToastClass = ref<string>("");
         @clickAddFolder="handleClickAddFolder" @clickSwitchEditor="handleClickSwitchEditor" @clickUndo="handleClickUndo"
         @clickRedo="handleClickRedo" @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch"
         @clickSetPassword="handleClickSetPassword" @clickImportNotes="handleClickImportNotes"
-        @clickMenuSidebar="handleClickMenuSidebar" />
+        @clickMenuSidebar="handleClickMenuSidebar" @clickFormatToolbar="handleClickFormatToolbar"
+        @clickPlainText="handleClickPlainText" />
     </div>
 
     <!-- cols personal -->
@@ -1280,7 +1385,7 @@ const syncToastClass = ref<string>("");
     </div>
 
     <!-- cols folders -->
-    <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300"
+    <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300/80"
       :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder }"
       :style="{ width: colsFoldersWidth + 'px' }">
       <div>
@@ -1311,14 +1416,10 @@ const syncToastClass = ref<string>("");
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
-        <div v-if="isSyncError" class="m-2 rounded text-xs text-center py-1"
-          :class="{ 'bg-warning': syncErrorClass === 'warning', 'text-warning-content': syncErrorClass === 'warning', 'bg-error': syncErrorClass === 'error', 'text-error-content': syncErrorClass === 'error' }">
-          {{ syncErrorMessage }}
-        </div>
-        <div v-if="!isSyncError && isSyncToast" class="m-2 rounded text-xs text-center py-1"
-          :class="{ 'bg-info': syncToastClass === 'info', 'text-info-content': syncToastClass === 'info', 'bg-success': syncToastClass === 'success', 'text-success-content': syncToastClass === 'success' }">
-          {{ syncToastMessage }}
-        </div>
+        <ToolbarNotesSecondBar :sortType="sortType" :isSyncError="isSyncError" :syncErrorClass="syncErrorClass"
+          :syncErrorMessage="syncErrorMessage" :isSyncToast="isSyncToast" :syncToastClass="syncToastClass"
+          :syncToastMessage="syncToastMessage" @clickSort="handleClickSort" @clickRetrySync="handleClickRetrySync" />
+
         <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
           :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
           @rightClickNote="handleRightClickNote" />
@@ -1335,12 +1436,13 @@ const syncToastClass = ref<string>("");
           @lockNote="handleClickLockNote" @deleteNote="handleClickDeleteNote" @copyToClipboard="handleCopyToClipboard"
           @clickInfo="handleClickFormNotesInfo" @clickResize="handleClickResizeApp"
           @clickSwitchEditor="handleClickSwitchEditor" @clickCollapsePanel="handleClickCollapsePanel"
-          @clickFormatToolbar="handleClickFormatToolbar" />
+          @clickFormatToolbar="handleClickFormatToolbar" @clickPlainText="handleClickPlainText" />
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="form-editors" class="cursor-text overflow-auto bg-base-100" :class="{ 'overflow-x-hidden': isMobile }"
-        style="height: calc(100vh - 80px)">
+      <div id="form-editors"
+        class="cursor-text overflow-auto bg-base-100 h-[calc(100vh_-_64px)] lg:h-[calc(100vh_-_80px)]"
+        :class="{ 'overflow-x-hidden': isMobile }">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
           :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt"
