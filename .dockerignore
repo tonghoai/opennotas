@@ -1,0 +1,9 @@
+node_modules
+.nuxt
+.output
+.git
+*.md
+Dockerfile*
+.dockerignore
+docker-compose*
+worker/
