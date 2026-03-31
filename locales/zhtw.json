@@ -93,6 +93,8 @@
         "menu_note_sort_by_updated_at": "最後修改",
         "list_note_no_title": "（無標題）",
         "list_note_no_content": "（無內容）",
+        "list_note_locked_title": "標題已鎖定",
+        "list_note_locked_content": "內容已鎖定",
         "form_note_input_password_title": "輸入密碼",
         "toolbar_form_note_resize_tooltip": "調整視窗大小",
         "toolbar_form_note_swap_editor_tooltip": "切換編輯器",

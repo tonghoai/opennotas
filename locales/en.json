@@ -94,6 +94,8 @@
     "menu_note_sort_by_updated_at": "Updated At",
     "list_note_no_title": "No Title",
     "list_note_no_content": "No Content",
+    "list_note_locked_title": "Locked Title",
+    "list_note_locked_content": "Locked Content",
     "form_note_input_password_title": "Enter Password",
     "toolbar_form_note_resize_tooltip": "Resize Window",
     "toolbar_form_note_swap_editor_tooltip": "Switch Editor",

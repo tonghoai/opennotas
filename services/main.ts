@@ -57,11 +57,11 @@ async function setActiveFolder(folderId: string) {
 async function getAllNotes() {
   return storage.getAllNotes();
 }
-async function getNotes(folderId: string, sortType: 'createdAt' | 'updatedAt') {
+async function getNotes(folderId: string, sortType: 'createdAt' | 'updatedAt', lockedTitle: string, lockedContent: string) {
   const notes = await storage.getNotes(folderId);
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : 'Tiêu đề đã khóa';
-    const content = !note.isLocked ? note.content.split('\n').slice(1).join('\n').substr(0, 60)?.replace(/(?:\r\n|\r|\n)/g, ' ')?.trim() : 'Nội dung đã khóa';
+    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : lockedTitle;
+    const content = !note.isLocked ? note.content.split('\n').slice(1).join('\n').substr(0, 60)?.replace(/(?:\r\n|\r|\n)/g, ' ')?.trim() : lockedContent;
     return {
       ...note,
       title,
@@ -123,11 +123,11 @@ async function getNoteDetail(noteId: string) {
   return storage.getNoteDetail(noteId);
 }
 
-async function getDeletedNotes() {
+async function getDeletedNotes(lockedTitle: string, lockedContent: string) {
   const notes = await storage.getDeletedNotes();
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : 'Tiêu đề đã khóa';
-    const content = !note.isLocked ? removeSpecialChar(note.content.split('\n').slice(1).join('\n').substr(0, 60)) : 'Nội dung đã khóa';
+    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : lockedTitle;
+    const content = !note.isLocked ? removeSpecialChar(note.content.split('\n').slice(1).join('\n').substr(0, 60)) : lockedContent;
     return {
       ...note,
       title,

@@ -319,7 +319,7 @@ const handleConfirmDeleteFolder = async (folderId: string) => {
   });
   setActionObject('folder', updatedFolder);
 
-  const notesInFolder = await getNotes(folderId, sortType.value);
+  const notesInFolder = await getNotes(folderId, sortType.value, $i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
   for (const note of notesInFolder) {
     const updatedNote = await updateNote(note.id, {
       deletedAt: nowUnix(),
@@ -374,13 +374,13 @@ const handleClickRetrySync = async () => {
 
 // all logic for notes
 const loadNotes = async () => {
-  return getNotes(activeFolderId.value, sortType.value);
+  return getNotes(activeFolderId.value, sortType.value, $i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
 }
 const loadActiveNote = async () => {
   return getActiveNote();
 }
 const loadTrashNotes = async () => {
-  return getDeletedNotes();
+  return getDeletedNotes($i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
 }
 
 const listNotes = ref<any[]>([]);
