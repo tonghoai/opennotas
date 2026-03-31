@@ -75,6 +75,7 @@ onMounted(async () => {
 
   window.history.replaceState({}, '', window.location.pathname); // reset query params
   outsideClickMenu(); // handle outside click for menu
+  disableDefaultContextMenu();
 
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === 'visible') {

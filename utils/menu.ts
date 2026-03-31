@@ -46,10 +46,25 @@ function hideMenuNote() {
   menuNote.style.display = 'none';
 }
 
+function disableDefaultContextMenu() {
+  document.addEventListener('contextmenu', (e) => {
+    const target = e.target as HTMLElement;
+
+    if (target.matches('input, textarea, select')) return;
+
+    if (target.closest('[contenteditable="true"], .tiptap, .cm-content, .cm-editor, .milkdown')) return;
+
+    if (target.closest('a[href]')) return;
+
+    e.preventDefault();
+  });
+}
+
 export {
   outsideClickMenu,
   offsetMenuFolder,
   offsetMenuNote,
   hideMenuFolder,
   hideMenuNote,
+  disableDefaultContextMenu,
 };
