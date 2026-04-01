@@ -389,7 +389,7 @@ const handleClickAddNote = async () => {
   setActionObject('note', newNote);
   listNotes.value = await loadNotes();
 
-  handleClickNote(newNote.id, true);
+  handleClickNote(newNote.id, true, true);
 };
 const handleClickSearch = async (value: string) => {
   if (!value) {
@@ -430,14 +430,14 @@ const handleClickCancelSearch = async () => {
   listNotes.value = await loadNotes();
 }
 const activeNoteId = ref<string>("");
-const handleClickNote = async (noteId: string, inEditor: boolean = false) => {
+const handleClickNote = async (noteId: string, inEditor: boolean = false, shouldFocus: boolean = false) => {
   activeNoteId.value = noteId;
   setActiveNote(noteId);
   formNotes.value = await getNoteDetail(activeNoteId.value);
   setTimeout(() => {
     formNotesRef.value?.focusPassword();
 
-    if (!isMobile.value || !formNotes.value.content) {
+    if (shouldFocus && (!isMobile.value || !formNotes.value.content)) {
       formNotesRef.value?.focus();
     }
   }, 100);
