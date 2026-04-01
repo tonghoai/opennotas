@@ -134,7 +134,7 @@ defineExpose({
 }
 
 .cm-line {
-  line-height: 32px;
+  line-height: 1.5;
 }
 
 .ͼ1 .cm-scroller {
