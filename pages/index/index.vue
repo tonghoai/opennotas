@@ -221,6 +221,7 @@ onMounted(async () => {
   }, 100);
 });
 const isSyncAll = ref<boolean>(false);
+const isSyncingAll = ref<boolean>(false);
 const SYNC_LEVELS = [
   { seconds: 300, labelKey: 'app.sync_5_minutes' },
   { seconds: 3600, labelKey: 'app.sync_1_hour' },
@@ -234,13 +235,16 @@ const syncLevel = ref<number>(0);
 let syncLevelResetTimer: ReturnType<typeof setTimeout> | null = null;
 const handleClickUpdateData = async () => {
   toggleModalMenuSidebar(false, isShowModalMenuSidebar);
+  navbarTopRef.value?.closeDrawer();
 
+  isSyncingAll.value = true;
   const level = SYNC_LEVELS[syncLevel.value];
   isSyncAll.value = syncLevel.value === SYNC_LEVELS.length - 1;
   lastPull.value = level.seconds === 0 ? 0 : nowUnix() - level.seconds;
 
   await pullPush().catch(() => { });
   isSyncAll.value = false;
+  isSyncingAll.value = false;
 
   showInfoSnackbar($i18n.t(level.labelKey));
 
@@ -1400,6 +1404,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <!-- cols personal -->
     <div class="hidden lg:block lg:float-left cols-personal w-20 bg-base-300">
       <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder"
+        :isSyncing="isSyncingAll"
         @clickNotes="handleClickFolderName('')" @clickTrash="handleClickBottombarTrash"
         @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData"
         @clickCollapseFolder="handleClickCollapseFolder" />
