@@ -221,15 +221,35 @@ onMounted(async () => {
   }, 100);
 });
 const isSyncAll = ref<boolean>(false);
+const SYNC_LEVELS = [
+  { seconds: 300, labelKey: 'app.sync_5_minutes' },
+  { seconds: 3600, labelKey: 'app.sync_1_hour' },
+  { seconds: 21600, labelKey: 'app.sync_6_hours' },
+  { seconds: 86400, labelKey: 'app.sync_1_day' },
+  { seconds: 604800, labelKey: 'app.sync_1_week' },
+  { seconds: 2592000, labelKey: 'app.sync_1_month' },
+  { seconds: 0, labelKey: 'app.message_sync_all_notes' },
+];
+const syncLevel = ref<number>(0);
+let syncLevelResetTimer: ReturnType<typeof setTimeout> | null = null;
 const handleClickUpdateData = async () => {
   toggleModalMenuSidebar(false, isShowModalMenuSidebar);
 
-  isSyncAll.value = true;
-  lastPull.value = 0;
+  const level = SYNC_LEVELS[syncLevel.value];
+  isSyncAll.value = syncLevel.value === SYNC_LEVELS.length - 1;
+  lastPull.value = level.seconds === 0 ? 0 : nowUnix() - level.seconds;
+
   await pullPush().catch(() => { });
   isSyncAll.value = false;
 
-  showInfoSnackbar($i18n.t('app.message_sync_all_notes'));
+  showInfoSnackbar($i18n.t(level.labelKey));
+
+  syncLevel.value = (syncLevel.value + 1) % SYNC_LEVELS.length;
+
+  if (syncLevelResetTimer) clearTimeout(syncLevelResetTimer);
+  syncLevelResetTimer = setTimeout(() => {
+    syncLevel.value = 0;
+  }, 10000);
 }
 const handleClickAddFolder = async () => {
   toggleModalMenuSidebar(false, isShowModalMenuSidebar);
