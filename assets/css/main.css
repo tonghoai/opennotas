@@ -31,3 +31,7 @@
   --text-warning-sync: oklch(0.67 0.16 58);
   --text-info-sync: oklch(0.71 0.14 255);
 }
+
+*, ::before, ::after {
+  border-color: transparent !important;
+}
