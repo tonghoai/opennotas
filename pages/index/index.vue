@@ -1292,7 +1292,7 @@ const pullPush = async () => {
   const pull = await pullData(
     settings.value,
     privateKey.value,
-    lastPushData.value,
+    lastPushData.value || lastPull.value,
     lastPull,
     idPulled,
     actionObject,
@@ -1310,7 +1310,7 @@ const pullPush = async () => {
     settings.value,
     privateKey.value,
     actionObject,
-    lastPull,
+    lastPushData,
     pull.now!,
   );
   if (pull.ok) {
@@ -1403,8 +1403,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
 
     <!-- cols personal -->
     <div class="hidden lg:block lg:float-left cols-personal w-20 bg-base-300">
-      <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder"
-        :isSyncing="isSyncingAll"
+      <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder" :isSyncing="isSyncingAll"
         @clickNotes="handleClickFolderName('')" @clickTrash="handleClickBottombarTrash"
         @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData"
         @clickCollapseFolder="handleClickCollapseFolder" />

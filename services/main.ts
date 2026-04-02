@@ -151,10 +151,11 @@ async function setSettings(data: any) {
 
 // sync
 async function getLastPull() {
-  return storage.getLastPull();
+  const value = await storage.getLastPull();
+  return value > 9_999_999_999 ? Math.floor(value / 1000) : value;
 }
 async function updateLastPull(now: number) {
-  return storage.updateLastPull(now);
+  return storage.updateLastPull(now > 9_999_999_999 ? Math.floor(now / 1000) : now);
 }
 async function getActionObject() {
   return storage.getActionObject();
