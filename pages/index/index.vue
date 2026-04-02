@@ -1338,15 +1338,15 @@ const changeThemeColor = () => {
   setTimeout(() => {
     if (colorMode.preference === "dark") {
       if (isMobile.value) {
-        metaThemeColor?.setAttribute("content", "#262626");
+        metaThemeColor?.setAttribute("content", "oklch(27% 0 0)");
       } else {
-        metaThemeColor?.setAttribute("content", "#090909");
+        metaThemeColor?.setAttribute("content", "oklch(0.14 0 0)");
       }
     } else {
       if (isMobile.value) {
-        metaThemeColor?.setAttribute("content", "#fcfcfc");
+        metaThemeColor?.setAttribute("content", "oklch(0.99 0 0)");
       } else {
-        metaThemeColor?.setAttribute("content", "#e4e4e4");
+        metaThemeColor?.setAttribute("content", "oklch(0.92 0 0)");
       }
     }
   }, 1000);
