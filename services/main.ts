@@ -60,8 +60,8 @@ async function getAllNotes() {
 async function getNotes(folderId: string, sortType: 'createdAt' | 'updatedAt', lockedTitle: string, lockedContent: string) {
   const notes = await storage.getNotes(folderId);
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : lockedTitle;
-    const content = !note.isLocked ? note.content.split('\n').slice(1).join('\n').substr(0, 60)?.replace(/(?:\r\n|\r|\n)/g, ' ')?.trim() : lockedContent;
+    const title = !note.isLocked ? removeSpecialChar(substrTitle(note.content)) : lockedTitle;
+    const content = !note.isLocked ? removeSpecialChar(substrContent(note.content)) : lockedContent;
     return {
       ...note,
       title,
