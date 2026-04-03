@@ -2,6 +2,7 @@
 import { defineProps, onMounted } from 'vue';
 
 import S3ProxyAdapter from '~/adapter/s3';
+import { toggleModalMenuEditor } from '~/utils/modal';
 import Menu from '../assets/svg/menu.svg?component';
 import Setting from '../assets/svg/settings.svg?component';
 import ArrowLeft from '../assets/svg/arrow-left.svg?component';
@@ -160,6 +161,11 @@ const handleClickFormatToolbar = () => {
 }
 const handleClickPlainText = () => {
   emit('clickPlainText', props.formNotes.id);
+}
+
+const isModalMenuEditorOpen = ref<boolean>(false);
+const handleOpenMenuEditorModal = () => {
+  toggleModalMenuEditor(true, isModalMenuEditorOpen);
 }
 
 const handleSaveSettings = () => {
@@ -339,7 +345,11 @@ defineExpose({
           <Type class="press mr-4 cursor-pointer opacity-80" @click="handleClickPlainText" />
           <Undo class="press mr-4 cursor-pointer opacity-80" @click="handleClickUndo" />
           <Redo class="press mr-4 cursor-pointer opacity-80" @click="handleClickRedo" />
-          <div class="dropdown dropdown-bottom dropdown-end mr-2">
+          <div class="lg:hidden mr-2" @click="handleOpenMenuEditorModal">
+            <MenuVertical class="press cursor-pointer" />
+          </div>
+
+          <div class="hidden lg:block dropdown dropdown-bottom dropdown-end mr-2">
             <div tabindex="0" role="button">
               <MenuVertical class="press cursor-pointer" />
             </div>
@@ -400,7 +410,7 @@ defineExpose({
       <label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
 
 
-      <div class="menu p-0 w-10/12 min-h-full bg-base-100">
+      <div class="menu p-0 w-10/12 min-h-full bg-base-100 overscroll-y-contain">
         <div class="w-full">
           <!-- general setting -->
           <div class="p-4">
@@ -643,6 +653,11 @@ defineExpose({
 
     </div>
   </div>
+
+  <ModalMenuEditor
+    @copyToClipboard="handleClickCopyToClipboard"
+    @clickInfo="handleClickInfo"
+  />
 </template>
 
 <style lang="scss">
