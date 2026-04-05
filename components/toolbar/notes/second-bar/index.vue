@@ -63,7 +63,7 @@ const handleOpenSortModal = () => {
         </div>
 
         <ul tabindex="0"
-          class="dropdown-content menu menu-sm bg-base-200 z-[1] w-44 p-2 shadow rounded-xl border border-neutral">
+          class="dropdown-content menu menu-sm bg-base-200 z-[1] w-36 p-2 shadow rounded-xl border border-neutral">
           <li class="" @click="() => handleClickSort('createdAt')">
             <a>
               <CircleCheck v-if="props.sortType === 'createdAt'" class="w-4 h-4" />

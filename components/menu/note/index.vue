@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import PinV2 from '~/assets/svg/pin-v2.svg?component';
+import Copy from '~/assets/svg/copy.svg?component';
+import CircleKey from '~/assets/svg/circle-key.svg?component';
+import Trash from '~/assets/svg/trash.svg?component';
+import Restore from '~/assets/svg/restore.svg?component';
+
 const props = defineProps([
   'noteId',
   'formNotes',
@@ -57,50 +63,59 @@ const handleClickDeleteNoteForever = () => {
     </ul> -->
 
     <ul v-if="!formNotes.deletedAt"
-      class="menu bg-base-100 rounded-box w-48 border border-neutral animate-fade-down animate-duration-100">
+      class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
       <li class="" @click="handleClickPinNote(props.formNotes.isPinned)">
-        <a>
-          {{ props.formNotes.isPinned ? $t('app.menu_note_unpin') : $t('app.menu_note_pin') }}
+        <a class="flex flex-row items-center gap-3">
+          <PinV2 />
+          <span class="flex items-center justify-center">{{ props.formNotes.isPinned ? $t('app.menu_note_unpin') :
+            $t('app.menu_note_pin') }}</span>
         </a>
       </li>
 
       <li class="" @click="handleClickCopyNote">
-        <a>
-          {{ $t('app.menu_note_copy') }}
+        <a class="flex flex-row items-center gap-3">
+          <Copy />
+          <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
         </a>
       </li>
 
       <li class="" @click="handleClickLockNote(props.formNotes.isLocked)">
-        <a>
-          {{ props.formNotes.isLocked ? $t('app.menu_note_unlock') : $t('app.menu_note_lock') }}
+        <a class="flex flex-row items-center gap-3">
+          <CircleKey />
+          <span class="flex items-center justify-center">{{ props.formNotes.isLocked ? $t('app.menu_note_unlock') :
+            $t('app.menu_note_lock') }}</span>
         </a>
       </li>
 
       <li class="text-rose-500" @click="handleClickDeleteNote">
-        <a>
-          {{ $t('app.menu_note_delete') }}
+        <a class="flex flex-row items-center gap-3">
+          <Trash />
+          <span class="flex items-center justify-center">{{ $t('app.menu_note_delete') }}</span>
         </a>
       </li>
     </ul>
 
     <!-- case deleted notes -->
     <ul v-if="formNotes.deletedAt"
-      class="menu bg-base-100 rounded-box w-48 border border-neutral animate-fade-down animate-duration-100">
+      class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
       <li class="" @click="handleClickRestoreNote">
-        <a>
-          {{ $t('app.menu_note_restore') }}
+        <a class="flex flex-row items-center gap-3">
+          <Restore />
+          <span class="flex items-center justify-center">{{ $t('app.menu_note_restore') }}</span>
         </a>
       </li>
 
       <li class="" @click="handleClickCopyNote">
-        <a>
-          {{ $t('app.menu_note_copy') }}
+        <a class="flex flex-row items-center gap-3">
+          <Copy />
+          <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
         </a>
       </li>
 
       <li class="text-rose-500" @click="handleClickDeleteNoteForever">
-        <a>
-          {{ $t('app.menu_note_delete_forever') }}
+        <a class="flex flex-row items-center gap-3">
+          <Trash />
+          <span class="flex items-center justify-center">{{ $t('app.menu_note_delete_forever') }}</span>
         </a>
       </li>
     </ul>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import Pencil from '~/assets/svg/pencil.svg?component';
+import Trash from '~/assets/svg/trash.svg?component';
+
 const props = defineProps([
   'folderId',
 ]);
@@ -15,17 +18,19 @@ const handleClickDeleteFolder = () => {
 </script>
 
 <template>
-  <div class="border border-neutral bg-base-100 shadow-sm rounded-xl animate-fade-down animate-duration-100">
-    <ul class="px-1.5 py-2 w-32">
-      <li id="menu-folder-rename" class="px-5 py-1.5 hover:bg-base-300 rounded-xl cursor-pointer"
-        @click="handleClickRenameFolder">
-        {{ $t('app.menu_folder_rename') }}
-      </li>
+  <ul class="menu bg-base-100 rounded-box w-36 border border-neutral animate-fade-down animate-duration-100">
+    <li id="menu-folder-rename" @click="handleClickRenameFolder">
+      <a class="flex flex-row items-center gap-3">
+        <Pencil />
+        <span class="flex items-center justify-center">{{ $t('app.menu_folder_rename') }}</span>
+      </a>
+    </li>
 
-      <li class="px-5 py-1.5 hover:bg-base-300 rounded-xl cursor-pointer text-rose-500"
-        @click="handleClickDeleteFolder">
-        {{ $t('app.menu_folder_delete') }}
-      </li>
-    </ul>
-  </div>
+    <li class="text-rose-500" @click="handleClickDeleteFolder">
+      <a class="flex flex-row items-center gap-3">
+        <Trash />
+        <span class="flex items-center justify-center">{{ $t('app.menu_folder_delete') }}</span>
+      </a>
+    </li>
+  </ul>
 </template>
