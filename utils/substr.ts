@@ -3,7 +3,7 @@ const substrTitle = (str: string) => {
 }
 
 const substrContent = (str: string) => {
-  return str.split('\n').slice(1).join('\n').substr(0, 60)?.replace(/(?:\r\n|\r|\n)/g, '')?.trim();
+  return (str.split('\n').slice(1).find(line => line.trim() !== '') ?? '').substr(0, 60).trim();
 }
 
 export {

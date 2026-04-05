@@ -9,7 +9,17 @@ import ArrowRightToLine from '../assets/svg/arrow-right-to-line.svg?component';
 const props = defineProps([
   'activeFolderId',
   'isCollapseFolder',
+  'isSyncing',
 ]);
+
+const refreshRef = ref<HTMLElement | null>(null);
+watch(() => props.isSyncing, (value) => {
+  if (value) {
+    refreshRef.value?.classList.add('spin');
+  } else {
+    refreshRef.value?.classList.remove('spin');
+  }
+});
 
 const emit = defineEmits([
   'clickNotes',
@@ -66,7 +76,9 @@ const handleClickCollapseFolder = () => {
         </div>
       </button>
       <button class="btn btn-ghost btn-sm w-full" @click="handleClickUpdateData">
-        <Refresh />
+        <span ref="refreshRef">
+          <Refresh />
+        </span>
       </button>
       <button class="btn btn-ghost btn-sm w-full" @click="handleClickSetting">
         <Settings />

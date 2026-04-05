@@ -49,7 +49,7 @@ const handleRightClickNote = (e: any, noteId: number) => {
             <Pin class="w-3 h-3 mb-2 text-error" v-if="note.isPinned" />
             <Lock class="w-3 h-3 text-warning" v-if="note.isLocked" />
           </div>
-          <div class="flex justify-end items-end flex-col more-tools"
+          <div class="flex justify-end items-end flex-col more-tools cursor-pointer"
             @click.stop="handleRightClickNote($event, note.id)">
             <MoreHorizontal class="press w-3 h-3 opacity-80" />
           </div>

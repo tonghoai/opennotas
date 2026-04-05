@@ -23,8 +23,8 @@ function getSecondLineSubstrWord(text: string, numWords: number): string {
 }
 
 function removeSpecialChar(text: string): string {
-  // only keep letters, numbers and spaces
-  return text?.replaceAll('<br />', '').replace(/[^\p{L}\p{N}\s]/gu, '') || '';
+  // strip HTML tags first, then keep only letters, numbers and spaces
+  return text?.replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim() || '';
 }
 
 // Remove escape characters added by GFM serializer before markdown special chars

@@ -39,7 +39,7 @@ const handleClickDeleteNoteForever = () => {
       <div class="bg-base-100 shadow-sm rounded">
         <!-- case active notes -->
         <ul v-if="!formNotes.deletedAt"
-          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100">
+          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
           <li class="w-full text-center" @click="handleClickPinNote(props.formNotes.isPinned)">
             <a class="w-full block text-center">{{ props.formNotes.isPinned ? $t('app.modal_menu_note_unpin') :
               $t('app.modal_menu_note_pin') }}</a>
@@ -87,7 +87,7 @@ const handleClickDeleteNoteForever = () => {
 
         <!-- case deleted notes -->
         <ul v-if="formNotes.deletedAt"
-          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100">
+          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
           <li class="w-full text-center" @click="handleClickRestoreNote">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_restore') }}</a>
           </li>

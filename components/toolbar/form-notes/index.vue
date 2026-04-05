@@ -4,6 +4,8 @@ import Menu from '../assets/svg/menu-vertical.svg?component';
 import PanelLeft from '../assets/svg/panel-left.svg?component';
 import Type from '../assets/svg/type.svg?component';
 import ToolCase from '../assets/svg/tool-case.svg?component';
+import Copy from '~/assets/svg/copy.svg?component';
+import Article from '~/assets/svg/article.svg?component';
 
 const props = defineProps([
   'noteId',
@@ -54,8 +56,7 @@ const handleClickPlainText = () => {
         <ToolCase class="press cursor-pointer" />
       </div>
 
-      <div v-if="props.noteId" class="p-2 rounded-full bg-base-300"
-        @click="handleClickPlainText">
+      <div v-if="props.noteId" class="p-2 rounded-full bg-base-300" @click="handleClickPlainText">
         <Type class="press cursor-pointer" />
       </div>
 
@@ -70,15 +71,17 @@ const handleClickPlainText = () => {
           </div>
 
           <ul tabindex="0"
-            class="dropdown-content menu bg-base-200 z-[1] w-48 p-2 shadow rounded-xl border border-neutral">
+            class="dropdown-content menu rounded-box bg-base-200 z-[1] w-48 shadow border border-neutral">
             <li class="" @click="handleClickCopyNote">
-              <a>
-                {{ $t('app.menu_note_copy') }}
+              <a class="flex flex-row items-center gap-3">
+                <Copy />
+                <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
               </a>
             </li>
             <li class="" @click="handleClickChangeEditor">
-              <a>
-                {{ $t('app.menu_note_change_editor') }}
+              <a class="flex flex-row items-center gap-3">
+                <Article />
+                <span class="flex items-center justify-center">{{ $t('app.menu_note_change_editor') }}</span>
               </a>
             </li>
           </ul>

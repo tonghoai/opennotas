@@ -2,6 +2,8 @@ import ImageRepository from '~/repositories/image';
 import type { ImageType, ImageMetaType } from '~/repositories/image.type';
 import S3ProxyAdapter from '~/adapter/s3';
 
+import { randomUUID } from '~/utils/uuid';
+
 const imageRepository = new ImageRepository();
 
 const IMAGE_PROTOCOL = 'opennotas://img/';
@@ -9,7 +11,7 @@ const IMAGE_PROTOCOL = 'opennotas://img/';
 const blobUrlCache = new Map<string, string>();
 
 function generateImageId(): string {
-  return crypto.randomUUID();
+  return randomUUID();
 }
 
 function createImageUrl(imageId: string): string {

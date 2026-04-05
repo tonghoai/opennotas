@@ -44,7 +44,7 @@ export default defineNuxtConfig({
         { name: "mobile-web-app-capable", content: "yes" },
         { name: "apple-mobile-web-app-capable", content: "yes" },
         { name: "msapplication-starturl", content: "/app" },
-        { name: "theme-color", content: "#e4e4e4", id: "theme-color" },
+        { name: "theme-color", content: "transparent", id: "theme-color" },
       ],
       link: [
         { hid: "icon", rel: "icon", type: "image/png", href: "/logo-icon.png" },

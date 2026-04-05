@@ -33,6 +33,7 @@ function handleInteractCols(
         .resizable({
           edges: {
             right: true,
+            margin: 15
           },
           listeners: {
             start: function () {
@@ -61,7 +62,8 @@ function handleInteractCols(
       (window as any).interact(colsNotes)
         .resizable({
           edges: {
-            right: '.right-menu',
+            right: true,
+            margin: 15
           },
           listeners: {
             start: function () {

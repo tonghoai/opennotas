@@ -3,6 +3,7 @@ import { EditorState } from "@codemirror/state";
 import { EditorView } from "codemirror";
 import { redo as _redo, undo as _undo, defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { drawSelection, dropCursor, rectangularSelection, keymap } from "@codemirror/view";
+import * as Diff from 'diff';
 
 const props = defineProps([
   'value',
@@ -15,6 +16,8 @@ const emit = defineEmits([
 ]);
 
 let editor: EditorView;
+const silent = ref<boolean>(false);
+
 const state = EditorState.create({
   doc: props.value,
   extensions: [
@@ -33,6 +36,7 @@ const state = EditorState.create({
     EditorView.lineWrapping,
     ...(props.isDeleted && [EditorView.editable.of(false)] || []),
     EditorView.updateListener.of((v: any) => {
+      if (silent.value) return;
       if (v.docChanged) {
         emit('changeContent', v.state.doc.toString());
       }
@@ -95,7 +99,50 @@ const focusState = () => {
 // use to update value without trigger change event
 // to keep the cursor position
 const slientUpdateValue = (value: string) => {
-  return;
+  if (!editor) return
+  silent.value = true
+  try {
+    const oldText = editor.state.doc.toString()
+    const oldCursor = editor.state.selection.main.head
+
+    const parts = Diff.diffChars(oldText, value)
+    let oldPos = 0
+    let newPos = 0
+    let newCursor = 0
+    let found = false
+    for (const p of parts) {
+      const len = p.value.length
+      if (p.added) {
+        newPos += len
+        continue
+      }
+      if (p.removed) {
+        if (!found && oldCursor <= oldPos + len) {
+          newCursor = newPos
+          found = true
+          break
+        }
+        oldPos += len
+        continue
+      }
+      // unchanged
+      if (!found && oldCursor <= oldPos + len) {
+        newCursor = newPos + (oldCursor - oldPos)
+        found = true
+        break
+      }
+      oldPos += len
+      newPos += len
+    }
+    if (!found) newCursor = newPos
+
+    const clampedCursor = Math.max(0, Math.min(newCursor, value.length))
+    editor.dispatch({
+      changes: { from: 0, to: editor.state.doc.length, insert: value },
+      selection: { anchor: clampedCursor },
+    })
+  } catch (_) { }
+  silent.value = false
 }
 
 defineExpose({
@@ -134,7 +181,7 @@ defineExpose({
 }
 
 .cm-line {
-  line-height: 32px;
+  line-height: 1.5;
 }
 
 .ͼ1 .cm-scroller {

@@ -27,8 +27,16 @@ function toggleModalMenuNote(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-menu-note", isOpen, state);
 }
 
+function toggleModalSortNote(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-sort-note", isOpen, state);
+}
+
 function toggleModalMenuSidebar(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-menu-sidebar", isOpen, state);
+}
+
+function toggleModalMenuEditor(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-menu-editor", isOpen, state);
 }
 
 function toggleModalUnlockNotes(isOpen: boolean, state: Ref<boolean>) {
@@ -80,7 +88,9 @@ export {
   toggleModalChangeFolderName,
   toggleModalConfirmDeleteFolder,
   toggleModalMenuNote,
+  toggleModalSortNote,
   toggleModalMenuSidebar,
+  toggleModalMenuEditor,
   toggleModalUnlockNotes,
   toggleModalAlertSetPassword,
   toggleModalNotesDetail,

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import ArrowDown from '../../assets/svg/arrow-down.svg?component';
 import CircleCheck from '../../assets/svg/circle-check.svg?component';
+import { toggleModalSortNote } from '~/utils/modal';
 
 const props = defineProps([
   'sortType',
@@ -17,11 +18,16 @@ const emit = defineEmits([
   'clickRetrySync'
 ]);
 
+const isModalSortOpen = ref(false);
+
 const handleClickSort = async (type: 'createdAt' | 'updatedAt') => {
   emit('clickSort', type);
 }
 const handleClickRetrySync = async () => {
   emit('clickRetrySync');
+}
+const handleOpenSortModal = () => {
+  toggleModalSortNote(true, isModalSortOpen);
 }
 </script>
 
@@ -41,7 +47,14 @@ const handleClickRetrySync = async () => {
     </div>
 
     <div class="h-6 mx-2 rounded-lg text-xs text-center py-1 flex-none flex items-center">
-      <div class="dropdown dropdown-bottom dropdown-end">
+      <div class="lg:hidden m-1 cursor-pointer" @click="handleOpenSortModal">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold">{{ $t('app.toolbar_note_sort_by_title') }}</span>
+          <ArrowDown class="w-4 h-4" />
+        </div>
+      </div>
+
+      <div class="hidden lg:block dropdown dropdown-bottom dropdown-end">
         <div tabindex="0" role="button" class="m-1">
           <div class="flex items-center gap-2">
             <span class="text-xs font-semibold">{{ $t('app.toolbar_note_sort_by_title') }}</span>
@@ -50,7 +63,7 @@ const handleClickRetrySync = async () => {
         </div>
 
         <ul tabindex="0"
-          class="dropdown-content menu menu-sm bg-base-200 z-[1] w-44 p-2 shadow rounded-xl border border-neutral">
+          class="dropdown-content menu menu-sm bg-base-200 z-[1] w-36 p-2 shadow rounded-xl border border-neutral">
           <li class="" @click="() => handleClickSort('createdAt')">
             <a>
               <CircleCheck v-if="props.sortType === 'createdAt'" class="w-4 h-4" />
@@ -69,4 +82,6 @@ const handleClickRetrySync = async () => {
       </div>
     </div>
   </div>
+
+  <ModalSortNote :sortType="props.sortType" @clickSort="handleClickSort" />
 </template>

@@ -69,7 +69,7 @@ const focusPassword = () => {
   passwordUnlockRef.value?.focus();
 }
 const focus = (location: 'start' | 'end' = 'start') => {
-  // editorRef.value?.focus(location);
+  editorRef.value?.focus(location);
 }
 const readonly = () => {
   editorRef.value?.readonly();

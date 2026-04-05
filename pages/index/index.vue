@@ -75,6 +75,7 @@ onMounted(async () => {
 
   window.history.replaceState({}, '', window.location.pathname); // reset query params
   outsideClickMenu(); // handle outside click for menu
+  disableDefaultContextMenu();
 
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === 'visible') {
@@ -220,15 +221,39 @@ onMounted(async () => {
   }, 100);
 });
 const isSyncAll = ref<boolean>(false);
+const isSyncingAll = ref<boolean>(false);
+const SYNC_LEVELS = [
+  { seconds: 300, labelKey: 'app.sync_5_minutes' },
+  { seconds: 3600, labelKey: 'app.sync_1_hour' },
+  { seconds: 21600, labelKey: 'app.sync_6_hours' },
+  { seconds: 86400, labelKey: 'app.sync_1_day' },
+  { seconds: 604800, labelKey: 'app.sync_1_week' },
+  { seconds: 2592000, labelKey: 'app.sync_1_month' },
+  { seconds: 0, labelKey: 'app.message_sync_all_notes' },
+];
+const syncLevel = ref<number>(0);
+let syncLevelResetTimer: ReturnType<typeof setTimeout> | null = null;
 const handleClickUpdateData = async () => {
   toggleModalMenuSidebar(false, isShowModalMenuSidebar);
+  navbarTopRef.value?.closeDrawer();
 
-  isSyncAll.value = true;
-  lastPull.value = 0;
+  isSyncingAll.value = true;
+  const level = SYNC_LEVELS[syncLevel.value];
+  isSyncAll.value = syncLevel.value === SYNC_LEVELS.length - 1;
+  lastPull.value = level.seconds === 0 ? 0 : nowUnix() - level.seconds;
+
   await pullPush().catch(() => { });
   isSyncAll.value = false;
+  isSyncingAll.value = false;
 
-  showInfoSnackbar($i18n.t('app.message_sync_all_notes'));
+  showInfoSnackbar($i18n.t(level.labelKey));
+
+  syncLevel.value = (syncLevel.value + 1) % SYNC_LEVELS.length;
+
+  if (syncLevelResetTimer) clearTimeout(syncLevelResetTimer);
+  syncLevelResetTimer = setTimeout(() => {
+    syncLevel.value = 0;
+  }, 10000);
 }
 const handleClickAddFolder = async () => {
   toggleModalMenuSidebar(false, isShowModalMenuSidebar);
@@ -318,7 +343,7 @@ const handleConfirmDeleteFolder = async (folderId: string) => {
   });
   setActionObject('folder', updatedFolder);
 
-  const notesInFolder = await getNotes(folderId, sortType.value);
+  const notesInFolder = await getNotes(folderId, sortType.value, $i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
   for (const note of notesInFolder) {
     const updatedNote = await updateNote(note.id, {
       deletedAt: nowUnix(),
@@ -373,13 +398,13 @@ const handleClickRetrySync = async () => {
 
 // all logic for notes
 const loadNotes = async () => {
-  return getNotes(activeFolderId.value, sortType.value);
+  return getNotes(activeFolderId.value, sortType.value, $i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
 }
 const loadActiveNote = async () => {
   return getActiveNote();
 }
 const loadTrashNotes = async () => {
-  return getDeletedNotes();
+  return getDeletedNotes($i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
 }
 
 const listNotes = ref<any[]>([]);
@@ -388,7 +413,7 @@ const handleClickAddNote = async () => {
   setActionObject('note', newNote);
   listNotes.value = await loadNotes();
 
-  handleClickNote(newNote.id, true);
+  handleClickNote(newNote.id, true, true);
 };
 const handleClickSearch = async (value: string) => {
   if (!value) {
@@ -429,14 +454,14 @@ const handleClickCancelSearch = async () => {
   listNotes.value = await loadNotes();
 }
 const activeNoteId = ref<string>("");
-const handleClickNote = async (noteId: string, inEditor: boolean = false) => {
+const handleClickNote = async (noteId: string, inEditor: boolean = false, shouldFocus: boolean = false) => {
   activeNoteId.value = noteId;
   setActiveNote(noteId);
   formNotes.value = await getNoteDetail(activeNoteId.value);
   setTimeout(() => {
     formNotesRef.value?.focusPassword();
 
-    if (!isMobile.value || !formNotes.value.content) {
+    if (shouldFocus && (!isMobile.value || !formNotes.value.content)) {
       formNotesRef.value?.focus();
     }
   }, 100);
@@ -1267,7 +1292,7 @@ const pullPush = async () => {
   const pull = await pullData(
     settings.value,
     privateKey.value,
-    lastPushData.value,
+    lastPushData.value || lastPull.value,
     lastPull,
     idPulled,
     actionObject,
@@ -1285,7 +1310,7 @@ const pullPush = async () => {
     settings.value,
     privateKey.value,
     actionObject,
-    lastPull,
+    lastPushData,
     pull.now!,
   );
   if (pull.ok) {
@@ -1313,15 +1338,15 @@ const changeThemeColor = () => {
   setTimeout(() => {
     if (colorMode.preference === "dark") {
       if (isMobile.value) {
-        metaThemeColor?.setAttribute("content", "#262626");
+        // metaThemeColor?.setAttribute("content", "oklch(27% 0 0)");
       } else {
-        metaThemeColor?.setAttribute("content", "#090909");
+        metaThemeColor?.setAttribute("content", "oklch(0.14 0 0)");
       }
     } else {
       if (isMobile.value) {
-        metaThemeColor?.setAttribute("content", "#fcfcfc");
+        // metaThemeColor?.setAttribute("content", "oklch(0.99 0 0)");
       } else {
-        metaThemeColor?.setAttribute("content", "#e4e4e4");
+        metaThemeColor?.setAttribute("content", "oklch(0.92 0 0)");
       }
     }
   }, 1000);
@@ -1378,7 +1403,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
 
     <!-- cols personal -->
     <div class="hidden lg:block lg:float-left cols-personal w-20 bg-base-300">
-      <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder"
+      <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder" :isSyncing="isSyncingAll"
         @clickNotes="handleClickFolderName('')" @clickTrash="handleClickBottombarTrash"
         @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData"
         @clickCollapseFolder="handleClickCollapseFolder" />
