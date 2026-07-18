@@ -145,6 +145,17 @@ class LocalForageRepository implements NotasRepository {
     await localForage.setItem('password', password);
     return password;
   }
+  async getPasswordChangeBackup(): Promise<any> {
+    return JSON.parse(await localForage.getItem('passwordChangeBackup') || 'null');
+  }
+  async savePasswordChangeBackup(data: any): Promise<any> {
+    await localForage.setItem('passwordChangeBackup', JSON.stringify(data));
+    return data;
+  }
+  async clearPasswordChangeBackup(): Promise<boolean> {
+    await localForage.removeItem('passwordChangeBackup');
+    return true;
+  }
 
   // sync
   async getLastPull(): Promise<number> {

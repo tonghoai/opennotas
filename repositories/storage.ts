@@ -75,6 +75,15 @@ class NotasStorage {
   async setPassword(password: string): Promise<string> {
     throw new Error('Not implemented');
   }
+  async getPasswordChangeBackup(): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async savePasswordChangeBackup(data: any): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async clearPasswordChangeBackup(): Promise<boolean> {
+    throw new Error('Not implemented');
+  }
 
   // sync
   async getLastPull(): Promise<number> {

@@ -174,6 +174,15 @@ async function getPassword() {
 async function setPassword(password: string) {
   return storage.setPassword(password);
 }
+async function getPasswordChangeBackup() {
+  return storage.getPasswordChangeBackup();
+}
+async function savePasswordChangeBackup(data: any) {
+  return storage.savePasswordChangeBackup(data);
+}
+async function clearPasswordChangeBackup() {
+  return storage.clearPasswordChangeBackup();
+}
 
 // import
 async function getImportData() {
@@ -258,6 +267,9 @@ export {
   checkPasswordExist,
   getPassword,
   setPassword,
+  getPasswordChangeBackup,
+  savePasswordChangeBackup,
+  clearPasswordChangeBackup,
 
   getImportData,
   setImportData,

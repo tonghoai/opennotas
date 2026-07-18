@@ -19,6 +19,9 @@ import {
   updateLastPull,
   checkPasswordExist,
   setPassword,
+  getPasswordChangeBackup,
+  savePasswordChangeBackup,
+  clearPasswordChangeBackup,
   getSettings,
   getAllNotes,
   setSettings,
@@ -110,6 +113,18 @@ onMounted(async () => {
   //       .SimpleBar(document.getElementById('form-editors'), { autoHide: true, clickOnTrack: false });
   //   }, 100);
   // }
+});
+
+// recover notes left half-migrated if a previous password change was interrupted
+onMounted(async () => {
+  const backup = await getPasswordChangeBackup();
+  if (backup?.notes?.length) {
+    for (const item of backup.notes) {
+      await updateNote(item.id, { content: item.content }).catch(() => { });
+    }
+    await clearPasswordChangeBackup();
+    showInfo($i18n.t('app.message_change_password_recovered'));
+  }
 });
 
 
@@ -914,39 +929,91 @@ const handleSetPassword = async (data: any) => {
   modalSettingRef.value?.closeSetPasswordModal();
   modalSetPasswordRef.value?.reset();
 }
+const isChangingPassword = ref<boolean>(false);
+const handleBeforeUnloadWarning = (e: BeforeUnloadEvent) => {
+  e.preventDefault();
+  e.returnValue = '';
+};
 const handleChangePassword = async (data: any) => {
+  if (isChangingPassword.value) {
+    return;
+  }
+  isChangingPassword.value = true;
+
   try {
     const password = await getPassword();
     const newHashPassword = await hashPassword(data.oldPassword);
     if (password !== newHashPassword) {
-      throw new Error($i18n.t('app.message_note_unlocked_failed'));
+      throw new Error('WRONG_OLD_PASSWORD');
     }
 
-    // find all notes locked and unlock
+    // Phase 1 - verify: decrypt every locked note with the old password first, no writes yet
     const allNotes = await getAllNotes();
     const notesLocked = allNotes.filter((note: any) => note.isLocked && !note.deleteCompletelyAt);
-    const hashNewPassword = await hashPassword(data.newPassword);
+    const decryptedNotes: { id: string; plainContent: string; oldContent: string }[] = [];
     for (const note of notesLocked) {
       const noteDetail = await getNoteDetail(note.id);
-      const decryptNoteDetailContent = await decryptData(noteDetail.content, password);
-
-      const updatedNote = await updateNote(note.id, {
-        isLocked: 1,
-        content: await encryptData(decryptNoteDetailContent, hashNewPassword),
-        updatedAt: nowUnix(),
-      });
-      setActionObject('note', updatedNote);
+      let plainContent: string;
+      try {
+        plainContent = await decryptData(noteDetail.content, password);
+      } catch (decryptError) {
+        throw new Error('DECRYPT_FAILED');
+      }
+      decryptedNotes.push({ id: note.id, plainContent, oldContent: noteDetail.content });
     }
 
-    await setPassword(await hashPassword(data.newPassword));
+    // Phase 2 - prepare: re-encrypt everything with the new password, still only in memory
+    const hashNewPassword = await hashPassword(data.newPassword);
+    const preparedNotes = await Promise.all(decryptedNotes.map(async (item) => ({
+      id: item.id,
+      newContent: await encryptData(item.plainContent, hashNewPassword),
+      oldContent: item.oldContent,
+    })));
+
+    // Phase 3 - commit: persist a recovery backup, then write, rolling back on failure
+    await savePasswordChangeBackup({
+      notes: preparedNotes.map((item) => ({ id: item.id, content: item.oldContent })),
+      createdAt: nowUnix(),
+    });
+    window.addEventListener('beforeunload', handleBeforeUnloadWarning);
+
+    const writtenNotes: typeof preparedNotes = [];
+    try {
+      for (const item of preparedNotes) {
+        const updatedNote = await updateNote(item.id, {
+          isLocked: 1,
+          content: item.newContent,
+          updatedAt: nowUnix(),
+        });
+        writtenNotes.push(item);
+        setActionObject('note', updatedNote);
+      }
+    } catch (writeError) {
+      for (const item of writtenNotes) {
+        await updateNote(item.id, { content: item.oldContent, updatedAt: nowUnix() }).catch(() => { });
+      }
+      throw new Error('WRITE_FAILED');
+    }
+
+    await setPassword(hashNewPassword);
     setActionObject('settings', { 'id': 'settings' });
+    await clearPasswordChangeBackup();
 
     toggleModalSetPassword(false, isShowModalSetPassword);
     showSuccess($i18n.t('app.message_change_password_success'));
     modalSetPasswordRef.value?.reset();
-  } catch (error) {
-    modalSetPasswordRef.value?.showOldPasswordWrong();
+  } catch (error: any) {
+    if (error?.message === 'DECRYPT_FAILED') {
+      showErrorSnackbar($i18n.t('app.message_change_password_note_corrupted'));
+    } else if (error?.message === 'WRITE_FAILED') {
+      showErrorSnackbar($i18n.t('app.message_change_password_failed'));
+    } else {
+      modalSetPasswordRef.value?.showOldPasswordWrong();
+    }
     return;
+  } finally {
+    window.removeEventListener('beforeunload', handleBeforeUnloadWarning);
+    isChangingPassword.value = false;
   }
 }
 const handleConfirmSetPassword = async (data: any) => {
@@ -1523,7 +1590,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     @clickImportNotes="handleClickImportNotes" @closeSetting="handleClickCloseSettings" />
   <ModalAlertSetPassword v-if="isShowModalAlertSetPassword" @close="handleClickCloseModalAlertSetPassword" />
   <ModalSetPassword v-if="isShowModalSetPassword" ref="modalSetPasswordRef" :type="isPasswordExist ? 'change' : 'set'"
-    @confirm="handleConfirmSetPassword" @close="handleCloseSetPassword" />
+    :isLoading="isChangingPassword" @confirm="handleConfirmSetPassword" @close="handleCloseSetPassword" />
   <ModalConfirmChangeAdapter v-if="isShowModalConfirmChangeAdapter" :adapterName="''"
     :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" @confirm="handleConfirmChangeAdapterOnline"
     @close="handleClickCloseModalConfirmChangeAdapter" />
