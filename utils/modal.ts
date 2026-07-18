@@ -23,6 +23,10 @@ function toggleModalConfirmDeleteFolder(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-confirm-delete-folder", isOpen, state);
 }
 
+function toggleModalConfirmSampleData(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-confirm-sample-data", isOpen, state);
+}
+
 function toggleModalMenuNote(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-menu-note", isOpen, state);
 }
@@ -87,6 +91,7 @@ export {
   toggleModalMenuFolder,
   toggleModalChangeFolderName,
   toggleModalConfirmDeleteFolder,
+  toggleModalConfirmSampleData,
   toggleModalMenuNote,
   toggleModalSortNote,
   toggleModalMenuSidebar,

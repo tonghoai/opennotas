@@ -114,15 +114,25 @@ onMounted(async () => {
 
 
 // init data notes if first time access
+const isShowModalConfirmSampleData = ref<boolean>(false);
 onMounted(async () => {
   const isFirstInit = await checkIsFirstInit();
   if (isFirstInit) {
-    const notes = await fetch('/opennotas.json').then((res) => res.json());
-    await setImportData(notes);
-    await handleTriggerImportNotes();
-    await setFirstInit();
+    toggleModalConfirmSampleData(true, isShowModalConfirmSampleData);
   }
 });
+const handleConfirmSampleData = async () => {
+  toggleModalConfirmSampleData(false, isShowModalConfirmSampleData);
+
+  const notes = await fetch('/opennotas.json').then((res) => res.json());
+  await setImportData(notes);
+  await handleTriggerImportNotes();
+  await setFirstInit();
+};
+const handleCancelSampleData = async () => {
+  toggleModalConfirmSampleData(false, isShowModalConfirmSampleData);
+  await setFirstInit();
+};
 
 // reloadNotes & reloadFolder using for reload all data display on screen
 const listNotesKey = ref<number>(0);
@@ -1491,6 +1501,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
   </div>
 
   <!-- modal -->
+  <ModalConfirmSampleData v-if="isShowModalConfirmSampleData" @confirm="handleConfirmSampleData"
+    @close="handleCancelSampleData" />
   <ModalNotesDetail v-if="isShowModalNotesDetail" :noteInfo="noteInfo" @close="handleClickCloseNotesDetail" />
   <ModalSetting v-if="isShowModalSettings" ref="modalSettingRef" :settings="settings" :isPasswordExist="isPasswordExist"
     @setPassword="handleSetPassword" @changePassword="handleChangePassword" @changeAdapter="handleChangeAdapter"
