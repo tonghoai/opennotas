@@ -283,6 +283,7 @@ const handleClickFolderName = async (folderId: string) => {
   navbarTopRef.value?.resetSearchInput();
   toolbarNotesRef.value?.resetSearchInput();
   activeFolderId.value = folderId;
+  isCollapsePanel.value = false;
   setActiveFolder(folderId);
 
   reloadNotes();
@@ -370,6 +371,7 @@ const handleConfirmDeleteFolder = async (folderId: string) => {
 }
 const handleClickBottombarTrash = async () => {
   activeFolderId.value = 'bottombar-trash';
+  isCollapsePanel.value = false;
   setActiveFolder('bottombar-trash');
 
   listNotes.value = await loadTrashNotes();
@@ -761,6 +763,10 @@ watch(() => isCollapsePanel.value, (newValue) => {
 });
 const isCollapseFolder = ref<boolean>(false);
 const handleClickCollapseFolder = () => {
+  if (activeFolderId.value === 'bottombar-trash') {
+    return;
+  }
+
   isCollapseFolder.value = !isCollapseFolder.value;
 }
 const isShowFormatToolbar = ref<boolean>(false);
@@ -1422,7 +1428,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
 
     <!-- cols folders -->
     <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300/80"
-      :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder }"
+      :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder && activeFolderId !== 'bottombar-trash' }"
       :style="{ width: colsFoldersWidth + 'px' }">
       <div>
         <ToolbarFolder :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
