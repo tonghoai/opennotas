@@ -29,6 +29,7 @@ type NoteType = {
   id: string;
   folderId: string;
   content: string;
+  title?: string;
   isPinned: boolean;
   isLocked: boolean;
   lastSync: number;
@@ -41,6 +42,7 @@ type NoteCreateType = {
   id: string;
   folderId: string;
   content: string;
+  title?: string;
   isPinned: boolean;
   isLocked: boolean;
   lastSync: number;
@@ -53,6 +55,7 @@ type NoteCreateType = {
 type NoteUpdateType = {
   folderId: string;
   content: string;
+  title?: string;
   isPinned: boolean;
   isLocked: boolean;
   lastSync: number;

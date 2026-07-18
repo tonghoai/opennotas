@@ -575,6 +575,7 @@ const handleClickLockNote = async (data: any) => {
     isLocked: data.status == 1 ? 0 : 1,
     content: data.status == 1 ? await decryptData(note.content, password)
       : await encryptData(note.content, password),
+    title: removeSpecialChar(substrTitle(note.content)),
     updatedAt: nowUnix(),
   });
 
@@ -593,9 +594,11 @@ const handleUnlockNote = async (data: any) => {
     }
 
     const note = await getNoteDetail(data.noteId);
+    const decryptedContent = await decryptData(note.content, password);
     const updatedNote = await updateNote(data.noteId, {
       isLocked: 0,
-      content: await decryptData(note.content, password),
+      content: decryptedContent,
+      title: removeSpecialChar(substrTitle(decryptedContent)),
       updatedAt: nowUnix(),
     });
     setActionObject('note', updatedNote);

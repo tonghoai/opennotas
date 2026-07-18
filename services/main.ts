@@ -60,7 +60,7 @@ async function getAllNotes() {
 async function getNotes(folderId: string, sortType: 'createdAt' | 'updatedAt', lockedTitle: string, lockedContent: string) {
   const notes = await storage.getNotes(folderId);
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(substrTitle(note.content)) : lockedTitle;
+    const title = !note.isLocked ? removeSpecialChar(substrTitle(note.content)) : (note.title || lockedTitle);
     const content = !note.isLocked ? removeSpecialChar(substrContent(note.content)) : lockedContent;
     return {
       ...note,
@@ -126,7 +126,7 @@ async function getNoteDetail(noteId: string) {
 async function getDeletedNotes(lockedTitle: string, lockedContent: string) {
   const notes = await storage.getDeletedNotes();
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : lockedTitle;
+    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : (note.title || lockedTitle);
     const content = !note.isLocked ? removeSpecialChar(note.content.split('\n').slice(1).join('\n').substr(0, 60)) : lockedContent;
     return {
       ...note,
