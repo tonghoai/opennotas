@@ -206,6 +206,7 @@
     "message_note_copied_clipboard": "Đã sao chép ghi chú",
     "message_note_copied_clipboard_lock_error": "Không thể sao chép ghi chú đã khóa",
     "message_note_restored": "Đã khôi phục ghi chú",
+    "message_note_deleted": "Đã xóa ghi chú",
     "message_setting_sync_adapter_saved": "Đã lưu cấu hình đồng bộ",
     "message_sync_all_notes": "Đã đồng bộ tất cả ghi chú",
     "sync_5_minutes": "Đã đồng bộ ghi chú trong 5 phút gần đây",

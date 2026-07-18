@@ -513,6 +513,7 @@ const handleClickDeleteNote = async (noteId: string) => {
 
   listNotes.value = await loadNotes();
   formNotes.value = {};
+  showSuccess($i18n.t('app.message_note_deleted'));
 }
 const handleClickDeleteNoteForever = async (noteId: string) => {
   const updatedNote = await updateNote(noteId, {
@@ -1497,7 +1498,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
   <div id="menu-note" class="hidden absolute">
     <MenuNote :key="menuNoteKey" :noteId="activeNoteId" :formNotes="formNotes" @deleteNote="handleClickDeleteNote"
       @pinNote="handleClickPinNote" @lockNote="handleClickLockNote" @copyNote="handleCopyToClipboard"
-      @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever" />
+      @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever"
+      @clickInfo="handleClickFormNotesInfo" />
   </div>
 
   <!-- modal -->

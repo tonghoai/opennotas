@@ -206,6 +206,7 @@
         "message_note_copied_clipboard": "已複製筆記",
         "message_note_copied_clipboard_lock_error": "無法複製已上鎖的筆記",
         "message_note_restored": "已還原筆記",
+        "message_note_deleted": "已刪除筆記",
         "message_setting_sync_adapter_saved": "已儲存同步設定",
         "message_sync_all_notes": "同步所有筆記",
         "sync_5_minutes": "已同步最近 5 分鐘的筆記",

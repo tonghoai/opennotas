@@ -206,6 +206,7 @@
     "message_note_copied_clipboard": "Note Copied",
     "message_note_copied_clipboard_lock_error": "It is not possible to copy a locked note",
     "message_note_restored": "Note Restored",
+    "message_note_deleted": "Note Deleted",
     "message_setting_sync_adapter_saved": "Sync Configuration Saved",
     "message_sync_all_notes": "Sync All Notes",
     "sync_5_minutes": "Synced notes from the last 5 minutes",
