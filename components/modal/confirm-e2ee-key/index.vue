@@ -27,11 +27,11 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-confirm-e2ee-key" class="modal modal-top lg:modal-middle">
-    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-neutral">
+  <dialog id="modal-confirm-e2ee-key"
+    class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
       <form method="dialog">
-        <button class="btn btn-sm lg:btn-md btn-circle btn-ghost absolute right-2 top-2"
-          @click="handleClickClose">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">
         {{ $t('app.modal_confirm_e2ee_key_title') }}
@@ -50,10 +50,10 @@ const handleClickClose = () => {
 
         <div class="modal-action">
           <form method="dialog">
-            <button class="btn btn-sm lg:btn-md mr-2">
+            <button class="btn btn-sm mr-2">
               {{ $t('app.modal_confirm_e2ee_key_cancel') }}
             </button>
-            <button class="btn btn-sm lg:btn-md btn-primary" @click="handleClickSubmit" :disabled="!isValidate">
+            <button class="btn btn-sm btn-primary" @click="handleClickSubmit" :disabled="!isValidate">
               {{ $t('app.modal_confirm_e2ee_key_ok') }}
             </button>
           </form>

@@ -74,8 +74,10 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-set-password" class="modal modal-top lg:modal-middle">
-    <div id="modal-set-password-content" class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-neutral">
+  <dialog id="modal-set-password"
+    class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    <div id="modal-set-password-content"
+      class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
@@ -106,7 +108,7 @@ const handleClickClose = () => {
         <div class="form-control w-full pt-2">
           <div class="label">
             <span class="font-semibold label-text">{{ $t('app.modal_set_password_confirm_password_input_title')
-              }}</span>
+            }}</span>
           </div>
           <input ref="inputPasswordRef" v-model="confirmPassword" type="password"
             :placeholder="$t('app.modal_set_password_confirm_password_input_title')"
@@ -116,7 +118,7 @@ const handleClickClose = () => {
 
         <div class="form-control w-full pt-2">
           <div class="label"></div>
-          <button class="btn btn-sm lg:btn-md btn-primary" :disabled="!isValidate" @click="handleConfirmPassword">
+          <button class="btn btn-sm btn-primary" :disabled="!isValidate" @click="handleConfirmPassword">
             {{ $t('app.modal_set_password_ok') }}
           </button>
         </div>

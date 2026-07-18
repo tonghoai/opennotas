@@ -591,7 +591,7 @@ const handleUnlockNote = async (data: any) => {
     formNotes.value = await getNoteDetail(activeNoteId.value);
 
     toggleModalUnlockNotes(false, isShowModalUnlockNotes);
-    showInfoSnackbar($i18n.t('app.message_note_unlocked'));
+    showSuccess($i18n.t('app.message_note_unlocked'));
   } catch (error) {
     modalUnlockNotesRef.value?.showFailedPassword();
     showErrorSnackbar($i18n.t('app.message_note_unlocked_failed'));
@@ -609,7 +609,7 @@ const handleClickRestoreNote = async (noteId: string) => {
 
   listNotes.value = await loadTrashNotes();
   formNotes.value = {};
-  showInfoSnackbar($i18n.t('app.message_note_restored'));
+  showSuccess($i18n.t('app.message_note_restored'));
 }
 
 
@@ -635,7 +635,7 @@ const handleConfirmPassword = async (password: string) => {
     formNotes.value.content = await decryptData(formNotes.value.content, currentPassword);
     formNotes.value.isLocked = false;
     formNotesRef.value?.resetPassword();
-    showInfoSnackbar($i18n.t('app.message_note_unlocked'));
+    showSuccess($i18n.t('app.message_note_unlocked'));
   } catch (error) {
     formNotesRef.value?.wrongPassword();
     showErrorSnackbar($i18n.t('app.message_note_unlocked_failed'));
@@ -685,7 +685,7 @@ const handleCopyToClipboard = async () => {
 
   const note = await getNoteDetail(activeNoteId.value);
   navigator.clipboard.writeText(removeMarkdownEscape(note.content));
-  showInfoSnackbar($i18n.t('app.message_note_copied_clipboard'));
+  showSuccess($i18n.t('app.message_note_copied_clipboard'));
 };
 const noteInfo = ref<any>({
   lastSync: 0,
@@ -836,7 +836,7 @@ const handleConfirmInsertImage = (data: any) => {
   formNotesRef.value?.handleInsertImage(data);
 }
 const handleAlertMessage = (message: string) => {
-  showErrorSnackbar(message);
+  showInfo(message);
 }
 
 // search notes feature
@@ -922,7 +922,7 @@ const handleChangePassword = async (data: any) => {
     setActionObject('settings', { 'id': 'settings' });
 
     toggleModalSetPassword(false, isShowModalSetPassword);
-    showInfoSnackbar($i18n.t('app.message_change_password_success'), document.getElementById('modal-settings')!);
+    showSuccess($i18n.t('app.message_change_password_success'));
     modalSetPasswordRef.value?.reset();
   } catch (error) {
     modalSetPasswordRef.value?.showOldPasswordWrong();
@@ -974,7 +974,7 @@ const handleConfirmChangeAdapter = async (e2eeKey: string) => {
   }
 
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
-  showInfoSnackbar($i18n.t('app.message_setting_sync_adapter_saved'));
+  showSuccess($i18n.t('app.message_setting_sync_adapter_saved'));
 
   // trigger 1 time sync to push data to new adapter
   handleClickUpdateData();
@@ -1107,7 +1107,7 @@ const handleTriggerImportNotes = async () => {
   await reloadFolder();
 
   toggleModalImportNotes(false, isShowModalImportNotes);
-  showInfoSnackbar($i18n.t('app.message_import_notes'));
+  showSuccess($i18n.t('app.message_import_notes'));
   navbarTopRef.value?.closeDrawer();
 }
 const modalExportNotesConfirm = ref<any>(null);

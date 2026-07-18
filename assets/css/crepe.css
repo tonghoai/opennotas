@@ -22,12 +22,14 @@
   --crepe-color-selected: oklch(var(--p));
   --crepe-color-inline-area: #2b2b2b;
 
-  --crepe-font-title: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  --crepe-font-default: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  --crepe-font-code: "Space Mono", Fira Code, Menlo, Monaco, "Courier New",
-    Courier, monospace;
+  --crepe-font-title:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --crepe-font-default:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --crepe-font-code:
+    "Space Mono", Fira Code, Menlo, Monaco, "Courier New", Courier, monospace;
   /* 
   --crepe-shadow-1:
     0px 1px 2px 0px rgba(255, 255, 255, 0.3),
@@ -122,6 +124,59 @@
   height: 100px !important;
 }
 
+/* image sync badge */
+.milkdown .milkdown-image-block {
+  position: relative;
+}
+.image-sync-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.15s,
+    opacity 0.15s;
+  opacity: 0.9;
+  border: none;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.image-sync-badge:hover {
+  opacity: 1;
+  transform: scale(1.12);
+}
+.image-sync-badge--pending {
+  background: rgba(0, 0, 0, 0.55);
+}
+.image-sync-badge--failed {
+  background: rgba(0, 0, 0, 0.55);
+}
+.image-sync-badge--syncing {
+  background: rgba(0, 0, 0, 0.55);
+  cursor: default;
+  animation: sync-badge-spin 1s linear infinite;
+}
+.image-sync-badge svg {
+  width: 18px;
+  height: 18px;
+  color: #f59e0b;
+}
+@keyframes sync-badge-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* image */
 .milkdown .milkdown-image-block .image-edit {
   border-radius: 0.5rem !important;
@@ -141,9 +196,42 @@
   align-items: center;
   justify-content: center;
 }
+.milkdown .milkdown-image-block .caption-input {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  font-style: italic !important;
+}
 /* Prevent scroll when resizing image on mobile */
 .milkdown .milkdown-image-block .image-resize-handle {
   touch-action: none;
+}
+
+/* Image loading placeholder — hide broken icon while blob URL is resolving */
+.milkdown .milkdown-image-block img {
+  transition: opacity 0.3s ease;
+}
+.milkdown .milkdown-image-block img[src^="opennotas://"] {
+  opacity: 0;
+}
+.milkdown .milkdown-image-block > .image-wrapper:has(img[src^="opennotas://"]) {
+  min-height: 120px;
+  border-radius: 8px;
+  background-image: linear-gradient(
+    90deg,
+    oklch(var(--b2)) 25%,
+    oklch(var(--b3)) 50%,
+    oklch(var(--b2)) 75%
+  );
+  background-size: 200% 100%;
+  animation: img-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes img-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Link preview */

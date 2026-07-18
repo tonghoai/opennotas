@@ -34,8 +34,8 @@ const handleClickDeleteNoteForever = () => {
 </script>
 
 <template>
-  <dialog id="modal-menu-note" class="modal">
-    <div class="modal-box p-0 w-5/6 border border-neutral">
+  <dialog id="modal-menu-note" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    <div class="modal-box p-0 w-5/6 border border-base-content/15">
       <div class="bg-base-100 shadow-sm rounded">
         <!-- case active notes -->
         <ul v-if="!formNotes.deletedAt"

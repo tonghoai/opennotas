@@ -14,8 +14,8 @@ const handleClickForceSync = () => {
 </script>
 
 <template>
-  <dialog id="modal-menu-sidebar" class="modal">
-    <div class="modal-box p-0 w-5/6 border border-neutral">
+  <dialog id="modal-menu-sidebar" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    <div class="modal-box p-0 w-5/6 border border-base-content/15">
       <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
         <li class="w-full text-center" @click="handleClickAddFolder">
           <a class="w-full block text-center">{{ $t('app.modal_menu_sidebar_new_folder') }}</a>

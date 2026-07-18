@@ -248,6 +248,16 @@ function cleanupBlobUrlCache(): void {
   blobUrlCache.clear();
 }
 
+async function resetSyncedImages(): Promise<number> {
+  const metas = await imageRepository.getAllImagesMeta();
+  const synced = metas.filter((m) => m.syncStatus === 'synced');
+  for (const meta of synced) {
+    await imageRepository.updateSyncStatus(meta.id, 'pending');
+  }
+  cleanupBlobUrlCache();
+  return synced.length;
+}
+
 async function getSyncStats(): Promise<{
   total: number;
   pending: number;
@@ -285,4 +295,5 @@ export {
   resolveContentImageUrls,
   cleanupBlobUrlCache,
   getSyncStats,
+  resetSyncedImages,
 };
