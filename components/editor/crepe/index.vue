@@ -44,6 +44,7 @@ const blobUrlToImageId = new Map<string, string>();
 // Track injected badge elements per imageId
 const imageBadgeMap = new Map<string, HTMLElement>();
 let domObserver: MutationObserver | null = null;
+let linkEditObserver: MutationObserver | null = null;
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
 let isRefreshingBadges = false;
 let imagePasteHandler: ((e: Event) => void) | null = null;
@@ -235,6 +236,33 @@ const setupDomObserver = () => {
   domObserver.observe(editorEl, { childList: true, subtree: true });
 };
 
+// Milkdown's link-edit popup focuses its input via requestAnimationFrame right when it
+// opens, which can race with the popup's own `data-show` flip and silently no-op if the
+// element is still `display:none` at that instant. Force-focus it ourselves whenever it
+// becomes visible so the popup never opens without focus landing in the input.
+const setupLinkEditFocusObserver = () => {
+  const editorEl = document.querySelector('#crepe-editor');
+  if (!editorEl) return;
+
+  linkEditObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      const target = mutation.target as HTMLElement;
+      if (!target.classList?.contains('milkdown-link-edit')) continue;
+      if (target.getAttribute('data-show') !== 'true') continue;
+
+      const input = target.querySelector<HTMLInputElement>('.link-edit input.input-area');
+      if (input && document.activeElement !== input) {
+        input.focus();
+      }
+    }
+  });
+  linkEditObserver.observe(editorEl, {
+    attributes: true,
+    attributeFilter: ['data-show'],
+    subtree: true,
+  });
+};
+
 onMounted(() => {
   editor = new Crepe({
     root: document.querySelector("#crepe-editor")!,
@@ -419,6 +447,7 @@ onMounted(() => {
       ?.addEventListener('pointerdown', imageResizeHandler as EventListener, true);
 
     setupDomObserver();
+    setupLinkEditFocusObserver();
     setTimeout(() => {
       focus();
     }, 100);
@@ -464,6 +493,7 @@ const focusState = () => {
 
 onUnmounted(() => {
   domObserver?.disconnect();
+  linkEditObserver?.disconnect();
   stopRefreshInterval();
   imageBadgeMap.clear();
   blobUrlToImageId.clear();
