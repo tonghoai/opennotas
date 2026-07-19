@@ -55,6 +55,22 @@ function toggleModalNotesDetail(isOpen: boolean, state: Ref) {
   _toggleModal("modal-notes-detail", isOpen, state);
 }
 
+function toggleModalNoteHistory(isOpen: boolean, state: Ref) {
+  _toggleModal("modal-note-history", isOpen, state);
+}
+
+function toggleModalNoteHistoryDiff(isOpen: boolean, state: Ref) {
+  _toggleModal("modal-note-history-diff", isOpen, state);
+}
+
+function toggleModalConfirmRestoreNoteHistory(isOpen: boolean, state: Ref) {
+  _toggleModal("modal-confirm-restore-note-history", isOpen, state);
+}
+
+function toggleModalConfirmDeleteNoteHistory(isOpen: boolean, state: Ref) {
+  _toggleModal("modal-confirm-delete-note-history", isOpen, state);
+}
+
 function toggleModalConfirmChangeAdapter(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-confirm-change-adapter", isOpen, state);
 }
@@ -99,6 +115,10 @@ export {
   toggleModalUnlockNotes,
   toggleModalAlertSetPassword,
   toggleModalNotesDetail,
+  toggleModalNoteHistory,
+  toggleModalNoteHistoryDiff,
+  toggleModalConfirmRestoreNoteHistory,
+  toggleModalConfirmDeleteNoteHistory,
   toggleModalConfirmChangeAdapter,
   toggleModalConfirmE2eeKey,
   toggleModalExportNotesConfirm,

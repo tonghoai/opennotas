@@ -119,6 +119,16 @@ async function setSortNote(sort: 'createdAt' | 'updatedAt') {
   return storage.setSortNote(sort);
 }
 
+async function getNoteHistory(noteId: string) {
+  return storage.getNoteHistory(noteId);
+}
+async function addNoteHistorySnapshot(noteId: string, content: string) {
+  return storage.addNoteHistorySnapshot(noteId, { id: randomUUID(), content, snapshotAt: nowUnix() });
+}
+async function deleteNoteHistorySnapshot(noteId: string, snapshotId: string) {
+  return storage.deleteNoteHistorySnapshot(noteId, snapshotId);
+}
+
 async function getNoteDetail(noteId: string) {
   return storage.getNoteDetail(noteId);
 }
@@ -253,6 +263,10 @@ export {
   getSortNote,
   setSortNote,
   getNoteDetail,
+
+  getNoteHistory,
+  addNoteHistorySnapshot,
+  deleteNoteHistorySnapshot,
 
   getDeletedNotes,
 

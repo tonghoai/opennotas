@@ -41,6 +41,9 @@ import {
   setFirstInit,
   setSortNote,
   getSortNote,
+  getNoteHistory,
+  addNoteHistorySnapshot,
+  deleteNoteHistorySnapshot,
 } from '../../services/main';
 import Mutex from "~/utils/mutex";
 import { removeMarkdownEscape } from "~/utils/string";
@@ -379,7 +382,7 @@ const handleConfirmDeleteFolder = async (folderId: string) => {
   }
 
   toggleModalConfirmDeleteFolder(false, isShowModalConfirmDeleteFolder);
-  showInfoSnackbar($i18n.t('app.message_folder_deleted'));
+  showSuccess($i18n.t('app.message_folder_deleted'));
 
   await setActiveFolder('');
   reloadFolder();
@@ -481,7 +484,32 @@ const handleClickCancelSearch = async () => {
   listNotes.value = await loadNotes();
 }
 const activeNoteId = ref<string>("");
+const activeNoteBaseline = ref<{ noteId: string, content: string }>({ noteId: '', content: '' });
+watch(activeNoteId, async (newId) => {
+  if (!newId) {
+    activeNoteBaseline.value = { noteId: '', content: '' };
+    return;
+  }
+  const note = await getNoteDetail(newId);
+  activeNoteBaseline.value = { noteId: newId, content: note?.content ?? '' };
+});
+const snapshotNoteBeforeLeaving = async (noteId: string) => {
+  if (activeNoteBaseline.value.noteId !== noteId) {
+    return;
+  }
+  const current = await getNoteDetail(noteId);
+  if (current?.content === undefined) {
+    return;
+  }
+  if (current.content === activeNoteBaseline.value.content) {
+    return;
+  }
+  await saveNoteHistorySnapshot(noteId, activeNoteBaseline.value.content);
+};
 const handleClickNote = async (noteId: string, inEditor: boolean = false, shouldFocus: boolean = false) => {
+  if (activeNoteId.value && activeNoteId.value !== noteId) {
+    await snapshotNoteBeforeLeaving(activeNoteId.value);
+  }
   activeNoteId.value = noteId;
   setActiveNote(noteId);
   formNotes.value = await getNoteDetail(activeNoteId.value);
@@ -620,6 +648,7 @@ const handleUnlockNote = async (data: any) => {
 
     listNotes.value = await loadNotes();
     formNotes.value = await getNoteDetail(activeNoteId.value);
+    activeNoteBaseline.value = { noteId: activeNoteId.value, content: formNotes.value.content };
 
     toggleModalUnlockNotes(false, isShowModalUnlockNotes);
     showSuccess($i18n.t('app.message_note_unlocked'));
@@ -671,6 +700,13 @@ const handleConfirmPassword = async (password: string) => {
     formNotesRef.value?.wrongPassword();
     showErrorSnackbar($i18n.t('app.message_note_unlocked_failed'));
   }
+};
+const saveNoteHistorySnapshot = async (noteId: string, content: string) => {
+  if (!noteId || content === undefined) return;
+  const history = await getNoteHistory(noteId);
+  const lastSnapshot = history[0];
+  if (lastSnapshot?.content === content) return;
+  await addNoteHistorySnapshot(noteId, content);
 };
 let debounceChangeContent: any = null;
 const handleChangeContent = async ({ content: newVal, id }: { content: string, id: string }) => {
@@ -738,13 +774,97 @@ const handleClickFormNotesInfo = async (noteId: string) => {
   };
   toggleModalNotesDetail(true, isShowModalNotesDetail);
 }
+const isShowModalNoteHistory = ref<boolean>(false);
+const historyNoteId = ref<string>('');
+const historyList = ref<any[]>([]);
+const historyIsLocked = ref<boolean>(false);
+const loadNoteHistory = async (noteId: string) => {
+  const note = await getNoteDetail(noteId);
+  historyIsLocked.value = !!note?.isLocked;
+  historyList.value = await getNoteHistory(noteId);
+};
+const handleClickFormNotesHistory = async (noteId: string) => {
+  historyNoteId.value = noteId;
+  await loadNoteHistory(noteId);
+  toggleModalNoteHistory(true, isShowModalNoteHistory);
+};
+const handleNoteHistoryRestored = async (noteId: string) => {
+  listNotes.value = await loadNotes();
+  if (activeNoteId.value === noteId) {
+    formNotes.value = await getNoteDetail(noteId);
+    formNotesRef.value?.slientUpdateValue(formNotes.value.content);
+    activeNoteBaseline.value = { noteId, content: formNotes.value.content };
+  }
+};
+const isShowModalNoteHistoryDiff = ref<boolean>(false);
+const diffSnapshotId = ref<string>('');
+const handleClickViewHistoryDiff = (snapshotId: string) => {
+  diffSnapshotId.value = snapshotId;
+  toggleModalNoteHistoryDiff(true, isShowModalNoteHistoryDiff);
+};
+const restoreSnapshotId = ref<string>('');
+const isShowModalConfirmRestoreNoteHistory = ref<boolean>(false);
+const handleRequestRestoreNoteHistory = (snapshotId: string) => {
+  restoreSnapshotId.value = snapshotId;
+  toggleModalConfirmRestoreNoteHistory(true, isShowModalConfirmRestoreNoteHistory);
+};
+const handleConfirmRestoreNoteHistory = async (snapshotId: string) => {
+  toggleModalConfirmRestoreNoteHistory(false, isShowModalConfirmRestoreNoteHistory);
+  const noteId = historyNoteId.value;
+  const snapshot = historyList.value.find((item: any) => item.id === snapshotId);
+  if (!snapshot) {
+    return;
+  }
+
+  const current = await getNoteDetail(noteId);
+  await deleteNoteHistorySnapshot(noteId, snapshotId);
+  if (current?.content !== undefined) {
+    await saveNoteHistorySnapshot(noteId, current.content);
+  }
+  await updateNote(noteId, {
+    content: snapshot.content,
+    updatedAt: nowUnix(),
+  });
+
+  toggleModalNoteHistory(false, isShowModalNoteHistory);
+  await handleNoteHistoryRestored(noteId);
+  showSuccess($i18n.t('app.message_note_history_restored'));
+};
+const deleteSnapshotId = ref<string>('');
+const isShowModalConfirmDeleteNoteHistory = ref<boolean>(false);
+const handleRequestDeleteNoteHistory = (snapshotId: string) => {
+  deleteSnapshotId.value = snapshotId;
+  toggleModalConfirmDeleteNoteHistory(true, isShowModalConfirmDeleteNoteHistory);
+};
+const handleConfirmDeleteNoteHistory = async (snapshotId: string) => {
+  toggleModalConfirmDeleteNoteHistory(false, isShowModalConfirmDeleteNoteHistory);
+  const noteId = historyNoteId.value;
+  historyList.value = await deleteNoteHistorySnapshot(noteId, snapshotId);
+  showSuccess($i18n.t('app.message_note_history_deleted'));
+};
+const handleClickCloseModalNoteHistory = () => {
+  toggleModalNoteHistory(false, isShowModalNoteHistory);
+};
+const handleClickCloseModalNoteHistoryDiff = () => {
+  toggleModalNoteHistoryDiff(false, isShowModalNoteHistoryDiff);
+};
+const handleClickCloseModalConfirmRestoreNoteHistory = () => {
+  toggleModalConfirmRestoreNoteHistory(false, isShowModalConfirmRestoreNoteHistory);
+};
+const handleClickCloseModalConfirmDeleteNoteHistory = () => {
+  toggleModalConfirmDeleteNoteHistory(false, isShowModalConfirmDeleteNoteHistory);
+};
 const handleClickResizeApp = () => {
   colsFoldersWidth.value = 234;
   colsNotesWidth.value = 400;
   setColsWidthData();
   window.resizeTo(1167, 700);
 }
-const handleClickBack = () => {
+const handleClickBack = async () => {
+  if (activeNoteId.value) {
+    await snapshotNoteBeforeLeaving(activeNoteId.value);
+  }
+
   if (window.history.length > 1) {
     window.history.back();
   } else {
@@ -1391,6 +1511,7 @@ const pullPush = async () => {
   if (pull.needReloadActiveNote) {
     formNotes.value = await getNoteDetail(activeNoteId.value);
     formNotesRef.value?.slientUpdateValue(formNotes.value.content);
+    activeNoteBaseline.value = { noteId: activeNoteId.value, content: formNotes.value.content };
   }
 
   await pushData(
@@ -1575,13 +1696,22 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <MenuNote :key="menuNoteKey" :noteId="activeNoteId" :formNotes="formNotes" @deleteNote="handleClickDeleteNote"
       @pinNote="handleClickPinNote" @lockNote="handleClickLockNote" @copyNote="handleCopyToClipboard"
       @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever"
-      @clickInfo="handleClickFormNotesInfo" />
+      @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory" />
   </div>
 
   <!-- modal -->
   <ModalConfirmSampleData v-if="isShowModalConfirmSampleData" @confirm="handleConfirmSampleData"
     @close="handleCancelSampleData" />
   <ModalNotesDetail v-if="isShowModalNotesDetail" :noteInfo="noteInfo" @close="handleClickCloseNotesDetail" />
+  <ModalNoteHistory v-if="isShowModalNoteHistory" :history="historyList" :isLocked="historyIsLocked"
+    @close="handleClickCloseModalNoteHistory" @viewDiff="handleClickViewHistoryDiff"
+    @restoreRequested="handleRequestRestoreNoteHistory" @deleteRequested="handleRequestDeleteNoteHistory" />
+  <ModalNoteHistoryDiff v-if="isShowModalNoteHistoryDiff" :noteId="historyNoteId" :snapshotId="diffSnapshotId"
+    @close="handleClickCloseModalNoteHistoryDiff" />
+  <ModalConfirmRestoreNoteHistory v-if="isShowModalConfirmRestoreNoteHistory" :snapshotId="restoreSnapshotId"
+    @confirm="handleConfirmRestoreNoteHistory" @close="handleClickCloseModalConfirmRestoreNoteHistory" />
+  <ModalConfirmDeleteNoteHistory v-if="isShowModalConfirmDeleteNoteHistory" :snapshotId="deleteSnapshotId"
+    @confirm="handleConfirmDeleteNoteHistory" @close="handleClickCloseModalConfirmDeleteNoteHistory" />
   <ModalSetting v-if="isShowModalSettings" ref="modalSettingRef" :settings="settings" :isPasswordExist="isPasswordExist"
     @setPassword="handleSetPassword" @changePassword="handleChangePassword" @changeAdapter="handleChangeAdapter"
     @changeDefaultEditor="handleChangeDefaultEditor" @clickExportNotes="handleClickExportNotes"
@@ -1612,7 +1742,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
   <ModalMenuNote v-if="isShowModalMenuNote" :noteId="activeNoteId" :formNotes="formNotes"
     @deleteNote="handleClickDeleteNote" @pinNote="handleClickPinNote" @lockNote="handleClickLockNote"
     @copyNote="handleCopyToClipboard" @restoreNote="handleClickRestoreNote"
-    @deleteNoteForever="handleClickDeleteNoteForever" />
+    @deleteNoteForever="handleClickDeleteNoteForever" @clickInfo="handleClickFormNotesInfo"
+    @clickHistory="handleClickFormNotesHistory" />
   <ModalMenuSidebar v-if="isShowModalMenuSidebar" @clickAddFolder="handleClickAddFolder"
     @clickForceSync="handleClickUpdateData" />
   <ModalInsertLink v-if="isShowModalInsertLink" ref="modalInsertLinkRef" @confirm="handleConfirmInsertLink"

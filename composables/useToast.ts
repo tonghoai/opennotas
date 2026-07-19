@@ -16,7 +16,7 @@ export function dismiss(id: number) {
 
 export function showToast(message: string, variant: ToastVariant = 'info', duration = 5000) {
   const id = Date.now();
-  toasts.value.push({ id, message, variant });
+  toasts.value = [...toasts.value, { id, message, variant }];
   setTimeout(() => dismiss(id), duration);
 }
 

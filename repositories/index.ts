@@ -111,6 +111,41 @@ class LocalForageRepository implements NotasRepository {
     // await localForage.removeItem(`notes-${noteId}`);
     return true;
   }
+  async getNoteHistory(noteId: string): Promise<any[]> {
+    return JSON.parse(await localForage.getItem(`notes-history-${noteId}`) || '[]');
+  }
+  private historyDayKey(unixSeconds: number): string {
+    const d = new Date(unixSeconds * 1000);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+  async addNoteHistorySnapshot(noteId: string, snapshot: any, maxDays: number = 3, maxPerDay: number = 5): Promise<any[]> {
+    let history = await this.getNoteHistory(noteId);
+    history.unshift(snapshot);
+
+    const dayKey = this.historyDayKey.bind(this);
+    const newDayKey = dayKey(snapshot.snapshotAt);
+
+    const sameDay = history.filter((item: any) => dayKey(item.snapshotAt) === newDayKey);
+    if (sameDay.length > maxPerDay) {
+      const dropIds = new Set(sameDay.slice(-(sameDay.length - maxPerDay)).map((item: any) => item.id));
+      history = history.filter((item: any) => !dropIds.has(item.id));
+    }
+
+    const days = Array.from(new Set(history.map((item: any) => dayKey(item.snapshotAt))));
+    if (days.length > maxDays) {
+      const keepDays = new Set(days.slice(0, maxDays));
+      history = history.filter((item: any) => keepDays.has(dayKey(item.snapshotAt)));
+    }
+
+    await localForage.setItem(`notes-history-${noteId}`, JSON.stringify(history));
+    return history;
+  }
+  async deleteNoteHistorySnapshot(noteId: string, snapshotId: string): Promise<any[]> {
+    const history = await this.getNoteHistory(noteId);
+    const filtered = history.filter((item: any) => item.id !== snapshotId);
+    await localForage.setItem(`notes-history-${noteId}`, JSON.stringify(filtered));
+    return filtered;
+  }
   async getActiveNote(): Promise<string | null> {
     return await localForage.getItem('activeNote') || null;
   }

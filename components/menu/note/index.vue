@@ -5,6 +5,7 @@ import CircleKey from '~/assets/svg/circle-key.svg?component';
 import Trash from '~/assets/svg/trash.svg?component';
 import Restore from '~/assets/svg/restore.svg?component';
 import Info from '~/assets/svg/info.svg?component';
+import History from '~/assets/svg/history.svg?component';
 
 const props = defineProps([
   'noteId',
@@ -19,6 +20,7 @@ const emit = defineEmits([
   'restoreNote',
   'deleteNoteForever',
   'clickInfo',
+  'clickHistory',
 ]);
 
 const handleClickPinNote = (status: number) => {
@@ -29,6 +31,9 @@ const handleClickCopyNote = () => {
 };
 const handleClickInfo = () => {
   emit('clickInfo', props.noteId);
+};
+const handleClickHistory = () => {
+  emit('clickHistory', props.noteId);
 };
 const handleClickLockNote = (status: number) => {
   emit('lockNote', { noteId: props.noteId, status });
@@ -91,6 +96,15 @@ const handleClickDeleteNoteForever = () => {
         </a>
       </li>
 
+      <li class="" @click="handleClickHistory">
+        <a class="flex flex-row items-center gap-3">
+          <History />
+          <span class="flex items-center justify-center">{{ $t('app.menu_note_history') }}</span>
+        </a>
+      </li>
+
+      <li></li>
+
       <li class="" @click="handleClickLockNote(props.formNotes.isLocked)">
         <a class="flex flex-row items-center gap-3">
           <CircleKey />
@@ -98,6 +112,8 @@ const handleClickDeleteNoteForever = () => {
             $t('app.menu_note_lock') }}</span>
         </a>
       </li>
+
+      <li></li>
 
       <li class="text-rose-500" @click="handleClickDeleteNote">
         <a class="flex flex-row items-center gap-3">

@@ -9,14 +9,23 @@ const variantAlertClass: Record<string, string> = {
   warning: 'alert-warning',
   error: 'alert-error',
 };
+
+const toastPopoverEl = ref<HTMLElement | null>(null);
+watch(toasts, (list) => {
+  const el = toastPopoverEl.value as any;
+  if (!el || typeof el.showPopover !== 'function') return;
+  if (el.matches(':popover-open')) el.hidePopover();
+  if (list.length > 0) el.showPopover();
+}, { deep: true });
 </script>
 
 <template>
   <Teleport to="body">
-    <div class="fixed bottom-20 left-1/2 -translate-x-1/2 flex flex-col-reverse gap-2 z-[1000] pointer-events-none">
+    <div ref="toastPopoverEl" popover="manual"
+      class="fixed bottom-20 left-1/2 -translate-x-1/2 top-auto right-auto flex flex-col-reverse gap-2 z-[1000] m-0 p-0 border-0 bg-transparent overflow-visible pointer-events-none">
       <TransitionGroup name="toast">
         <div v-for="toast in toasts" :key="toast.id"
-          class="alert shadow-lg min-w-64 max-w-xs pointer-events-auto py-3 pr-2 rounded-box"
+          class="alert shadow-lg min-w-64 max-w-xs pointer-events-auto py-3 pr-2 rounded-lg"
           :class="variantAlertClass[toast.variant] ?? 'alert-info'" role="alert">
           <!-- success icon -->
           <svg v-if="toast.variant === 'success'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"

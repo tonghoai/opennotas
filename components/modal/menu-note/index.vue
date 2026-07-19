@@ -7,6 +7,8 @@ const props = defineProps([
 const emit = defineEmits([
   'pinNote',
   'copyNote',
+  'clickInfo',
+  'clickHistory',
   'lockNote',
   'deleteNote',
   'restoreNote',
@@ -18,6 +20,12 @@ const handleClickPinNote = (status: number) => {
 };
 const handleClickCopyNote = () => {
   emit('copyNote', props.noteId);
+};
+const handleClickInfo = () => {
+  emit('clickInfo', props.noteId);
+};
+const handleClickHistory = () => {
+  emit('clickHistory', props.noteId);
 };
 const handleClickLockNote = (status: number) => {
   emit('lockNote', { noteId: props.noteId, status });
@@ -49,10 +57,22 @@ const handleClickDeleteNoteForever = () => {
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
           </li>
 
+          <li class="w-full text-center" @click="handleClickInfo">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_info') }}</a>
+          </li>
+
+          <li class="w-full text-center" @click="handleClickHistory">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_history') }}</a>
+          </li>
+
+          <li></li>
+
           <li class="w-full text-center" @click="handleClickLockNote(props.formNotes.isLocked)">
             <a class="w-full block text-center">{{ props.formNotes.isLocked ? $t('app.modal_menu_note_unlock') :
               $t('app.modal_menu_note_lock') }}</a>
           </li>
+
+          <li></li>
 
           <li class="text-rose-500 w-full" @click="handleClickDeleteNote">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_delete') }}</a>
@@ -94,6 +114,10 @@ const handleClickDeleteNoteForever = () => {
 
           <li class="w-full text-center" @click="handleClickCopyNote">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
+          </li>
+
+          <li class="w-full text-center" @click="handleClickInfo">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_info') }}</a>
           </li>
 
           <li class="text-rose-500 w-full" @click="handleClickDeleteNoteForever">

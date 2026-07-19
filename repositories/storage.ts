@@ -65,6 +65,17 @@ class NotasStorage {
     throw new Error('Not implemented');
   }
 
+  // history
+  async getNoteHistory(noteId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async addNoteHistorySnapshot(noteId: string, snapshot: any, maxDays: number = 3, maxPerDay: number = 5): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+  async deleteNoteHistorySnapshot(noteId: string, snapshotId: string): Promise<any[]> {
+    throw new Error('Not implemented');
+  }
+
   // password | settings
   async getSettings(): Promise<any> {
     throw new Error('Not implemented');
