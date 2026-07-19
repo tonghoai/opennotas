@@ -76,7 +76,7 @@ const handleClickDeleteNoteForever = () => {
       class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
       <li class="" @click="handleClickPinNote(props.formNotes.isPinned)">
         <a class="flex flex-row items-center gap-3">
-          <PinV2 />
+          <PinV2 class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ props.formNotes.isPinned ? $t('app.menu_note_unpin') :
             $t('app.menu_note_pin') }}</span>
         </a>
@@ -84,21 +84,21 @@ const handleClickDeleteNoteForever = () => {
 
       <li class="" @click="handleClickCopyNote">
         <a class="flex flex-row items-center gap-3">
-          <Copy />
+          <Copy class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
         </a>
       </li>
 
       <li class="" @click="handleClickInfo">
         <a class="flex flex-row items-center gap-3">
-          <Info />
+          <Info class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_info') }}</span>
         </a>
       </li>
 
       <li class="" @click="handleClickHistory">
         <a class="flex flex-row items-center gap-3">
-          <History />
+          <History class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_history') }}</span>
         </a>
       </li>
@@ -107,7 +107,7 @@ const handleClickDeleteNoteForever = () => {
 
       <li class="" @click="handleClickLockNote(props.formNotes.isLocked)">
         <a class="flex flex-row items-center gap-3">
-          <CircleKey />
+          <CircleKey class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ props.formNotes.isLocked ? $t('app.menu_note_unlock') :
             $t('app.menu_note_lock') }}</span>
         </a>
@@ -117,7 +117,7 @@ const handleClickDeleteNoteForever = () => {
 
       <li class="text-rose-500" @click="handleClickDeleteNote">
         <a class="flex flex-row items-center gap-3">
-          <Trash />
+          <Trash class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_delete') }}</span>
         </a>
       </li>
@@ -128,28 +128,30 @@ const handleClickDeleteNoteForever = () => {
       class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
       <li class="" @click="handleClickRestoreNote">
         <a class="flex flex-row items-center gap-3">
-          <Restore />
+          <Restore class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_restore') }}</span>
         </a>
       </li>
 
       <li class="" @click="handleClickCopyNote">
         <a class="flex flex-row items-center gap-3">
-          <Copy />
+          <Copy class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
         </a>
       </li>
 
       <li class="" @click="handleClickInfo">
         <a class="flex flex-row items-center gap-3">
-          <Info />
+          <Info class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_info') }}</span>
         </a>
       </li>
 
+      <li></li>
+
       <li class="text-rose-500" @click="handleClickDeleteNoteForever">
         <a class="flex flex-row items-center gap-3">
-          <Trash />
+          <Trash class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_delete_forever') }}</span>
         </a>
       </li>

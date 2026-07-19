@@ -21,14 +21,16 @@ const handleClickDeleteFolder = () => {
   <ul class="menu bg-base-100 rounded-box w-36 border border-neutral animate-fade-down animate-duration-100">
     <li id="menu-folder-rename" @click="handleClickRenameFolder">
       <a class="flex flex-row items-center gap-3">
-        <Pencil />
+        <Pencil class="w-4 h-4 shrink-0" />
         <span class="flex items-center justify-center">{{ $t('app.menu_folder_rename') }}</span>
       </a>
     </li>
 
+    <li></li>
+
     <li class="text-rose-500" @click="handleClickDeleteFolder">
       <a class="flex flex-row items-center gap-3">
-        <Trash />
+        <Trash class="w-4 h-4 shrink-0" />
         <span class="flex items-center justify-center">{{ $t('app.menu_folder_delete') }}</span>
       </a>
     </li>

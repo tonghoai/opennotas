@@ -23,6 +23,8 @@ const handleClickDeleteFolder = () => {
           <a class="w-full block text-center">{{ $t('app.modal_menu_folder_rename') }}</a>
         </li>
 
+        <li></li>
+
         <li class="text-rose-500 w-full" @click="handleClickDeleteFolder">
           <a class="w-full block text-center">{{ $t('app.modal_menu_folder_delete') }}</a>
         </li>

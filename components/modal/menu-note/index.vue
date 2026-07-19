@@ -120,6 +120,8 @@ const handleClickDeleteNoteForever = () => {
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_info') }}</a>
           </li>
 
+          <li></li>
+
           <li class="text-rose-500 w-full" @click="handleClickDeleteNoteForever">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_delete_forever') }}</a>
           </li>
