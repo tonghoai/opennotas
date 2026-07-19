@@ -31,6 +31,10 @@ function toggleModalMenuNote(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-menu-note", isOpen, state);
 }
 
+function toggleModalMenuMoveNote(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-menu-move-note", isOpen, state);
+}
+
 function toggleModalSortNote(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-sort-note", isOpen, state);
 }
@@ -109,6 +113,7 @@ export {
   toggleModalConfirmDeleteFolder,
   toggleModalConfirmSampleData,
   toggleModalMenuNote,
+  toggleModalMenuMoveNote,
   toggleModalSortNote,
   toggleModalMenuSidebar,
   toggleModalMenuEditor,

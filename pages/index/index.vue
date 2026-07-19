@@ -311,6 +311,7 @@ const menuFolderKey = ref<number>(0);
 const handleRightClickFolderName = (data: any) => {
   // ẩn menu note
   hideMenuNote();
+  hideMenuMoveNote();
 
   if (isMobile.value) {
     handleClickFolderName(data.folderId);
@@ -534,6 +535,7 @@ const isShowModalMenuNote = ref<boolean>(false);
 const handleRightClickNote = (data: any) => {
   // ẩn menu folder
   hideMenuFolder();
+  hideMenuMoveNote();
 
   if (isMobile.value) {
     handleClickNote(data.noteId);
@@ -787,6 +789,39 @@ const handleClickFormNotesHistory = async (noteId: string) => {
   historyNoteId.value = noteId;
   await loadNoteHistory(noteId);
   toggleModalNoteHistory(true, isShowModalNoteHistory);
+};
+const isShowModalMenuMoveNote = ref<boolean>(false);
+const noteIdToMove = ref<string>('');
+const moveNoteFolders = computed(() => {
+  const note = listNotes.value.find((note: any) => note.id === noteIdToMove.value);
+  return listFoldersMenu.value.filter((folder: any) => folder.id !== '' && folder.id !== note?.folderId);
+});
+const handleClickMoveNote = (noteId: string) => {
+  noteIdToMove.value = noteId;
+
+  if (isMobile.value) {
+    toggleModalMenuNote(false, isShowModalMenuNote);
+    toggleModalMenuMoveNote(true, isShowModalMenuMoveNote);
+    return;
+  }
+
+  const menuNoteEl = document.getElementById('menu-note');
+  const rect = menuNoteEl?.getBoundingClientRect();
+  if (rect) {
+    offsetMenuMoveNote({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
+  }
+};
+const handleSelectMoveFolder = async (folderId: string) => {
+  toggleModalMenuMoveNote(false, isShowModalMenuMoveNote);
+
+  const updatedNote = await updateNote(noteIdToMove.value, {
+    folderId,
+    updatedAt: nowUnix(),
+  });
+  setActionObject('note', updatedNote);
+
+  listNotes.value = await loadNotes();
+  showSuccess($i18n.t('app.message_note_moved'));
 };
 const handleNoteHistoryRestored = async (noteId: string) => {
   listNotes.value = await loadNotes();
@@ -1696,7 +1731,11 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <MenuNote :key="menuNoteKey" :noteId="activeNoteId" :formNotes="formNotes" @deleteNote="handleClickDeleteNote"
       @pinNote="handleClickPinNote" @lockNote="handleClickLockNote" @copyNote="handleCopyToClipboard"
       @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever"
-      @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory" />
+      @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory"
+      @clickMove="handleClickMoveNote" />
+  </div>
+  <div id="menu-move-note" class="hidden absolute">
+    <MenuMoveNote :listFolders="moveNoteFolders" @selectFolder="handleSelectMoveFolder" />
   </div>
 
   <!-- modal -->
@@ -1743,7 +1782,9 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     @deleteNote="handleClickDeleteNote" @pinNote="handleClickPinNote" @lockNote="handleClickLockNote"
     @copyNote="handleCopyToClipboard" @restoreNote="handleClickRestoreNote"
     @deleteNoteForever="handleClickDeleteNoteForever" @clickInfo="handleClickFormNotesInfo"
-    @clickHistory="handleClickFormNotesHistory" />
+    @clickHistory="handleClickFormNotesHistory" @clickMove="handleClickMoveNote" />
+  <ModalMenuMoveNote v-if="isShowModalMenuMoveNote" :listFolders="moveNoteFolders"
+    @selectFolder="handleSelectMoveFolder" />
   <ModalMenuSidebar v-if="isShowModalMenuSidebar" @clickAddFolder="handleClickAddFolder"
     @clickForceSync="handleClickUpdateData" />
   <ModalInsertLink v-if="isShowModalInsertLink" ref="modalInsertLinkRef" @confirm="handleConfirmInsertLink"

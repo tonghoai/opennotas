@@ -6,6 +6,7 @@ import Trash from '~/assets/svg/trash.svg?component';
 import Restore from '~/assets/svg/restore.svg?component';
 import Info from '~/assets/svg/info.svg?component';
 import History from '~/assets/svg/history.svg?component';
+import FileMove from '~/assets/svg/file-arrow-right.svg?component';
 
 const props = defineProps([
   'noteId',
@@ -21,6 +22,7 @@ const emit = defineEmits([
   'deleteNoteForever',
   'clickInfo',
   'clickHistory',
+  'clickMove',
 ]);
 
 const handleClickPinNote = (status: number) => {
@@ -34,6 +36,9 @@ const handleClickInfo = () => {
 };
 const handleClickHistory = () => {
   emit('clickHistory', props.noteId);
+};
+const handleClickMove = () => {
+  emit('clickMove', props.noteId);
 };
 const handleClickLockNote = (status: number) => {
   emit('lockNote', { noteId: props.noteId, status });
@@ -86,6 +91,13 @@ const handleClickDeleteNoteForever = () => {
         <a class="flex flex-row items-center gap-3">
           <Copy class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
+        </a>
+      </li>
+
+      <li class="" @click.stop="handleClickMove">
+        <a class="flex flex-row items-center gap-3">
+          <FileMove class="w-4 h-4 shrink-0" />
+          <span class="flex items-center justify-center">{{ $t('app.menu_note_move') }}</span>
         </a>
       </li>
 

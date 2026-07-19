@@ -9,6 +9,7 @@ const emit = defineEmits([
   'copyNote',
   'clickInfo',
   'clickHistory',
+  'clickMove',
   'lockNote',
   'deleteNote',
   'restoreNote',
@@ -26,6 +27,9 @@ const handleClickInfo = () => {
 };
 const handleClickHistory = () => {
   emit('clickHistory', props.noteId);
+};
+const handleClickMove = () => {
+  emit('clickMove', props.noteId);
 };
 const handleClickLockNote = (status: number) => {
   emit('lockNote', { noteId: props.noteId, status });
@@ -55,6 +59,10 @@ const handleClickDeleteNoteForever = () => {
 
           <li class="w-full text-center" @click="handleClickCopyNote">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
+          </li>
+
+          <li class="w-full text-center" @click="handleClickMove">
+            <a class="w-full block text-center">{{ $t('app.modal_menu_note_move') }}</a>
           </li>
 
           <li class="w-full text-center" @click="handleClickInfo">

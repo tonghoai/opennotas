@@ -9,6 +9,11 @@ function outsideClickMenu() {
     if (menuNote.style.display === 'block') {
       menuNote.style.display = 'none';
     }
+
+    const menuMoveNote: any = document.getElementById('menu-move-note') || {};
+    if (menuMoveNote.style.display === 'block') {
+      menuMoveNote.style.display = 'none';
+    }
   });
 }
 
@@ -36,6 +41,25 @@ function offsetMenuNote(data: any) {
   }
 }
 
+// submenu opened beside menu-note, so it needs its own width/height estimate
+// to decide whether to flip left/up when the note menu is near a viewport edge
+const MOVE_MENU_WIDTH = 190;
+const MOVE_MENU_MAX_HEIGHT = 300;
+
+function offsetMenuMoveNote(data: any) {
+  const menuMoveNote: any = document.getElementById('menu-move-note') || {};
+  menuMoveNote.style.display = 'block';
+
+  const openLeft = data.right + MOVE_MENU_WIDTH > window.innerWidth;
+  menuMoveNote.style.left = openLeft ? `${data.left - MOVE_MENU_WIDTH}px` : `${data.right}px`;
+
+  let top = data.top;
+  if (top + MOVE_MENU_MAX_HEIGHT > window.innerHeight) {
+    top = Math.max(8, window.innerHeight - MOVE_MENU_MAX_HEIGHT - 8);
+  }
+  menuMoveNote.style.top = `${top}px`;
+}
+
 function hideMenuFolder() {
   const menuFolder: any = document.getElementById('menu-folder') || {};
   menuFolder.style.display = 'none';
@@ -44,6 +68,11 @@ function hideMenuFolder() {
 function hideMenuNote() {
   const menuNote: any = document.getElementById('menu-note') || {};
   menuNote.style.display = 'none';
+}
+
+function hideMenuMoveNote() {
+  const menuMoveNote: any = document.getElementById('menu-move-note') || {};
+  menuMoveNote.style.display = 'none';
 }
 
 function disableDefaultContextMenu() {
@@ -64,7 +93,9 @@ export {
   outsideClickMenu,
   offsetMenuFolder,
   offsetMenuNote,
+  offsetMenuMoveNote,
   hideMenuFolder,
   hideMenuNote,
+  hideMenuMoveNote,
   disableDefaultContextMenu,
 };
