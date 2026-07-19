@@ -55,6 +55,7 @@ watch(() => props.settings, (newValue) => {
   adapterSelect.value = settings.value.sync.adapter;
   // Keep draft in sync when settings are committed externally (e.g., parent reload)
   draftS3Config.value = buildDraft(newValue?.imageSync);
+  fontFamilyDraft.value = newValue?.general?.fontFamily || '';
 }, { deep: true });
 
 // onMounted(() => {
@@ -118,14 +119,37 @@ const buildDraft = (cfg: any): S3Config => ({
 // Only committed to settings.value when user clicks Save.
 const draftS3Config = ref<S3Config>(buildDraft(null));
 
+// Draft font family: only committed to settings.value when user clicks Save.
+const fontFamilyDraft = ref<string>('');
+
 onMounted(() => {
   adapterSelect.value = settings.value.sync.adapter;
   draftS3Config.value = buildDraft(props.settings?.imageSync);
+  fontFamilyDraft.value = props.settings?.general?.fontFamily || '';
 });
 // change adapter
 const isAdapterChanged = computed(() => adapterSelect.value !== settings.value.sync.adapter);
 const handleSaveAdapter = (e: Event) => {
   emit('saveAdapter', adapterSelect.value);
+}
+const handleCancelAdapterChange = () => {
+  adapterSelect.value = settings.value.sync.adapter;
+}
+
+// font family
+const isFontFamilyDirty = computed(() => (props.settings?.general?.fontFamily || '') !== fontFamilyDraft.value);
+const handleSaveFontFamily = () => {
+  settings.value = {
+    ...settings.value,
+    general: {
+      ...settings.value.general,
+      fontFamily: fontFamilyDraft.value,
+    },
+  };
+  handleSaveSettings();
+}
+const handleCancelFontFamily = () => {
+  fontFamilyDraft.value = props.settings?.general?.fontFamily || '';
 }
 
 // export notes
@@ -277,7 +301,7 @@ const handleSaveImageSyncConfigModal = () => {
       class="modal-box w-full max-w-3xl h-[38rem] max-h-[85vh] overflow-hidden p-0 rounded-2xl border border-base-content/15 shadow-2xl">
       <div class="flex flex-row h-full">
         <!-- sidebar -->
-        <div class="w-60 shrink-0 flex flex-col gap-1 bg-base-100 border-r border-base-300 px-3 py-5 overflow-y-auto">
+        <div class="w-60 shrink-0 flex flex-col gap-1 bg-base-100 border-r border-base-content/15 px-3 py-5 overflow-y-auto">
           <form method="dialog" class="px-1 pb-3">
             <button class="btn btn-sm btn-ghost btn-square" @click="handleClickCloseSettings">✕</button>
           </form>
@@ -292,8 +316,9 @@ const handleSaveImageSyncConfigModal = () => {
         </div>
 
         <!-- content -->
-        <div id="setting-content" class="flex-1 overflow-auto px-8 py-6">
-          <p class="text-xl font-semibold pb-4 mb-2 border-b border-base-content/15">{{ tabTitle }}</p>
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div id="setting-content" class="flex-1 overflow-auto px-8 py-6">
+            <p class="text-xl font-semibold pb-4 mb-2 border-b border-base-content/15">{{ tabTitle }}</p>
 
           <!-- general settings -->
           <div v-if="tabIndex === 0" class="divide-y divide-base-content/10">
@@ -330,8 +355,8 @@ const handleSaveImageSyncConfigModal = () => {
             </SettingRow>
 
             <SettingRow :label="$t('app.setting_general_font_title')">
-              <input v-model="settings.general.fontFamily" type="text" class="input input-sm input-bordered w-40"
-                @change="handleSaveSettings" autocomplete="off" />
+              <input v-model="fontFamilyDraft" type="text" class="input input-sm input-bordered w-40"
+                autocomplete="off" />
             </SettingRow>
           </div>
 
@@ -364,9 +389,6 @@ const handleSaveImageSyncConfigModal = () => {
                     { label: 'LocalForage (Offline)', value: 'LocalForage' },
                     { label: 'Turso (Online)', value: 'Turso' },
                   ]" />
-                  <button v-if="isAdapterChanged" class="btn btn-primary btn-xs" @click="handleSaveAdapter">
-                    {{ $t('app.setting_sync_adapter_save') }}
-                  </button>
                 </div>
               </div>
 
@@ -453,6 +475,27 @@ const handleSaveImageSyncConfigModal = () => {
               <p class="mt-4 text-center text-sm">{{ $t('app.slogan') }}</p>
             </div>
           </div>
+        </div>
+
+        <div v-if="(tabIndex === 0 && isFontFamilyDirty) || (tabIndex === 2 && isAdapterChanged)"
+          class="shrink-0 border-t border-base-content/15 px-8 py-4 flex items-center justify-end gap-2">
+          <template v-if="tabIndex === 0">
+            <button class="btn btn-sm" @click="handleCancelFontFamily">
+              {{ $t('app.setting_general_font_cancel') }}
+            </button>
+            <button class="btn btn-sm btn-primary" @click="handleSaveFontFamily">
+              {{ $t('app.setting_general_font_save') }}
+            </button>
+          </template>
+          <template v-if="tabIndex === 2">
+            <button class="btn btn-sm" @click="handleCancelAdapterChange">
+              {{ $t('app.setting_sync_adapter_cancel') }}
+            </button>
+            <button class="btn btn-sm btn-primary" @click="handleSaveAdapter">
+              {{ $t('app.setting_sync_adapter_save') }}
+            </button>
+          </template>
+        </div>
         </div>
       </div>
     </div>

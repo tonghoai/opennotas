@@ -3,8 +3,6 @@ const emit = defineEmits([
   'confirm',
   'close',
 ]);
-const isValidate = computed(() => !!inputE2eeKey.value);
-
 const inputE2eeKeyKey = ref(0);
 const handleClickSubmit = () => {
   inputE2eeKeyKey.value += 1;
@@ -12,6 +10,20 @@ const handleClickSubmit = () => {
 }
 
 const inputE2eeKey = ref<string>('');
+const isKeyValid = ref<boolean>(false);
+watch(inputE2eeKey, async (val) => {
+  if (!val) {
+    isKeyValid.value = false;
+    return;
+  }
+  try {
+    await importKey(atob(val));
+    isKeyValid.value = true;
+  } catch {
+    isKeyValid.value = false;
+  }
+}, { immediate: true });
+
 const isGenerateKey = ref<boolean>(false);
 const handleClickGenerateKey = async () => {
   const key = await generateKey();
@@ -53,7 +65,7 @@ const handleClickClose = () => {
             <button class="btn btn-sm mr-2">
               {{ $t('app.modal_confirm_e2ee_key_cancel') }}
             </button>
-            <button class="btn btn-sm btn-primary" @click="handleClickSubmit" :disabled="!isValidate">
+            <button class="btn btn-sm btn-primary" @click="handleClickSubmit" :disabled="!isKeyValid">
               {{ $t('app.modal_confirm_e2ee_key_ok') }}
             </button>
           </form>
