@@ -25,7 +25,7 @@ watch(toasts, (list) => {
       class="fixed bottom-20 left-1/2 -translate-x-1/2 top-auto right-auto flex flex-col-reverse gap-2 z-[1000] m-0 p-0 border-0 bg-transparent overflow-visible pointer-events-none">
       <TransitionGroup name="toast">
         <div v-for="toast in toasts" :key="toast.id"
-          class="alert shadow-lg min-w-64 max-w-xs pointer-events-auto py-3 pr-2 rounded-lg"
+          class="alert app-toast shadow-lg min-w-64 max-w-xs pointer-events-auto py-3 pr-2 rounded-lg"
           :class="variantAlertClass[toast.variant] ?? 'alert-info'" role="alert">
           <!-- success icon -->
           <svg v-if="toast.variant === 'success'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0"
@@ -67,6 +67,13 @@ watch(toasts, (list) => {
 </template>
 
 <style scoped>
+.app-toast {
+  display: flex !important;
+  align-items: center !important;
+  justify-items: normal !important;
+  text-align: left !important;
+}
+
 .toast-enter-active {
   transition: opacity 0.25s ease-out, transform 0.25s ease-out;
 }
