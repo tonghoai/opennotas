@@ -171,6 +171,13 @@ const handleClickResetServiceWorker = () => {
     window.location.href = window.location.href;
   });
 }
+const handleClickForceUpdate = async () => {
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+  window.location.reload();
+}
 
 const handleClickCloseSettings = () => {
   emit('closeSetting');
@@ -460,6 +467,13 @@ const handleSaveImageSyncConfigModal = () => {
               <SettingRow label="Service Worker">
                 <button class="btn btn-sm btn-outline btn-error" @click="handleClickResetServiceWorker">
                   {{ $t('app.setting_tools_reset_service_worker_title') }}
+                </button>
+              </SettingRow>
+
+              <SettingRow :label="$t('app.setting_tools_force_update_title')"
+                :description="$t('app.setting_tools_force_update_description')">
+                <button class="btn btn-sm btn-outline btn-error" @click="handleClickForceUpdate">
+                  {{ $t('app.setting_tools_force_update_button') }}
                 </button>
               </SettingRow>
             </div>
