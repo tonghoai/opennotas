@@ -1793,6 +1793,6 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     @close="handleClickCloseModalInsertImage" />
 
   <!-- float button create new note -->
-  <FloatNewNotes v-if="!formNotes.id && initedApp && activeFolderId !== 'bottombar-trash'"
+  <FloatNewNotes v-if="!isInEditor && initedApp && activeFolderId !== 'bottombar-trash'"
     @clickNewNote="handleClickAddNote" />
 </template>
