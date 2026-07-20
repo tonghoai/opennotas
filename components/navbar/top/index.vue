@@ -244,6 +244,13 @@ const handleClickResetServiceWorker = () => {
     window.location.reload();
   });
 }
+const handleClickForceUpdate = async () => {
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+  window.location.reload();
+}
 
 const imageSyncTestStatus = ref<'idle' | 'testing' | 'success' | 'failed'>('idle');
 const isShowModalConfirmImageSyncChange = ref(false);
@@ -447,7 +454,7 @@ defineExpose({
       <div class="flex-1 flex justify-between">
         <div class="font-semibold text-xl ml-1">{{ $t('app.navbar_top_note_title') }}</div>
 
-        <div class="flex">
+        <div class="flex" v-if="!props.formNotes.isLocked">
           <!-- <Clipboard class="press mr-4 cursor-pointer opacity-80" @click="handleClickCopyToClipboard" />
           <Info class="press mr-4 cursor-pointer opacity-80" @click="handleClickInfo" /> -->
           <ToolCase v-if="['Tiptap', 'Crepe'].includes(props.editorName)" class="press mr-4 cursor-pointer opacity-80"
@@ -686,6 +693,13 @@ defineExpose({
                 <SettingRow label="Service Worker">
                   <button class="btn btn-sm btn-outline btn-error" @click="handleClickResetServiceWorker">
                     {{ $t('app.setting_tools_reset_service_worker_title') }}
+                  </button>
+                </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_force_update_title')"
+                  :description="$t('app.setting_tools_force_update_description')">
+                  <button class="btn btn-sm btn-outline btn-error" @click="handleClickForceUpdate">
+                    {{ $t('app.setting_tools_force_update_button') }}
                   </button>
                 </SettingRow>
               </div>
