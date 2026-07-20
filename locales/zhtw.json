@@ -144,7 +144,7 @@
         "setting_tools_backup_export_button": "匯出",
         "setting_tools_backup_import": "匯入筆記",
         "setting_tools_backup_import_button": "匯入",
-        "setting_tools_reset_service_worker_title": "重設 Service Worker",
+        "setting_tools_reset_service_worker_title": "重設",
         "modal_alert_set_password_title": "設定筆記密碼",
         "modal_alert_set_password_content": "你需要在「設定」>「一般」設定筆記密碼，才能將筆記上鎖。",
         "modal_alert_set_password_ok": "知道了",

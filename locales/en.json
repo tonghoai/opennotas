@@ -144,7 +144,7 @@
     "setting_tools_backup_export_button": "Export",
     "setting_tools_backup_import": "Import Notes",
     "setting_tools_backup_import_button": "Import",
-    "setting_tools_reset_service_worker_title": "Reset Service Worker",
+    "setting_tools_reset_service_worker_title": "Reset",
     "modal_alert_set_password_title": "Set Note Password",
     "modal_alert_set_password_content": "You need to set a note password in \"Settings\" > \"General\" before locking the note",
     "modal_alert_set_password_ok": "Understood",
