@@ -49,11 +49,7 @@ const onEnd = () => {
 </script>
 
 <template>
-  <div class="lg:hidden mt-4 h-32 w-32 m-auto">
-    <img :src="'/logo-icon.png'" width="128" height="128" class="mb-4" alt="OpenNotas Logo" />
-  </div>
-
-  <ul class="menu block w-full p-2 transition-all h-[calc(100vh_-_222px)] overflow-auto lg:h-full lg:overflow-auto">
+  <ul class="menu block w-full p-2 transition-all h-[calc(100vh_-_254px)] overflow-auto lg:h-full lg:overflow-auto">
     <draggable :delay="300" :prevent-on-filter="false" :touch-start-threshold="50" :list="props.listFolders"
       @end="onEnd" :move="onMove" item-key="id">
       <template #item="{ element: folder }">

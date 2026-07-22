@@ -24,11 +24,7 @@ const handleRightClickTagName = (e: any, tagId: string) => {
 </script>
 
 <template>
-  <div class="lg:hidden mt-4 h-32 w-32 m-auto">
-    <img :src="'/logo-icon.png'" width="128" height="128" class="mb-4" alt="OpenNotas Logo" />
-  </div>
-
-  <ul class="menu block w-full p-2 transition-all h-[calc(100vh_-_222px)] overflow-auto lg:h-full lg:overflow-auto">
+  <ul class="menu block w-full p-2 transition-all h-[calc(100vh_-_254px)] overflow-auto lg:h-full lg:overflow-auto">
     <li v-if="!props.listTags.length" class="menu-items w-full py-0.5 cursor-pointer"
       @click="emit('clickAddTag')">
       <div class="flex flex-row justify-between rounded-xl w-full">

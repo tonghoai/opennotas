@@ -1810,10 +1810,12 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <!-- mobile nav top -->
     <div class="lg:hidden">
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
-        :activeFolderId="activeFolderId" :formNotes="formNotes" :isSyncing="isSyncAll" :settings="settings"
-        :isPasswordExist="isPasswordExist" :editorName="editorName" @clickFolderName="handleClickFolderName"
-        @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
-        @reorderFolderName="handleReorderFolderName" @clickSetting="handleClickSetting" @clickBack="handleClickBack"
+        :activeFolderId="activeFolderId" :listTags="listTagsMenu" :activeTagId="activeTagId" :formNotes="formNotes"
+        :isSyncing="isSyncAll" :settings="settings" :isPasswordExist="isPasswordExist" :editorName="editorName"
+        @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
+        @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName"
+        @clickTagName="handleClickTagName" @rightClickTagName="handleRightClickTagName" @clickTags="handleClickTags"
+        @clickAddTag="handleClickAddTag" @clickSetting="handleClickSetting" @clickBack="handleClickBack"
         @clickUpdateData="handleClickUpdateData" @clickTrash="handleClickBottombarTrash"
         @copyToClipboard="handleCopyToClipboard" @clickInfo="handleClickFormNotesInfo"
         @saveSettings="handleSaveSettings" @saveAdapter="handleSaveAdapter" @clickExportNotes="handleClickExportNotes"
@@ -1995,8 +1997,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     :tagColor="tagFormInitial.color" @confirm="handleConfirmTagForm" @close="handleClickCloseModalTagForm" />
   <ModalConfirmDeleteTag v-if="isShowModalConfirmDeleteTag" :tagId="tagWillDelete" @confirm="handleConfirmDeleteTag"
     @close="handleClickCloseModalConfirmDeleteTag" />
-  <ModalMenuSidebar v-if="isShowModalMenuSidebar" @clickAddFolder="handleClickAddFolder"
-    @clickForceSync="handleClickUpdateData" />
+  <ModalMenuSidebar v-if="isShowModalMenuSidebar" :isTagsMode="isTagsMode" @clickAddFolder="handleClickAddFolder"
+    @clickAddTag="handleClickAddTag" @clickForceSync="handleClickUpdateData" />
   <ModalInsertLink v-if="isShowModalInsertLink" ref="modalInsertLinkRef" @confirm="handleConfirmInsertLink"
     @close="handleClickCloseModalInsertLink" />
   <ModalInsertImage v-if="isShowModalInsertImage" ref="modalInsertImageRef" @confirm="handleConfirmInsertImage"

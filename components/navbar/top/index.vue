@@ -22,6 +22,8 @@ import Type from '../assets/svg/type.svg?component';
 const props = defineProps([
   'listFolders',
   'activeFolderId',
+  'listTags',
+  'activeTagId',
   'formNotes',
   'isInEditor',
   'isSyncing',
@@ -36,6 +38,10 @@ const emit = defineEmits([
   'rightClickFolderName',
   'renameFolderName',
   'reorderFolderName',
+  'clickTagName',
+  'rightClickTagName',
+  'clickTags',
+  'clickAddTag',
   'clickSearch',
   'clickCancelSearch',
   'clickSetting',
@@ -118,6 +124,24 @@ const handleRenameFolderName = (folderId: string) => {
 
 const handleReorderFolderName = (data: any[]) => {
   emit('reorderFolderName', data);
+};
+
+const isTagsTabActive = computed(() => props.activeFolderId === 'bottombar-tags');
+const handleClickTagName = (tagId: string) => {
+  emit('clickTagName', tagId);
+  isDrawerOpen.value = false;
+};
+const handleRightClickTagName = (data: any) => {
+  emit('rightClickTagName', data);
+};
+const handleClickAddTag = () => {
+  emit('clickAddTag');
+};
+const handleClickFoldersTab = () => {
+  emit('clickFolderName', '');
+};
+const handleClickTagsTab = () => {
+  emit('clickTags');
 };
 
 const handleClickSetting = () => {
@@ -502,10 +526,29 @@ defineExpose({
       <div class="menu p-0 w-2/3 min-h-full bg-base-100">
         <div class="flex flex-col justify-between items-center w-full" style="height: calc(100vh);">
           <div class="w-full">
+            <div class="lg:hidden mt-4 h-32 w-32 m-auto">
+              <img :src="'/logo-icon.png'" width="128" height="128" class="mb-4" alt="OpenNotas Logo" />
+            </div>
+
+            <div class="tabs tabs-bordered w-full">
+              <a class="tab flex-1" :class="{ 'tab-active': !isTagsTabActive }"
+                @click="handleClickFoldersTab">
+                {{ $t('app.tab_folders') }}
+              </a>
+              <a class="tab flex-1" :class="{ 'tab-active': isTagsTabActive }"
+                @click="handleClickTagsTab">
+                {{ $t('app.tab_tags') }}
+              </a>
+            </div>
+
             <div>
-              <ListFolder ref="listFolderRef" :listFolders="props.listFolders" :activeFolderId="props.activeFolderId"
-                @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
-                @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName" />
+              <ListFolder v-if="!isTagsTabActive" ref="listFolderRef" :listFolders="props.listFolders"
+                :activeFolderId="props.activeFolderId" @clickFolderName="handleClickFolderName"
+                @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
+                @reorderFolderName="handleReorderFolderName" />
+              <ListTag v-else :listTags="props.listTags" :activeTagId="props.activeTagId" :isCollapseFolder="false"
+                @clickTagName="handleClickTagName" @rightClickTagName="handleRightClickTagName"
+                @clickAddTag="handleClickAddTag" />
 
               <!-- <div class="px-2 pt-2">
                 <button class="btn btn-sm btn-block rounded" @click="handleClickAddFolder">
