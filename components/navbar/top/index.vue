@@ -217,6 +217,9 @@ const isAdapterChanged = computed(() => adapterSelect.value !== settings.value.s
 const handleSaveAdapter = (e: Event) => {
   emit('saveAdapter', adapterSelect.value);
 }
+const handleCancelAdapterChange = () => {
+  adapterSelect.value = settings.value.sync.adapter;
+}
 
 const handleChangeLanguage = () => {
   setLocale(settings.value.general.lang);
@@ -370,8 +373,11 @@ const handleSaveImageSyncConfigModal = () => {
 
 const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
+  const hasPendingAdapterChange = isAdapterChanged.value;
   settings.value = newValue;
-  adapterSelect.value = settings.value.sync.adapter;
+  if (!hasPendingAdapterChange) {
+    adapterSelect.value = settings.value.sync.adapter;
+  }
   draftS3Config.value = buildDraft(newValue?.imageSync);
 }, { deep: true });
 
@@ -527,8 +533,8 @@ defineExpose({
       <label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
 
 
-      <div class="menu p-0 w-10/12 min-h-full bg-base-100 overscroll-y-contain">
-        <div class="w-full">
+      <div class="menu p-0 w-10/12 h-screen bg-base-100 flex flex-col">
+        <div class="w-full flex-1 overflow-y-auto overscroll-y-contain">
           <!-- general setting -->
           <div class="p-4">
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_general_title') }}</h2>
@@ -613,9 +619,6 @@ defineExpose({
                       { label: 'LocalForage (Offline)', value: 'LocalForage' },
                       { label: 'Turso (Online)', value: 'Turso' },
                     ]" />
-                    <button v-if="isAdapterChanged" class="btn btn-primary btn-xs" @click="handleSaveAdapter">
-                      {{ $t('app.setting_sync_adapter_save') }}
-                    </button>
                   </div>
                 </div>
 
@@ -722,6 +725,16 @@ defineExpose({
 
           <div class="h-6"></div>
 
+        </div>
+
+        <div v-if="isAdapterChanged"
+          class="shrink-0 border-t border-base-content/15 px-4 py-3 flex items-center justify-end gap-2 bg-base-100">
+          <button class="btn btn-sm" @click="handleCancelAdapterChange">
+            {{ $t('app.setting_sync_adapter_cancel') }}
+          </button>
+          <button class="btn btn-sm btn-primary" @click="handleSaveAdapter">
+            {{ $t('app.setting_sync_adapter_save') }}
+          </button>
         </div>
       </div>
 
