@@ -270,13 +270,14 @@ const SYNC_LEVELS = [
 ];
 const syncLevel = ref<number>(0);
 let syncLevelResetTimer: ReturnType<typeof setTimeout> | null = null;
-const handleClickUpdateData = async () => {
+const handleClickUpdateData = async (forcedLevelIndex?: number) => {
   toggleModalMenuSidebar(false, isShowModalMenuSidebar);
   navbarTopRef.value?.closeDrawer();
 
   isSyncingAll.value = true;
-  const level = SYNC_LEVELS[syncLevel.value];
-  isSyncAll.value = syncLevel.value === SYNC_LEVELS.length - 1;
+  const levelIndex = forcedLevelIndex ?? syncLevel.value;
+  const level = SYNC_LEVELS[levelIndex];
+  isSyncAll.value = levelIndex === SYNC_LEVELS.length - 1;
   lastPull.value = level.seconds === 0 ? 0 : nowUnix() - level.seconds;
 
   await pullPush().catch(() => { });
@@ -285,7 +286,7 @@ const handleClickUpdateData = async () => {
 
   showInfoSnackbar($i18n.t(level.labelKey));
 
-  syncLevel.value = (syncLevel.value + 1) % SYNC_LEVELS.length;
+  syncLevel.value = (levelIndex + 1) % SYNC_LEVELS.length;
 
   if (syncLevelResetTimer) clearTimeout(syncLevelResetTimer);
   syncLevelResetTimer = setTimeout(() => {
@@ -1397,8 +1398,8 @@ const handleConfirmChangeAdapter = async (e2eeKey: string) => {
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
   showSuccess($i18n.t('app.message_setting_sync_adapter_saved'));
 
-  // trigger 1 time sync to push data to new adapter
-  handleClickUpdateData();
+  // trigger 1 time full sync to pull/push all data with the new adapter
+  handleClickUpdateData(SYNC_LEVELS.length - 1);
 }
 const isShowModalConfirmE2eeKey = ref<boolean>(false);
 const handleClickCloseModalConfirmE2eeKey = () => {
