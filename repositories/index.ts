@@ -9,6 +9,11 @@ import type {
   NoteSortType,
   NoteType,
   NoteUpdateType,
+  TagCreateType,
+  TagType,
+  TagUpdateType,
+  NoteTagCreateType,
+  NoteTagType,
 } from "./storage.type";
 
 class LocalForageRepository implements NotasRepository {
@@ -159,6 +164,63 @@ class LocalForageRepository implements NotasRepository {
   async setSortNote(sort: NoteSortType): Promise<NoteSortType> {
     await localForage.setItem('sortNote', sort);
     return sort;
+  }
+
+  // tags
+  async getAllTags(): Promise<TagType[]> {
+    const tags = JSON.parse(await localForage.getItem('tags') || '[]');
+    return tags as TagType[];
+  }
+  async getTags(): Promise<TagType[]> {
+    const tags = await this.getAllTags();
+    return tags.filter((tag: any) => !tag.deletedAt) as TagType[];
+  }
+  async getTagDetail(tagId: string): Promise<TagType> {
+    return JSON.parse(await localForage.getItem(`tags-${tagId}`) || '{}') as TagType;
+  }
+  async createTag(data: TagCreateType): Promise<TagType> {
+    const tags = await this.getAllTags();
+    const newTags = [data, ...tags];
+    await localForage.setItem('tags', JSON.stringify(newTags));
+    await localForage.setItem(`tags-${data.id}`, JSON.stringify(data));
+    return data as TagType;
+  }
+  async updateTag(tagId: string, data: TagUpdateType): Promise<TagType> {
+    const tags = await this.getAllTags();
+    const tagIndex = tags.findIndex((tag: any) => tag.id === tagId);
+    tags[tagIndex] = { ...tags[tagIndex], ...data };
+    await localForage.setItem('tags', JSON.stringify(tags));
+    await localForage.setItem(`tags-${tagId}`, JSON.stringify(tags[tagIndex]));
+    return tags[tagIndex] as TagType;
+  }
+
+  // note tags (map note <-> tag)
+  async getAllNoteTags(): Promise<NoteTagType[]> {
+    const noteTags = JSON.parse(await localForage.getItem('noteTags') || '[]');
+    return noteTags as NoteTagType[];
+  }
+  async getNoteTagsByNote(noteId: string): Promise<NoteTagType[]> {
+    const noteTags = await this.getAllNoteTags();
+    return noteTags.filter((noteTag: any) => noteTag.noteId === noteId && !noteTag.deletedAt) as NoteTagType[];
+  }
+  async getNoteTagsByTag(tagId: string): Promise<NoteTagType[]> {
+    const noteTags = await this.getAllNoteTags();
+    return noteTags.filter((noteTag: any) => noteTag.tagId === tagId && !noteTag.deletedAt) as NoteTagType[];
+  }
+  async createNoteTag(data: NoteTagCreateType): Promise<NoteTagType> {
+    const noteTags = await this.getAllNoteTags();
+    const newNoteTags = [data, ...noteTags];
+    await localForage.setItem('noteTags', JSON.stringify(newNoteTags));
+    await localForage.setItem(`noteTags-${data.id}`, JSON.stringify(data));
+    return data as NoteTagType;
+  }
+  async updateNoteTag(noteTagId: string, data: Partial<NoteTagType>): Promise<NoteTagType> {
+    const noteTags = await this.getAllNoteTags();
+    const noteTagIndex = noteTags.findIndex((noteTag: any) => noteTag.id === noteTagId);
+    noteTags[noteTagIndex] = { ...noteTags[noteTagIndex], ...data };
+    await localForage.setItem('noteTags', JSON.stringify(noteTags));
+    await localForage.setItem(`noteTags-${noteTagId}`, JSON.stringify(noteTags[noteTagIndex]));
+    return noteTags[noteTagIndex] as NoteTagType;
   }
 
   // password | settings

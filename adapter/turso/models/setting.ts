@@ -5,6 +5,7 @@ const settingModel = sqliteTable("settings", {
   password: text("password"),
   lastSync: integer("lastSync"),
   updatedAt: integer("updatedAt"),
+  schemaVersion: integer("schemaVersion"),
 });
 
 export default settingModel;

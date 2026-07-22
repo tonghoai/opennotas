@@ -51,8 +51,11 @@ const handleClickTab = (index: number) => {
 
 const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
+  const hasPendingAdapterChange = isAdapterChanged.value;
   settings.value = newValue;
-  adapterSelect.value = settings.value.sync.adapter;
+  if (!hasPendingAdapterChange) {
+    adapterSelect.value = settings.value.sync.adapter;
+  }
   // Keep draft in sync when settings are committed externally (e.g., parent reload)
   draftS3Config.value = buildDraft(newValue?.imageSync);
   fontFamilyDraft.value = newValue?.general?.fontFamily || '';

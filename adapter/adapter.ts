@@ -1,4 +1,4 @@
-import type { FolderType, NoteType } from "~/repositories/storage.type";
+import type { FolderType, NoteType, TagType, NoteTagType } from "~/repositories/storage.type";
 
 class NotasAdapter {
   async pullFolders(lastSync: number): Promise<FolderType[]> {
@@ -14,6 +14,23 @@ class NotasAdapter {
   }
 
   async pushNote(note: any): Promise<any> {
+    throw new Error("Not implemented");
+  }
+
+  // tags
+  async pullTags(lastSync: number): Promise<TagType[]> {
+    throw new Error("Not implemented");
+  }
+
+  async pushTag(tag: any): Promise<any> {
+    throw new Error("Not implemented");
+  }
+
+  async pullNoteTags(lastSync: number): Promise<NoteTagType[]> {
+    throw new Error("Not implemented");
+  }
+
+  async pushNoteTag(noteTag: any): Promise<any> {
     throw new Error("Not implemented");
   }
 

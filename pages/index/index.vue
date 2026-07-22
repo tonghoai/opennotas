@@ -44,6 +44,15 @@ import {
   getNoteHistory,
   addNoteHistorySnapshot,
   deleteNoteHistorySnapshot,
+  getTags,
+  createTag,
+  updateTag,
+  deleteTag,
+  getNotesForTag,
+  getNoteTagsByNote,
+  getNoteTagsByTag,
+  addTagToNote,
+  removeTagFromNote,
 } from '../../services/main';
 import Mutex from "~/utils/mutex";
 import { removeMarkdownEscape } from "~/utils/string";
@@ -179,7 +188,7 @@ const reloadFolder = async (isFirst: boolean = false, focus = true) => {
   await nextTick();
   listFoldersMenu.value = await loadFolder();
   const activeFolder = await loadActiveFolder();
-  activeFolderId.value = (isFirst && activeFolder === 'bottombar-trash') ? "" : activeFolder || "";
+  activeFolderId.value = (isFirst && (activeFolder === 'bottombar-trash' || activeFolder === 'bottombar-tags')) ? "" : activeFolder || "";
 
   await reloadNotes(focus, isFirst ? false : activeFolder === 'bottombar-trash');
 }
@@ -312,6 +321,7 @@ const handleRightClickFolderName = (data: any) => {
   // ẩn menu note
   hideMenuNote();
   hideMenuMoveNote();
+  hideMenuNoteTags();
 
   if (isMobile.value) {
     handleClickFolderName(data.folderId);
@@ -401,6 +411,172 @@ const handleClickBottombarTrash = async () => {
     formNotes.value = {};
   }
 }
+
+// all logic for tags
+const activeTagId = ref<string>("");
+const listTagsMenu = ref<any[]>([]);
+const isTagsMode = computed(() => activeFolderId.value === 'bottombar-tags');
+const loadTags = async () => {
+  return getTags();
+}
+const loadNotesForActiveTag = async () => {
+  return getNotesForTag(activeTagId.value, sortType.value, $i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
+}
+const handleClickTags = async () => {
+  activeFolderId.value = 'bottombar-tags';
+  isCollapsePanel.value = false;
+  setActiveFolder('bottombar-tags');
+
+  listTagsMenu.value = await loadTags();
+  activeTagId.value = '';
+  listNotes.value = [];
+  formNotes.value = {};
+}
+const handleClickTagName = async (tagId: string) => {
+  activeTagId.value = tagId;
+  listNotes.value = await loadNotesForActiveTag();
+  activeNoteId.value = await loadActiveNote() || "";
+
+  if (!isMobile.value) {
+    formNotes.value = await getNoteDetail(activeNoteId.value);
+  }
+  if (!isMobile.value && listNotes.value.find((note: any) => note.id === activeNoteId.value)) {
+    formNotesRef.value?.focus();
+  } else if (!isMobile.value) {
+    formNotes.value = {};
+  }
+}
+
+const isShowModalMenuTag = ref<boolean>(false);
+const menuTagKey = ref<number>(0);
+const handleRightClickTagName = (data: any) => {
+  hideMenuNote();
+  hideMenuMoveNote();
+  hideMenuNoteTags();
+
+  if (isMobile.value) {
+    activeTagId.value = data.tagId;
+    menuTagKey.value += 1;
+    toggleModalMenuTag(true, isShowModalMenuTag);
+  } else {
+    activeTagId.value = data.tagId;
+    menuTagKey.value += 1;
+    offsetMenuTag(data);
+  }
+};
+
+const isShowModalTagForm = ref<boolean>(false);
+const tagIdToEdit = ref<string>('');
+const tagFormInitial = computed(() => {
+  const tag = listTagsMenu.value.find((tag: any) => tag.id === tagIdToEdit.value);
+  return { name: tag?.name || '', color: tag?.color || '' };
+});
+const handleClickAddTag = () => {
+  tagIdToEdit.value = '';
+  toggleModalTagForm(true, isShowModalTagForm);
+}
+const handleClickEditTag = (tagId: string) => {
+  toggleModalMenuTag(false, isShowModalMenuTag);
+  tagIdToEdit.value = tagId;
+  toggleModalTagForm(true, isShowModalTagForm);
+}
+const handleClickCloseModalTagForm = () => {
+  toggleModalTagForm(false, isShowModalTagForm);
+}
+const handleConfirmTagForm = async (data: { tagId: string; name: string; color: string }) => {
+  if (!data.tagId) {
+    const newTag = await createTag({
+      id: randomUUID(),
+      name: data.name,
+      color: data.color,
+      lastSync: 0,
+      createdAt: nowUnix(),
+      updatedAt: nowUnix(),
+      deletedAt: null,
+    });
+    setActionObject('tag', newTag);
+    showSuccess($i18n.t('app.message_tag_created'));
+  } else {
+    const updatedTag = await updateTag(data.tagId, {
+      name: data.name,
+      color: data.color,
+      updatedAt: nowUnix(),
+    });
+    setActionObject('tag', updatedTag);
+    showSuccess($i18n.t('app.message_tag_updated'));
+  }
+
+  toggleModalTagForm(false, isShowModalTagForm);
+  listTagsMenu.value = await loadTags();
+}
+
+const tagWillDelete = ref<string>("");
+const isShowModalConfirmDeleteTag = ref<boolean>(false);
+const handleClickCloseModalConfirmDeleteTag = () => {
+  toggleModalConfirmDeleteTag(false, isShowModalConfirmDeleteTag);
+}
+const handleClickDeleteTag = (tagId: string) => {
+  tagWillDelete.value = tagId;
+  toggleModalMenuTag(false, isShowModalMenuTag);
+  toggleModalConfirmDeleteTag(true, isShowModalConfirmDeleteTag);
+}
+const handleConfirmDeleteTag = async (tagId: string) => {
+  toggleModalMenuTag(false, isShowModalMenuTag);
+
+  const noteTagsOfTag = await getNoteTagsByTag(tagId);
+  await deleteTag(tagId);
+  setActionObject('tag', { id: tagId, deletedAt: nowUnix() });
+  for (const noteTag of noteTagsOfTag) {
+    setActionObject('noteTag', { id: noteTag.id, deletedAt: nowUnix() });
+  }
+
+  toggleModalConfirmDeleteTag(false, isShowModalConfirmDeleteTag);
+  showSuccess($i18n.t('app.message_tag_deleted'));
+
+  listTagsMenu.value = await loadTags();
+  if (activeTagId.value === tagId) {
+    activeTagId.value = '';
+    listNotes.value = [];
+    formNotes.value = {};
+  }
+}
+
+const noteIdForTags = ref<string>('');
+const activeNoteTagIds = ref<string[]>([]);
+const handleClickAddNoteToTag = async (noteId: string) => {
+  noteIdForTags.value = noteId;
+  activeNoteTagIds.value = (await getNoteTagsByNote(noteId)).map((noteTag: any) => noteTag.tagId);
+
+  if (isMobile.value) {
+    toggleModalMenuNote(false, isShowModalMenuNote);
+    toggleModalMenuNoteTags(true, isShowModalMenuNoteTags);
+    return;
+  }
+
+  const menuNoteEl = document.getElementById('menu-note');
+  const rect = menuNoteEl?.getBoundingClientRect();
+  if (rect) {
+    offsetMenuNoteTags({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
+  }
+};
+const handleToggleNoteTag = async (tagId: string) => {
+  const isTagged = activeNoteTagIds.value.includes(tagId);
+
+  if (isTagged) {
+    const updated = await removeTagFromNote(noteIdForTags.value, tagId);
+    setActionObject('noteTag', updated);
+    activeNoteTagIds.value = activeNoteTagIds.value.filter((id: string) => id !== tagId);
+  } else {
+    const created = await addTagToNote(noteIdForTags.value, tagId);
+    setActionObject('noteTag', created);
+    activeNoteTagIds.value = [...activeNoteTagIds.value, tagId];
+  }
+
+  if (isTagsMode.value && activeTagId.value) {
+    listNotes.value = await loadNotesForActiveTag();
+  }
+};
+
 const isShowModalMenuSidebar = ref<boolean>(false);
 const handleClickMenuSidebar = (e: any) => {
   toggleModalMenuSidebar(true, isShowModalMenuSidebar);
@@ -536,6 +712,8 @@ const handleRightClickNote = (data: any) => {
   // ẩn menu folder
   hideMenuFolder();
   hideMenuMoveNote();
+  hideMenuTag();
+  hideMenuNoteTags();
 
   if (isMobile.value) {
     handleClickNote(data.noteId);
@@ -796,6 +974,7 @@ const moveNoteFolders = computed(() => {
   const note = listNotes.value.find((note: any) => note.id === noteIdToMove.value);
   return listFoldersMenu.value.filter((folder: any) => folder.id !== '' && folder.id !== note?.folderId);
 });
+const isShowModalMenuNoteTags = ref<boolean>(false);
 const handleClickMoveNote = (noteId: string) => {
   noteIdToMove.value = noteId;
 
@@ -1647,7 +1826,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <!-- cols personal -->
     <div class="hidden lg:block lg:float-left cols-personal w-20 bg-base-300">
       <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder" :isSyncing="isSyncingAll"
-        @clickNotes="handleClickFolderName('')" @clickTrash="handleClickBottombarTrash"
+        @clickNotes="handleClickFolderName('')" @clickTags="handleClickTags" @clickTrash="handleClickBottombarTrash"
         @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData"
         @clickCollapseFolder="handleClickCollapseFolder" />
     </div>
@@ -1656,21 +1835,35 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300/80"
       :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder && activeFolderId !== 'bottombar-trash' }"
       :style="{ width: colsFoldersWidth + 'px' }">
-      <div>
-        <ToolbarFolder :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
-          :isShowToolbarFolder="isShowToolbarNotes" @clickAddFolder="handleClickAddFolder"
-          @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData" />
-      </div>
-      <!-- <hr class="hidden lg:block border-base-300"> -->
+      <template v-if="!isTagsMode">
+        <div>
+          <ToolbarFolder :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
+            :isShowToolbarFolder="isShowToolbarNotes" @clickAddFolder="handleClickAddFolder"
+            @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData" />
+        </div>
+        <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
-        <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
-          :actionObjectKeys="actionObjectKeys" :isCollapseFolder="isCollapseFolder"
-          @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
-          @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName" />
-      </div>
-      <!-- <hr class="border-base-300"> -->
-      <!-- <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" /> -->
+        <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
+          <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
+            :actionObjectKeys="actionObjectKeys" :isCollapseFolder="isCollapseFolder"
+            @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
+            @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName" />
+        </div>
+        <!-- <hr class="border-base-300"> -->
+        <!-- <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" /> -->
+      </template>
+      <template v-else>
+        <div>
+          <ToolbarTag :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
+            :isShowToolbarFolder="isShowToolbarNotes" @clickAddTag="handleClickAddTag" />
+        </div>
+
+        <div id="tags-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
+          <ListTag :listTags="listTagsMenu" :activeTagId="activeTagId" :actionObjectKeys="actionObjectKeys"
+            :isCollapseFolder="isCollapseFolder" @clickTagName="handleClickTagName"
+            @rightClickTagName="handleRightClickTagName" @clickAddTag="handleClickAddTag" />
+        </div>
+      </template>
     </div>
 
 
@@ -1678,8 +1871,9 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <div class="cols-notes transition-all duration-300" :style="{ width: colsNotesWidth + 'px' }"
       :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[64px] absolute': isMobile, 'lg:w-3/12 lg:float-left bg-base-200 h-full': !isMobile, '!w-0': isCollapsePanel }">
       <div class="hidden lg:block">
-        <ToolbarNotes v-if="isShowToolbarNotes" ref="toolbarNotesRef" @clickAddNote="handleClickAddNote"
-          @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch" />
+        <ToolbarNotes v-if="isShowToolbarNotes" ref="toolbarNotesRef" :hideAddButton="isTagsMode"
+          @clickAddNote="handleClickAddNote" @clickSearch="handleClickSearch"
+          @clickCancelSearch="handleClickCancelSearch" />
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
@@ -1732,10 +1926,16 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
       @pinNote="handleClickPinNote" @lockNote="handleClickLockNote" @copyNote="handleCopyToClipboard"
       @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever"
       @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory"
-      @clickMove="handleClickMoveNote" />
+      @clickMove="handleClickMoveNote" @clickAddToTag="handleClickAddNoteToTag" />
   </div>
   <div id="menu-move-note" class="hidden absolute">
     <MenuMoveNote :listFolders="moveNoteFolders" @selectFolder="handleSelectMoveFolder" />
+  </div>
+  <div id="menu-tag" class="hidden absolute">
+    <MenuTag :key="menuTagKey" :tagId="activeTagId" @editTag="handleClickEditTag" @deleteTag="handleClickDeleteTag" />
+  </div>
+  <div id="menu-note-tags" class="hidden absolute">
+    <MenuNoteTags :listTags="listTagsMenu" :noteTagIds="activeNoteTagIds" @toggleTag="handleToggleNoteTag" />
   </div>
 
   <!-- modal -->
@@ -1782,9 +1982,18 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     @deleteNote="handleClickDeleteNote" @pinNote="handleClickPinNote" @lockNote="handleClickLockNote"
     @copyNote="handleCopyToClipboard" @restoreNote="handleClickRestoreNote"
     @deleteNoteForever="handleClickDeleteNoteForever" @clickInfo="handleClickFormNotesInfo"
-    @clickHistory="handleClickFormNotesHistory" @clickMove="handleClickMoveNote" />
+    @clickHistory="handleClickFormNotesHistory" @clickMove="handleClickMoveNote"
+    @clickAddToTag="handleClickAddNoteToTag" />
   <ModalMenuMoveNote v-if="isShowModalMenuMoveNote" :listFolders="moveNoteFolders"
     @selectFolder="handleSelectMoveFolder" />
+  <ModalMenuTag v-if="isShowModalMenuTag" :tagId="activeTagId" @editTag="handleClickEditTag"
+    @deleteTag="handleClickDeleteTag" />
+  <ModalMenuNoteTags v-if="isShowModalMenuNoteTags" :listTags="listTagsMenu" :noteTagIds="activeNoteTagIds"
+    @toggleTag="handleToggleNoteTag" />
+  <ModalTagForm v-if="isShowModalTagForm" :tagId="tagIdToEdit" :tagName="tagFormInitial.name"
+    :tagColor="tagFormInitial.color" @confirm="handleConfirmTagForm" @close="handleClickCloseModalTagForm" />
+  <ModalConfirmDeleteTag v-if="isShowModalConfirmDeleteTag" :tagId="tagWillDelete" @confirm="handleConfirmDeleteTag"
+    @close="handleClickCloseModalConfirmDeleteTag" />
   <ModalMenuSidebar v-if="isShowModalMenuSidebar" @clickAddFolder="handleClickAddFolder"
     @clickForceSync="handleClickUpdateData" />
   <ModalInsertLink v-if="isShowModalInsertLink" ref="modalInsertLinkRef" @confirm="handleConfirmInsertLink"
@@ -1793,6 +2002,6 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     @close="handleClickCloseModalInsertImage" />
 
   <!-- float button create new note -->
-  <FloatNewNotes v-if="!isInEditor && initedApp && activeFolderId !== 'bottombar-trash'"
+  <FloatNewNotes v-if="!isInEditor && initedApp && !isTagsMode && activeFolderId !== 'bottombar-trash'"
     @clickNewNote="handleClickAddNote" />
 </template>

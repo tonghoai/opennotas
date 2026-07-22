@@ -35,6 +35,26 @@ function toggleModalMenuMoveNote(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-menu-move-note", isOpen, state);
 }
 
+function toggleModalMenuTag(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-menu-tag", isOpen, state);
+}
+
+function toggleModalTagForm(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-tag-form", isOpen, state);
+}
+
+function toggleModalTagColorCustom(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-tag-color-custom", isOpen, state);
+}
+
+function toggleModalConfirmDeleteTag(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-confirm-delete-tag", isOpen, state);
+}
+
+function toggleModalMenuNoteTags(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-menu-note-tags", isOpen, state);
+}
+
 function toggleModalSortNote(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-sort-note", isOpen, state);
 }
@@ -114,6 +134,11 @@ export {
   toggleModalConfirmSampleData,
   toggleModalMenuNote,
   toggleModalMenuMoveNote,
+  toggleModalMenuTag,
+  toggleModalTagForm,
+  toggleModalTagColorCustom,
+  toggleModalConfirmDeleteTag,
+  toggleModalMenuNoteTags,
   toggleModalSortNote,
   toggleModalMenuSidebar,
   toggleModalMenuEditor,

@@ -67,6 +67,39 @@ type NoteUpdateType = {
 
 type NoteSortType = 'createdAt' | 'updatedAt';
 
+type TagType = {
+  id: string;
+  name: string;
+  color?: string;
+  lastSync: number;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: number | null;
+}
+
+type TagCreateType = TagType;
+
+type TagUpdateType = {
+  name: string;
+  color?: string;
+  lastSync: number;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: number | null;
+}
+
+type NoteTagType = {
+  id: string;
+  noteId: string;
+  tagId: string;
+  lastSync: number;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: number | null;
+}
+
+type NoteTagCreateType = NoteTagType;
+
 export type {
   FolderType,
   FolderCreateType,
@@ -76,4 +109,11 @@ export type {
   NoteCreateType,
   NoteUpdateType,
   NoteSortType,
+
+  TagType,
+  TagCreateType,
+  TagUpdateType,
+
+  NoteTagType,
+  NoteTagCreateType,
 }
