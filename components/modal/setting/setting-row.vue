@@ -3,12 +3,12 @@ defineProps<{ label: string; description?: string }>();
 </script>
 
 <template>
-  <div class="flex items-center justify-between gap-6 py-4">
+  <div class="grid grid-cols-[3fr_2fr] items-center gap-3 py-4 lg:flex lg:justify-between lg:gap-6">
     <div class="min-w-0">
       <p class="font-medium">{{ label }}</p>
       <p v-if="description" class="text-xs text-base-content/60 mt-1">{{ description }}</p>
     </div>
-    <div class="shrink-0">
+    <div class="min-w-0 flex justify-end lg:shrink-0">
       <slot />
     </div>
   </div>
