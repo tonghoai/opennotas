@@ -7,8 +7,10 @@ function handleInteractCols(
 ) {
   setTimeout(() => {
     if (document.querySelector('.cols-notes')) {
-      const mc = new (window as any).Hammer.Manager(document.querySelector('.cols-notes'));
-      mc.add(new (window as any).Hammer.Swipe({ threshold: 10 }));
+      const mc = new (window as any).Hammer.Manager(document.querySelector('.cols-notes'), {
+        touchAction: 'pan-y',
+      });
+      mc.add(new (window as any).Hammer.Swipe({ threshold: 10, direction: (window as any).Hammer.DIRECTION_HORIZONTAL }));
       mc.on("swipeleft swiperight", function (ev: any) {
         switch (ev.type) {
           case 'swipeleft':
