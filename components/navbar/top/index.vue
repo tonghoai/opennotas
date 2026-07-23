@@ -4,6 +4,7 @@ import { defineProps, onMounted } from 'vue';
 import S3ProxyAdapter from '~/adapter/s3';
 import { resetSyncedImages } from '~/services/image';
 import { toggleModalMenuEditor } from '~/utils/modal';
+import { useMobileBackToggle } from '~/utils/mobile-back';
 import SettingRow from '../../modal/setting/setting-row.vue';
 import SettingSelect from '../../modal/setting/setting-select.vue';
 import Menu from '../assets/svg/menu.svg?component';
@@ -72,6 +73,7 @@ const { setLocale } = useI18n();
 // const colorMode = useColorMode();
 
 const isDrawerOpen = ref<boolean>(false);
+useMobileBackToggle(isDrawerOpen);
 
 const activeFolderName = computed(() => {
   if (props.activeFolderId === 'bottombar-trash') {
@@ -83,6 +85,7 @@ const activeFolderName = computed(() => {
 });
 
 const isShowSearchInput = ref(false);
+useMobileBackToggle(isShowSearchInput);
 const handleToggleSearch = () => {
   isShowSearchInput.value = !isShowSearchInput.value;
   if (isShowSearchInput.value) {
@@ -157,6 +160,7 @@ const handleClickUpdateData = () => {
 };
 
 const isDrawerSettingOpen = ref<boolean>(false);
+useMobileBackToggle(isDrawerSettingOpen);
 const handleClickSettingBtn = () => {
   isDrawerSettingOpen.value = true;
 };

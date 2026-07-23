@@ -56,19 +56,13 @@ import {
 } from '../../services/main';
 import Mutex from "~/utils/mutex";
 import { removeMarkdownEscape } from "~/utils/string";
+import { pushMobileBackState, closeMobileBackState, initMobileBackHandler } from "~/utils/mobile-back";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
 const colorMode = useColorMode();
-const route = useRoute();
 
 const isInEditor = ref<boolean>(false);
-watch(() => route.params, () => {
-  if (!route.query.noteId) {
-    isInEditor.value = false;
-    formNotes.value = {};
-  }
-});
 
 // function for update viewport height
 function updateViewportHeight() {
@@ -91,6 +85,7 @@ onMounted(async () => {
   window.history.replaceState({}, '', window.location.pathname); // reset query params
   outsideClickMenu(); // handle outside click for menu
   disableDefaultContextMenu();
+  initMobileBackHandler(); // handle back button/gesture on mobile
 
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === 'visible') {
@@ -702,9 +697,12 @@ const handleClickNote = async (noteId: string, inEditor: boolean = false, should
   if (inEditor) {
     isInEditor.value = true;
 
-    // if mobile, push state to change url
+    // if mobile, push a back-stack entry so hardware/gesture back closes the editor
     if (isMobile.value) {
-      window.history.pushState({}, '', `?noteId=${noteId}`);
+      pushMobileBackState(() => {
+        isInEditor.value = false;
+        snapshotNoteBeforeLeaving(noteId);
+      });
     }
   }
 };
@@ -1081,7 +1079,7 @@ const handleClickBack = async () => {
   }
 
   if (window.history.length > 1) {
-    window.history.back();
+    closeMobileBackState();
   } else {
     window.location.href = '/';
   }
