@@ -539,7 +539,8 @@ const handleConfirmDeleteTag = async (tagId: string) => {
 
 const noteIdForTags = ref<string>('');
 const activeNoteTagIds = ref<string[]>([]);
-const handleClickAddNoteToTag = async (noteId: string) => {
+const handleClickAddNoteToTag = async (payload: any) => {
+  const noteId = typeof payload === 'object' ? payload.noteId : payload;
   noteIdForTags.value = noteId;
   activeNoteTagIds.value = (await getNoteTagsByNote(noteId)).map((noteTag: any) => noteTag.tagId);
 
@@ -549,8 +550,8 @@ const handleClickAddNoteToTag = async (noteId: string) => {
     return;
   }
 
-  const menuNoteEl = document.getElementById('menu-note');
-  const rect = menuNoteEl?.getBoundingClientRect();
+  hideMenuMoveNote();
+  const rect = payload?.rect;
   if (rect) {
     offsetMenuNoteTags({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
   }
@@ -570,6 +571,8 @@ const handleToggleNoteTag = async (tagId: string) => {
 
   if (isTagsMode.value && activeTagId.value) {
     listNotes.value = await loadNotesForActiveTag();
+  } else {
+    listNotes.value = await loadNotes();
   }
 };
 
@@ -974,7 +977,8 @@ const moveNoteFolders = computed(() => {
   return listFoldersMenu.value.filter((folder: any) => folder.id !== '' && folder.id !== note?.folderId);
 });
 const isShowModalMenuNoteTags = ref<boolean>(false);
-const handleClickMoveNote = (noteId: string) => {
+const handleClickMoveNote = (payload: any) => {
+  const noteId = typeof payload === 'object' ? payload.noteId : payload;
   noteIdToMove.value = noteId;
 
   if (isMobile.value) {
@@ -983,8 +987,8 @@ const handleClickMoveNote = (noteId: string) => {
     return;
   }
 
-  const menuNoteEl = document.getElementById('menu-note');
-  const rect = menuNoteEl?.getBoundingClientRect();
+  hideMenuNoteTags();
+  const rect = payload?.rect;
   if (rect) {
     offsetMenuMoveNote({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
   }
@@ -1926,8 +1930,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <MenuNote :key="menuNoteKey" :noteId="activeNoteId" :formNotes="formNotes" @deleteNote="handleClickDeleteNote"
       @pinNote="handleClickPinNote" @lockNote="handleClickLockNote" @copyNote="handleCopyToClipboard"
       @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever"
-      @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory"
-      @clickMove="handleClickMoveNote" @clickAddToTag="handleClickAddNoteToTag" />
+      @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory" @clickMove="handleClickMoveNote"
+      @clickAddToTag="handleClickAddNoteToTag" />
   </div>
   <div id="menu-move-note" class="hidden absolute">
     <MenuMoveNote :listFolders="moveNoteFolders" @selectFolder="handleSelectMoveFolder" />
