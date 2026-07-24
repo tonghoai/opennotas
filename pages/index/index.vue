@@ -1908,7 +1908,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="form-editors"
-        class="cursor-text overflow-auto bg-base-100 h-[calc(100vh_-_64px)] lg:h-[calc(100vh_-_80px)]"
+        class="cursor-text overflow-auto bg-base-100 h-[calc(100vh_-_64px_-_28px)] lg:h-[calc(100vh_-_80px_-_28px)]"
         :class="{ 'overflow-x-hidden': isMobile }">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
@@ -1918,6 +1918,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
           @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleClickCloseModalInsertImage"
           @alertMessage="handleAlertMessage" />
       </div>
+      <ToolbarFormNotesStatus :noteId="formNotes.id" :formNotes="formNotes" :actionObjectKeys="actionObjectKeys"
+        :idPulled="idPulled" />
     </div>
   </div>
 
