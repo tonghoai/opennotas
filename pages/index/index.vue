@@ -19,6 +19,9 @@ import {
   updateLastPull,
   checkPasswordExist,
   setPassword,
+  getPasswordChangeBackup,
+  savePasswordChangeBackup,
+  clearPasswordChangeBackup,
   getSettings,
   getAllNotes,
   setSettings,
@@ -38,22 +41,28 @@ import {
   setFirstInit,
   setSortNote,
   getSortNote,
+  getNoteHistory,
+  addNoteHistorySnapshot,
+  deleteNoteHistorySnapshot,
+  getTags,
+  createTag,
+  updateTag,
+  deleteTag,
+  getNotesForTag,
+  getNoteTagsByNote,
+  getNoteTagsByTag,
+  addTagToNote,
+  removeTagFromNote,
 } from '../../services/main';
 import Mutex from "~/utils/mutex";
 import { removeMarkdownEscape } from "~/utils/string";
+import { pushMobileBackState, closeMobileBackState, initMobileBackHandler } from "~/utils/mobile-back";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
 const colorMode = useColorMode();
-const route = useRoute();
 
 const isInEditor = ref<boolean>(false);
-watch(() => route.params, () => {
-  if (!route.query.noteId) {
-    isInEditor.value = false;
-    formNotes.value = {};
-  }
-});
 
 // function for update viewport height
 function updateViewportHeight() {
@@ -76,6 +85,7 @@ onMounted(async () => {
   window.history.replaceState({}, '', window.location.pathname); // reset query params
   outsideClickMenu(); // handle outside click for menu
   disableDefaultContextMenu();
+  initMobileBackHandler(); // handle back button/gesture on mobile
 
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === 'visible') {
@@ -112,17 +122,39 @@ onMounted(async () => {
   // }
 });
 
+// recover notes left half-migrated if a previous password change was interrupted
+onMounted(async () => {
+  const backup = await getPasswordChangeBackup();
+  if (backup?.notes?.length) {
+    for (const item of backup.notes) {
+      await updateNote(item.id, { content: item.content }).catch(() => { });
+    }
+    await clearPasswordChangeBackup();
+    showInfo($i18n.t('app.message_change_password_recovered'));
+  }
+});
+
 
 // init data notes if first time access
+const isShowModalConfirmSampleData = ref<boolean>(false);
 onMounted(async () => {
   const isFirstInit = await checkIsFirstInit();
   if (isFirstInit) {
-    const notes = await fetch('/opennotas.json').then((res) => res.json());
-    await setImportData(notes);
-    await handleTriggerImportNotes();
-    await setFirstInit();
+    toggleModalConfirmSampleData(true, isShowModalConfirmSampleData);
   }
 });
+const handleConfirmSampleData = async () => {
+  toggleModalConfirmSampleData(false, isShowModalConfirmSampleData);
+
+  const notes = await fetch('/opennotas.json').then((res) => res.json());
+  await setImportData(notes);
+  await handleTriggerImportNotes();
+  await setFirstInit();
+};
+const handleCancelSampleData = async () => {
+  toggleModalConfirmSampleData(false, isShowModalConfirmSampleData);
+  await setFirstInit();
+};
 
 // reloadNotes & reloadFolder using for reload all data display on screen
 const listNotesKey = ref<number>(0);
@@ -151,7 +183,7 @@ const reloadFolder = async (isFirst: boolean = false, focus = true) => {
   await nextTick();
   listFoldersMenu.value = await loadFolder();
   const activeFolder = await loadActiveFolder();
-  activeFolderId.value = (isFirst && activeFolder === 'bottombar-trash') ? "" : activeFolder || "";
+  activeFolderId.value = (isFirst && (activeFolder === 'bottombar-trash' || activeFolder === 'bottombar-tags')) ? "" : activeFolder || "";
 
   await reloadNotes(focus, isFirst ? false : activeFolder === 'bottombar-trash');
 }
@@ -233,13 +265,14 @@ const SYNC_LEVELS = [
 ];
 const syncLevel = ref<number>(0);
 let syncLevelResetTimer: ReturnType<typeof setTimeout> | null = null;
-const handleClickUpdateData = async () => {
+const handleClickUpdateData = async (forcedLevelIndex?: number) => {
   toggleModalMenuSidebar(false, isShowModalMenuSidebar);
   navbarTopRef.value?.closeDrawer();
 
   isSyncingAll.value = true;
-  const level = SYNC_LEVELS[syncLevel.value];
-  isSyncAll.value = syncLevel.value === SYNC_LEVELS.length - 1;
+  const levelIndex = forcedLevelIndex ?? syncLevel.value;
+  const level = SYNC_LEVELS[levelIndex];
+  isSyncAll.value = levelIndex === SYNC_LEVELS.length - 1;
   lastPull.value = level.seconds === 0 ? 0 : nowUnix() - level.seconds;
 
   await pullPush().catch(() => { });
@@ -248,7 +281,7 @@ const handleClickUpdateData = async () => {
 
   showInfoSnackbar($i18n.t(level.labelKey));
 
-  syncLevel.value = (syncLevel.value + 1) % SYNC_LEVELS.length;
+  syncLevel.value = (levelIndex + 1) % SYNC_LEVELS.length;
 
   if (syncLevelResetTimer) clearTimeout(syncLevelResetTimer);
   syncLevelResetTimer = setTimeout(() => {
@@ -273,6 +306,7 @@ const handleClickFolderName = async (folderId: string) => {
   navbarTopRef.value?.resetSearchInput();
   toolbarNotesRef.value?.resetSearchInput();
   activeFolderId.value = folderId;
+  isCollapsePanel.value = false;
   setActiveFolder(folderId);
 
   reloadNotes();
@@ -282,6 +316,8 @@ const menuFolderKey = ref<number>(0);
 const handleRightClickFolderName = (data: any) => {
   // ẩn menu note
   hideMenuNote();
+  hideMenuMoveNote();
+  hideMenuNoteTags();
 
   if (isMobile.value) {
     handleClickFolderName(data.folderId);
@@ -353,13 +389,14 @@ const handleConfirmDeleteFolder = async (folderId: string) => {
   }
 
   toggleModalConfirmDeleteFolder(false, isShowModalConfirmDeleteFolder);
-  showInfoSnackbar($i18n.t('app.message_folder_deleted'));
+  showSuccess($i18n.t('app.message_folder_deleted'));
 
   await setActiveFolder('');
   reloadFolder();
 }
 const handleClickBottombarTrash = async () => {
   activeFolderId.value = 'bottombar-trash';
+  isCollapsePanel.value = false;
   setActiveFolder('bottombar-trash');
 
   listNotes.value = await loadTrashNotes();
@@ -370,6 +407,172 @@ const handleClickBottombarTrash = async () => {
     formNotes.value = {};
   }
 }
+
+// all logic for tags
+const activeTagId = ref<string>("");
+const listTagsMenu = ref<any[]>([]);
+const isTagsMode = computed(() => activeFolderId.value === 'bottombar-tags');
+const loadTags = async () => {
+  return getTags();
+}
+const loadNotesForActiveTag = async () => {
+  return getNotesForTag(activeTagId.value, sortType.value, $i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
+}
+const handleClickTags = async () => {
+  activeFolderId.value = 'bottombar-tags';
+  isCollapsePanel.value = false;
+  setActiveFolder('bottombar-tags');
+
+  listTagsMenu.value = await loadTags();
+  activeTagId.value = '';
+  listNotes.value = [];
+  formNotes.value = {};
+}
+const handleClickTagName = async (tagId: string) => {
+  activeTagId.value = tagId;
+  listNotes.value = await loadNotesForActiveTag();
+  activeNoteId.value = await loadActiveNote() || "";
+
+  if (!isMobile.value) {
+    formNotes.value = await getNoteDetail(activeNoteId.value);
+  }
+  if (!isMobile.value && listNotes.value.find((note: any) => note.id === activeNoteId.value)) {
+    formNotesRef.value?.focus();
+  } else if (!isMobile.value) {
+    formNotes.value = {};
+  }
+}
+
+const isShowModalMenuTag = ref<boolean>(false);
+const menuTagKey = ref<number>(0);
+const handleRightClickTagName = (data: any) => {
+  hideMenuNote();
+  hideMenuMoveNote();
+  hideMenuNoteTags();
+
+  if (isMobile.value) {
+    activeTagId.value = data.tagId;
+    menuTagKey.value += 1;
+    toggleModalMenuTag(true, isShowModalMenuTag);
+  } else {
+    activeTagId.value = data.tagId;
+    menuTagKey.value += 1;
+    offsetMenuTag(data);
+  }
+};
+
+const isShowModalTagForm = ref<boolean>(false);
+const tagIdToEdit = ref<string>('');
+const tagFormInitial = computed(() => {
+  const tag = listTagsMenu.value.find((tag: any) => tag.id === tagIdToEdit.value);
+  return { name: tag?.name || '', color: tag?.color || '' };
+});
+const handleClickAddTag = () => {
+  tagIdToEdit.value = '';
+  toggleModalTagForm(true, isShowModalTagForm);
+}
+const handleClickEditTag = (tagId: string) => {
+  toggleModalMenuTag(false, isShowModalMenuTag);
+  tagIdToEdit.value = tagId;
+  toggleModalTagForm(true, isShowModalTagForm);
+}
+const handleClickCloseModalTagForm = () => {
+  toggleModalTagForm(false, isShowModalTagForm);
+}
+const handleConfirmTagForm = async (data: { tagId: string; name: string; color: string }) => {
+  if (!data.tagId) {
+    const newTag = await createTag({
+      id: randomUUID(),
+      name: data.name,
+      color: data.color,
+      lastSync: 0,
+      createdAt: nowUnix(),
+      updatedAt: nowUnix(),
+      deletedAt: null,
+    });
+    setActionObject('tag', newTag);
+    showSuccess($i18n.t('app.message_tag_created'));
+  } else {
+    const updatedTag = await updateTag(data.tagId, {
+      name: data.name,
+      color: data.color,
+      updatedAt: nowUnix(),
+    });
+    setActionObject('tag', updatedTag);
+    showSuccess($i18n.t('app.message_tag_updated'));
+  }
+
+  toggleModalTagForm(false, isShowModalTagForm);
+  listTagsMenu.value = await loadTags();
+}
+
+const tagWillDelete = ref<string>("");
+const isShowModalConfirmDeleteTag = ref<boolean>(false);
+const handleClickCloseModalConfirmDeleteTag = () => {
+  toggleModalConfirmDeleteTag(false, isShowModalConfirmDeleteTag);
+}
+const handleClickDeleteTag = (tagId: string) => {
+  tagWillDelete.value = tagId;
+  toggleModalMenuTag(false, isShowModalMenuTag);
+  toggleModalConfirmDeleteTag(true, isShowModalConfirmDeleteTag);
+}
+const handleConfirmDeleteTag = async (tagId: string) => {
+  toggleModalMenuTag(false, isShowModalMenuTag);
+
+  const noteTagsOfTag = await getNoteTagsByTag(tagId);
+  await deleteTag(tagId);
+  setActionObject('tag', { id: tagId, deletedAt: nowUnix() });
+  for (const noteTag of noteTagsOfTag) {
+    setActionObject('noteTag', { id: noteTag.id, deletedAt: nowUnix() });
+  }
+
+  toggleModalConfirmDeleteTag(false, isShowModalConfirmDeleteTag);
+  showSuccess($i18n.t('app.message_tag_deleted'));
+
+  listTagsMenu.value = await loadTags();
+  if (activeTagId.value === tagId) {
+    activeTagId.value = '';
+    listNotes.value = [];
+    formNotes.value = {};
+  }
+}
+
+const noteIdForTags = ref<string>('');
+const activeNoteTagIds = ref<string[]>([]);
+const handleClickAddNoteToTag = async (noteId: string) => {
+  noteIdForTags.value = noteId;
+  activeNoteTagIds.value = (await getNoteTagsByNote(noteId)).map((noteTag: any) => noteTag.tagId);
+
+  if (isMobile.value) {
+    toggleModalMenuNote(false, isShowModalMenuNote);
+    toggleModalMenuNoteTags(true, isShowModalMenuNoteTags);
+    return;
+  }
+
+  const menuNoteEl = document.getElementById('menu-note');
+  const rect = menuNoteEl?.getBoundingClientRect();
+  if (rect) {
+    offsetMenuNoteTags({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
+  }
+};
+const handleToggleNoteTag = async (tagId: string) => {
+  const isTagged = activeNoteTagIds.value.includes(tagId);
+
+  if (isTagged) {
+    const updated = await removeTagFromNote(noteIdForTags.value, tagId);
+    setActionObject('noteTag', updated);
+    activeNoteTagIds.value = activeNoteTagIds.value.filter((id: string) => id !== tagId);
+  } else {
+    const created = await addTagToNote(noteIdForTags.value, tagId);
+    setActionObject('noteTag', created);
+    activeNoteTagIds.value = [...activeNoteTagIds.value, tagId];
+  }
+
+  if (isTagsMode.value && activeTagId.value) {
+    listNotes.value = await loadNotesForActiveTag();
+  }
+};
+
 const isShowModalMenuSidebar = ref<boolean>(false);
 const handleClickMenuSidebar = (e: any) => {
   toggleModalMenuSidebar(true, isShowModalMenuSidebar);
@@ -454,7 +657,32 @@ const handleClickCancelSearch = async () => {
   listNotes.value = await loadNotes();
 }
 const activeNoteId = ref<string>("");
+const activeNoteBaseline = ref<{ noteId: string, content: string }>({ noteId: '', content: '' });
+watch(activeNoteId, async (newId) => {
+  if (!newId) {
+    activeNoteBaseline.value = { noteId: '', content: '' };
+    return;
+  }
+  const note = await getNoteDetail(newId);
+  activeNoteBaseline.value = { noteId: newId, content: note?.content ?? '' };
+});
+const snapshotNoteBeforeLeaving = async (noteId: string) => {
+  if (activeNoteBaseline.value.noteId !== noteId) {
+    return;
+  }
+  const current = await getNoteDetail(noteId);
+  if (current?.content === undefined) {
+    return;
+  }
+  if (current.content === activeNoteBaseline.value.content) {
+    return;
+  }
+  await saveNoteHistorySnapshot(noteId, activeNoteBaseline.value.content);
+};
 const handleClickNote = async (noteId: string, inEditor: boolean = false, shouldFocus: boolean = false) => {
+  if (activeNoteId.value && activeNoteId.value !== noteId) {
+    await snapshotNoteBeforeLeaving(activeNoteId.value);
+  }
   activeNoteId.value = noteId;
   setActiveNote(noteId);
   formNotes.value = await getNoteDetail(activeNoteId.value);
@@ -469,9 +697,12 @@ const handleClickNote = async (noteId: string, inEditor: boolean = false, should
   if (inEditor) {
     isInEditor.value = true;
 
-    // if mobile, push state to change url
+    // if mobile, push a back-stack entry so hardware/gesture back closes the editor
     if (isMobile.value) {
-      window.history.pushState({}, '', `?noteId=${noteId}`);
+      pushMobileBackState(() => {
+        isInEditor.value = false;
+        snapshotNoteBeforeLeaving(noteId);
+      });
     }
   }
 };
@@ -479,6 +710,9 @@ const isShowModalMenuNote = ref<boolean>(false);
 const handleRightClickNote = (data: any) => {
   // ẩn menu folder
   hideMenuFolder();
+  hideMenuMoveNote();
+  hideMenuTag();
+  hideMenuNoteTags();
 
   if (isMobile.value) {
     handleClickNote(data.noteId);
@@ -503,6 +737,7 @@ const handleClickDeleteNote = async (noteId: string) => {
 
   listNotes.value = await loadNotes();
   formNotes.value = {};
+  showSuccess($i18n.t('app.message_note_deleted'));
 }
 const handleClickDeleteNoteForever = async (noteId: string) => {
   const updatedNote = await updateNote(noteId, {
@@ -562,6 +797,7 @@ const handleClickLockNote = async (data: any) => {
     isLocked: data.status == 1 ? 0 : 1,
     content: data.status == 1 ? await decryptData(note.content, password)
       : await encryptData(note.content, password),
+    title: removeSpecialChar(substrTitle(note.content)),
     updatedAt: nowUnix(),
   });
 
@@ -580,18 +816,21 @@ const handleUnlockNote = async (data: any) => {
     }
 
     const note = await getNoteDetail(data.noteId);
+    const decryptedContent = await decryptData(note.content, password);
     const updatedNote = await updateNote(data.noteId, {
       isLocked: 0,
-      content: await decryptData(note.content, password),
+      content: decryptedContent,
+      title: removeSpecialChar(substrTitle(decryptedContent)),
       updatedAt: nowUnix(),
     });
     setActionObject('note', updatedNote);
 
     listNotes.value = await loadNotes();
     formNotes.value = await getNoteDetail(activeNoteId.value);
+    activeNoteBaseline.value = { noteId: activeNoteId.value, content: formNotes.value.content };
 
     toggleModalUnlockNotes(false, isShowModalUnlockNotes);
-    showInfoSnackbar($i18n.t('app.message_note_unlocked'));
+    showSuccess($i18n.t('app.message_note_unlocked'));
   } catch (error) {
     modalUnlockNotesRef.value?.showFailedPassword();
     showErrorSnackbar($i18n.t('app.message_note_unlocked_failed'));
@@ -609,7 +848,7 @@ const handleClickRestoreNote = async (noteId: string) => {
 
   listNotes.value = await loadTrashNotes();
   formNotes.value = {};
-  showInfoSnackbar($i18n.t('app.message_note_restored'));
+  showSuccess($i18n.t('app.message_note_restored'));
 }
 
 
@@ -635,11 +874,18 @@ const handleConfirmPassword = async (password: string) => {
     formNotes.value.content = await decryptData(formNotes.value.content, currentPassword);
     formNotes.value.isLocked = false;
     formNotesRef.value?.resetPassword();
-    showInfoSnackbar($i18n.t('app.message_note_unlocked'));
+    showSuccess($i18n.t('app.message_note_unlocked'));
   } catch (error) {
     formNotesRef.value?.wrongPassword();
     showErrorSnackbar($i18n.t('app.message_note_unlocked_failed'));
   }
+};
+const saveNoteHistorySnapshot = async (noteId: string, content: string) => {
+  if (!noteId || content === undefined) return;
+  const history = await getNoteHistory(noteId);
+  const lastSnapshot = history[0];
+  if (lastSnapshot?.content === content) return;
+  await addNoteHistorySnapshot(noteId, content);
 };
 let debounceChangeContent: any = null;
 const handleChangeContent = async ({ content: newVal, id }: { content: string, id: string }) => {
@@ -685,7 +931,7 @@ const handleCopyToClipboard = async () => {
 
   const note = await getNoteDetail(activeNoteId.value);
   navigator.clipboard.writeText(removeMarkdownEscape(note.content));
-  showInfoSnackbar($i18n.t('app.message_note_copied_clipboard'));
+  showSuccess($i18n.t('app.message_note_copied_clipboard'));
 };
 const noteInfo = ref<any>({
   lastSync: 0,
@@ -707,15 +953,133 @@ const handleClickFormNotesInfo = async (noteId: string) => {
   };
   toggleModalNotesDetail(true, isShowModalNotesDetail);
 }
+const isShowModalNoteHistory = ref<boolean>(false);
+const historyNoteId = ref<string>('');
+const historyList = ref<any[]>([]);
+const historyIsLocked = ref<boolean>(false);
+const loadNoteHistory = async (noteId: string) => {
+  const note = await getNoteDetail(noteId);
+  historyIsLocked.value = !!note?.isLocked;
+  historyList.value = await getNoteHistory(noteId);
+};
+const handleClickFormNotesHistory = async (noteId: string) => {
+  historyNoteId.value = noteId;
+  await loadNoteHistory(noteId);
+  toggleModalNoteHistory(true, isShowModalNoteHistory);
+};
+const isShowModalMenuMoveNote = ref<boolean>(false);
+const noteIdToMove = ref<string>('');
+const moveNoteFolders = computed(() => {
+  const note = listNotes.value.find((note: any) => note.id === noteIdToMove.value);
+  return listFoldersMenu.value.filter((folder: any) => folder.id !== '' && folder.id !== note?.folderId);
+});
+const isShowModalMenuNoteTags = ref<boolean>(false);
+const handleClickMoveNote = (noteId: string) => {
+  noteIdToMove.value = noteId;
+
+  if (isMobile.value) {
+    toggleModalMenuNote(false, isShowModalMenuNote);
+    toggleModalMenuMoveNote(true, isShowModalMenuMoveNote);
+    return;
+  }
+
+  const menuNoteEl = document.getElementById('menu-note');
+  const rect = menuNoteEl?.getBoundingClientRect();
+  if (rect) {
+    offsetMenuMoveNote({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
+  }
+};
+const handleSelectMoveFolder = async (folderId: string) => {
+  toggleModalMenuMoveNote(false, isShowModalMenuMoveNote);
+
+  const updatedNote = await updateNote(noteIdToMove.value, {
+    folderId,
+    updatedAt: nowUnix(),
+  });
+  setActionObject('note', updatedNote);
+
+  listNotes.value = await loadNotes();
+  showSuccess($i18n.t('app.message_note_moved'));
+};
+const handleNoteHistoryRestored = async (noteId: string) => {
+  listNotes.value = await loadNotes();
+  if (activeNoteId.value === noteId) {
+    formNotes.value = await getNoteDetail(noteId);
+    formNotesRef.value?.slientUpdateValue(formNotes.value.content);
+    activeNoteBaseline.value = { noteId, content: formNotes.value.content };
+  }
+};
+const isShowModalNoteHistoryDiff = ref<boolean>(false);
+const diffSnapshotId = ref<string>('');
+const handleClickViewHistoryDiff = (snapshotId: string) => {
+  diffSnapshotId.value = snapshotId;
+  toggleModalNoteHistoryDiff(true, isShowModalNoteHistoryDiff);
+};
+const restoreSnapshotId = ref<string>('');
+const isShowModalConfirmRestoreNoteHistory = ref<boolean>(false);
+const handleRequestRestoreNoteHistory = (snapshotId: string) => {
+  restoreSnapshotId.value = snapshotId;
+  toggleModalConfirmRestoreNoteHistory(true, isShowModalConfirmRestoreNoteHistory);
+};
+const handleConfirmRestoreNoteHistory = async (snapshotId: string) => {
+  toggleModalConfirmRestoreNoteHistory(false, isShowModalConfirmRestoreNoteHistory);
+  const noteId = historyNoteId.value;
+  const snapshot = historyList.value.find((item: any) => item.id === snapshotId);
+  if (!snapshot) {
+    return;
+  }
+
+  const current = await getNoteDetail(noteId);
+  await deleteNoteHistorySnapshot(noteId, snapshotId);
+  if (current?.content !== undefined) {
+    await saveNoteHistorySnapshot(noteId, current.content);
+  }
+  await updateNote(noteId, {
+    content: snapshot.content,
+    updatedAt: nowUnix(),
+  });
+
+  toggleModalNoteHistory(false, isShowModalNoteHistory);
+  await handleNoteHistoryRestored(noteId);
+  showSuccess($i18n.t('app.message_note_history_restored'));
+};
+const deleteSnapshotId = ref<string>('');
+const isShowModalConfirmDeleteNoteHistory = ref<boolean>(false);
+const handleRequestDeleteNoteHistory = (snapshotId: string) => {
+  deleteSnapshotId.value = snapshotId;
+  toggleModalConfirmDeleteNoteHistory(true, isShowModalConfirmDeleteNoteHistory);
+};
+const handleConfirmDeleteNoteHistory = async (snapshotId: string) => {
+  toggleModalConfirmDeleteNoteHistory(false, isShowModalConfirmDeleteNoteHistory);
+  const noteId = historyNoteId.value;
+  historyList.value = await deleteNoteHistorySnapshot(noteId, snapshotId);
+  showSuccess($i18n.t('app.message_note_history_deleted'));
+};
+const handleClickCloseModalNoteHistory = () => {
+  toggleModalNoteHistory(false, isShowModalNoteHistory);
+};
+const handleClickCloseModalNoteHistoryDiff = () => {
+  toggleModalNoteHistoryDiff(false, isShowModalNoteHistoryDiff);
+};
+const handleClickCloseModalConfirmRestoreNoteHistory = () => {
+  toggleModalConfirmRestoreNoteHistory(false, isShowModalConfirmRestoreNoteHistory);
+};
+const handleClickCloseModalConfirmDeleteNoteHistory = () => {
+  toggleModalConfirmDeleteNoteHistory(false, isShowModalConfirmDeleteNoteHistory);
+};
 const handleClickResizeApp = () => {
   colsFoldersWidth.value = 234;
   colsNotesWidth.value = 400;
   setColsWidthData();
   window.resizeTo(1167, 700);
 }
-const handleClickBack = () => {
+const handleClickBack = async () => {
+  if (activeNoteId.value) {
+    await snapshotNoteBeforeLeaving(activeNoteId.value);
+  }
+
   if (window.history.length > 1) {
-    window.history.back();
+    closeMobileBackState();
   } else {
     window.location.href = '/';
   }
@@ -750,6 +1114,10 @@ watch(() => isCollapsePanel.value, (newValue) => {
 });
 const isCollapseFolder = ref<boolean>(false);
 const handleClickCollapseFolder = () => {
+  if (activeFolderId.value === 'bottombar-trash') {
+    return;
+  }
+
   isCollapseFolder.value = !isCollapseFolder.value;
 }
 const isShowFormatToolbar = ref<boolean>(false);
@@ -836,7 +1204,7 @@ const handleConfirmInsertImage = (data: any) => {
   formNotesRef.value?.handleInsertImage(data);
 }
 const handleAlertMessage = (message: string) => {
-  showErrorSnackbar(message);
+  showInfo(message);
 }
 
 // search notes feature
@@ -894,39 +1262,91 @@ const handleSetPassword = async (data: any) => {
   modalSettingRef.value?.closeSetPasswordModal();
   modalSetPasswordRef.value?.reset();
 }
+const isChangingPassword = ref<boolean>(false);
+const handleBeforeUnloadWarning = (e: BeforeUnloadEvent) => {
+  e.preventDefault();
+  e.returnValue = '';
+};
 const handleChangePassword = async (data: any) => {
+  if (isChangingPassword.value) {
+    return;
+  }
+  isChangingPassword.value = true;
+
   try {
     const password = await getPassword();
     const newHashPassword = await hashPassword(data.oldPassword);
     if (password !== newHashPassword) {
-      throw new Error($i18n.t('app.message_note_unlocked_failed'));
+      throw new Error('WRONG_OLD_PASSWORD');
     }
 
-    // find all notes locked and unlock
+    // Phase 1 - verify: decrypt every locked note with the old password first, no writes yet
     const allNotes = await getAllNotes();
     const notesLocked = allNotes.filter((note: any) => note.isLocked && !note.deleteCompletelyAt);
-    const hashNewPassword = await hashPassword(data.newPassword);
+    const decryptedNotes: { id: string; plainContent: string; oldContent: string }[] = [];
     for (const note of notesLocked) {
       const noteDetail = await getNoteDetail(note.id);
-      const decryptNoteDetailContent = await decryptData(noteDetail.content, password);
-
-      const updatedNote = await updateNote(note.id, {
-        isLocked: 1,
-        content: await encryptData(decryptNoteDetailContent, hashNewPassword),
-        updatedAt: nowUnix(),
-      });
-      setActionObject('note', updatedNote);
+      let plainContent: string;
+      try {
+        plainContent = await decryptData(noteDetail.content, password);
+      } catch (decryptError) {
+        throw new Error('DECRYPT_FAILED');
+      }
+      decryptedNotes.push({ id: note.id, plainContent, oldContent: noteDetail.content });
     }
 
-    await setPassword(await hashPassword(data.newPassword));
+    // Phase 2 - prepare: re-encrypt everything with the new password, still only in memory
+    const hashNewPassword = await hashPassword(data.newPassword);
+    const preparedNotes = await Promise.all(decryptedNotes.map(async (item) => ({
+      id: item.id,
+      newContent: await encryptData(item.plainContent, hashNewPassword),
+      oldContent: item.oldContent,
+    })));
+
+    // Phase 3 - commit: persist a recovery backup, then write, rolling back on failure
+    await savePasswordChangeBackup({
+      notes: preparedNotes.map((item) => ({ id: item.id, content: item.oldContent })),
+      createdAt: nowUnix(),
+    });
+    window.addEventListener('beforeunload', handleBeforeUnloadWarning);
+
+    const writtenNotes: typeof preparedNotes = [];
+    try {
+      for (const item of preparedNotes) {
+        const updatedNote = await updateNote(item.id, {
+          isLocked: 1,
+          content: item.newContent,
+          updatedAt: nowUnix(),
+        });
+        writtenNotes.push(item);
+        setActionObject('note', updatedNote);
+      }
+    } catch (writeError) {
+      for (const item of writtenNotes) {
+        await updateNote(item.id, { content: item.oldContent, updatedAt: nowUnix() }).catch(() => { });
+      }
+      throw new Error('WRITE_FAILED');
+    }
+
+    await setPassword(hashNewPassword);
     setActionObject('settings', { 'id': 'settings' });
+    await clearPasswordChangeBackup();
 
     toggleModalSetPassword(false, isShowModalSetPassword);
-    showInfoSnackbar($i18n.t('app.message_change_password_success'), document.getElementById('modal-settings')!);
+    showSuccess($i18n.t('app.message_change_password_success'));
     modalSetPasswordRef.value?.reset();
-  } catch (error) {
-    modalSetPasswordRef.value?.showOldPasswordWrong();
+  } catch (error: any) {
+    if (error?.message === 'DECRYPT_FAILED') {
+      showErrorSnackbar($i18n.t('app.message_change_password_note_corrupted'));
+    } else if (error?.message === 'WRITE_FAILED') {
+      showErrorSnackbar($i18n.t('app.message_change_password_failed'));
+    } else {
+      modalSetPasswordRef.value?.showOldPasswordWrong();
+    }
     return;
+  } finally {
+    window.removeEventListener('beforeunload', handleBeforeUnloadWarning);
+    isChangingPassword.value = false;
   }
 }
 const handleConfirmSetPassword = async (data: any) => {
@@ -974,10 +1394,10 @@ const handleConfirmChangeAdapter = async (e2eeKey: string) => {
   }
 
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
-  showInfoSnackbar($i18n.t('app.message_setting_sync_adapter_saved'));
+  showSuccess($i18n.t('app.message_setting_sync_adapter_saved'));
 
-  // trigger 1 time sync to push data to new adapter
-  handleClickUpdateData();
+  // trigger 1 time full sync to pull/push all data with the new adapter
+  handleClickUpdateData(SYNC_LEVELS.length - 1);
 }
 const isShowModalConfirmE2eeKey = ref<boolean>(false);
 const handleClickCloseModalConfirmE2eeKey = () => {
@@ -1107,7 +1527,7 @@ const handleTriggerImportNotes = async () => {
   await reloadFolder();
 
   toggleModalImportNotes(false, isShowModalImportNotes);
-  showInfoSnackbar($i18n.t('app.message_import_notes'));
+  showSuccess($i18n.t('app.message_import_notes'));
   navbarTopRef.value?.closeDrawer();
 }
 const modalExportNotesConfirm = ref<any>(null);
@@ -1304,6 +1724,7 @@ const pullPush = async () => {
   if (pull.needReloadActiveNote) {
     formNotes.value = await getNoteDetail(activeNoteId.value);
     formNotesRef.value?.slientUpdateValue(formNotes.value.content);
+    activeNoteBaseline.value = { noteId: activeNoteId.value, content: formNotes.value.content };
   }
 
   await pushData(
@@ -1387,10 +1808,12 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <!-- mobile nav top -->
     <div class="lg:hidden">
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
-        :activeFolderId="activeFolderId" :formNotes="formNotes" :isSyncing="isSyncAll" :settings="settings"
-        :isPasswordExist="isPasswordExist" :editorName="editorName" @clickFolderName="handleClickFolderName"
-        @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
-        @reorderFolderName="handleReorderFolderName" @clickSetting="handleClickSetting" @clickBack="handleClickBack"
+        :activeFolderId="activeFolderId" :listTags="listTagsMenu" :activeTagId="activeTagId" :formNotes="formNotes"
+        :isSyncing="isSyncAll" :settings="settings" :isPasswordExist="isPasswordExist" :editorName="editorName"
+        @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
+        @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName"
+        @clickTagName="handleClickTagName" @rightClickTagName="handleRightClickTagName" @clickTags="handleClickTags"
+        @clickAddTag="handleClickAddTag" @clickSetting="handleClickSetting" @clickBack="handleClickBack"
         @clickUpdateData="handleClickUpdateData" @clickTrash="handleClickBottombarTrash"
         @copyToClipboard="handleCopyToClipboard" @clickInfo="handleClickFormNotesInfo"
         @saveSettings="handleSaveSettings" @saveAdapter="handleSaveAdapter" @clickExportNotes="handleClickExportNotes"
@@ -1404,30 +1827,44 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <!-- cols personal -->
     <div class="hidden lg:block lg:float-left cols-personal w-20 bg-base-300">
       <ColsPersonal :activeFolderId="activeFolderId" :isCollapseFolder="isCollapseFolder" :isSyncing="isSyncingAll"
-        @clickNotes="handleClickFolderName('')" @clickTrash="handleClickBottombarTrash"
+        @clickNotes="handleClickFolderName('')" @clickTags="handleClickTags" @clickTrash="handleClickBottombarTrash"
         @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData"
         @clickCollapseFolder="handleClickCollapseFolder" />
     </div>
 
     <!-- cols folders -->
     <div class="hidden lg:block lg:float-left cols-folders transition-all duration-300 bg-base-300/80"
-      :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder }"
+      :class="{ '!w-0': activeFolderId === 'bottombar-trash' || isCollapsePanel, '!w-[4.5rem]': isCollapseFolder && activeFolderId !== 'bottombar-trash' }"
       :style="{ width: colsFoldersWidth + 'px' }">
-      <div>
-        <ToolbarFolder :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
-          :isShowToolbarFolder="isShowToolbarNotes" @clickAddFolder="handleClickAddFolder"
-          @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData" />
-      </div>
-      <!-- <hr class="hidden lg:block border-base-300"> -->
+      <template v-if="!isTagsMode">
+        <div>
+          <ToolbarFolder :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
+            :isShowToolbarFolder="isShowToolbarNotes" @clickAddFolder="handleClickAddFolder"
+            @clickSetting="handleClickSetting" @clickUpdateData="handleClickUpdateData" />
+        </div>
+        <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
-        <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
-          :actionObjectKeys="actionObjectKeys" :isCollapseFolder="isCollapseFolder"
-          @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
-          @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName" />
-      </div>
-      <!-- <hr class="border-base-300"> -->
-      <!-- <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" /> -->
+        <div id="folders-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
+          <ListFolder ref="listFolderRef" :listFolders="listFoldersMenu" :activeFolderId="activeFolderId"
+            :actionObjectKeys="actionObjectKeys" :isCollapseFolder="isCollapseFolder"
+            @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
+            @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName" />
+        </div>
+        <!-- <hr class="border-base-300"> -->
+        <!-- <BottombarFolder :activeFolderId="activeFolderId" @clickTrash="handleClickBottombarTrash" /> -->
+      </template>
+      <template v-else>
+        <div>
+          <ToolbarTag :isSyncing="isSyncAll" :isCollapseFolder="isCollapseFolder"
+            :isShowToolbarFolder="isShowToolbarNotes" @clickAddTag="handleClickAddTag" />
+        </div>
+
+        <div id="tags-instance" class="relative overflow-auto" style="height: calc(100vh - 77px)">
+          <ListTag :listTags="listTagsMenu" :activeTagId="activeTagId" :actionObjectKeys="actionObjectKeys"
+            :isCollapseFolder="isCollapseFolder" @clickTagName="handleClickTagName"
+            @rightClickTagName="handleRightClickTagName" @clickAddTag="handleClickAddTag" />
+        </div>
+      </template>
     </div>
 
 
@@ -1435,8 +1872,9 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <div class="cols-notes transition-all duration-300" :style="{ width: colsNotesWidth + 'px' }"
       :class="{ 'hidden': isMobile && isInEditor, '!w-full pt-[64px] absolute': isMobile, 'lg:w-3/12 lg:float-left bg-base-200 h-full': !isMobile, '!w-0': isCollapsePanel }">
       <div class="hidden lg:block">
-        <ToolbarNotes v-if="isShowToolbarNotes" ref="toolbarNotesRef" @clickAddNote="handleClickAddNote"
-          @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch" />
+        <ToolbarNotes v-if="isShowToolbarNotes" ref="toolbarNotesRef" :hideAddButton="isTagsMode"
+          @clickAddNote="handleClickAddNote" @clickSearch="handleClickSearch"
+          @clickCancelSearch="handleClickCancelSearch" />
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
@@ -1487,11 +1925,33 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
   <div id="menu-note" class="hidden absolute">
     <MenuNote :key="menuNoteKey" :noteId="activeNoteId" :formNotes="formNotes" @deleteNote="handleClickDeleteNote"
       @pinNote="handleClickPinNote" @lockNote="handleClickLockNote" @copyNote="handleCopyToClipboard"
-      @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever" />
+      @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever"
+      @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory"
+      @clickMove="handleClickMoveNote" @clickAddToTag="handleClickAddNoteToTag" />
+  </div>
+  <div id="menu-move-note" class="hidden absolute">
+    <MenuMoveNote :listFolders="moveNoteFolders" @selectFolder="handleSelectMoveFolder" />
+  </div>
+  <div id="menu-tag" class="hidden absolute">
+    <MenuTag :key="menuTagKey" :tagId="activeTagId" @editTag="handleClickEditTag" @deleteTag="handleClickDeleteTag" />
+  </div>
+  <div id="menu-note-tags" class="hidden absolute">
+    <MenuNoteTags :listTags="listTagsMenu" :noteTagIds="activeNoteTagIds" @toggleTag="handleToggleNoteTag" />
   </div>
 
   <!-- modal -->
+  <ModalConfirmSampleData v-if="isShowModalConfirmSampleData" @confirm="handleConfirmSampleData"
+    @close="handleCancelSampleData" />
   <ModalNotesDetail v-if="isShowModalNotesDetail" :noteInfo="noteInfo" @close="handleClickCloseNotesDetail" />
+  <ModalNoteHistory v-if="isShowModalNoteHistory" :history="historyList" :isLocked="historyIsLocked"
+    @close="handleClickCloseModalNoteHistory" @viewDiff="handleClickViewHistoryDiff"
+    @restoreRequested="handleRequestRestoreNoteHistory" @deleteRequested="handleRequestDeleteNoteHistory" />
+  <ModalNoteHistoryDiff v-if="isShowModalNoteHistoryDiff" :noteId="historyNoteId" :snapshotId="diffSnapshotId"
+    @close="handleClickCloseModalNoteHistoryDiff" />
+  <ModalConfirmRestoreNoteHistory v-if="isShowModalConfirmRestoreNoteHistory" :snapshotId="restoreSnapshotId"
+    @confirm="handleConfirmRestoreNoteHistory" @close="handleClickCloseModalConfirmRestoreNoteHistory" />
+  <ModalConfirmDeleteNoteHistory v-if="isShowModalConfirmDeleteNoteHistory" :snapshotId="deleteSnapshotId"
+    @confirm="handleConfirmDeleteNoteHistory" @close="handleClickCloseModalConfirmDeleteNoteHistory" />
   <ModalSetting v-if="isShowModalSettings" ref="modalSettingRef" :settings="settings" :isPasswordExist="isPasswordExist"
     @setPassword="handleSetPassword" @changePassword="handleChangePassword" @changeAdapter="handleChangeAdapter"
     @changeDefaultEditor="handleChangeDefaultEditor" @clickExportNotes="handleClickExportNotes"
@@ -1500,7 +1960,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     @clickImportNotes="handleClickImportNotes" @closeSetting="handleClickCloseSettings" />
   <ModalAlertSetPassword v-if="isShowModalAlertSetPassword" @close="handleClickCloseModalAlertSetPassword" />
   <ModalSetPassword v-if="isShowModalSetPassword" ref="modalSetPasswordRef" :type="isPasswordExist ? 'change' : 'set'"
-    @confirm="handleConfirmSetPassword" @close="handleCloseSetPassword" />
+    :isLoading="isChangingPassword" @confirm="handleConfirmSetPassword" @close="handleCloseSetPassword" />
   <ModalConfirmChangeAdapter v-if="isShowModalConfirmChangeAdapter" :adapterName="''"
     :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" @confirm="handleConfirmChangeAdapterOnline"
     @close="handleClickCloseModalConfirmChangeAdapter" />
@@ -1522,15 +1982,27 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
   <ModalMenuNote v-if="isShowModalMenuNote" :noteId="activeNoteId" :formNotes="formNotes"
     @deleteNote="handleClickDeleteNote" @pinNote="handleClickPinNote" @lockNote="handleClickLockNote"
     @copyNote="handleCopyToClipboard" @restoreNote="handleClickRestoreNote"
-    @deleteNoteForever="handleClickDeleteNoteForever" />
-  <ModalMenuSidebar v-if="isShowModalMenuSidebar" @clickAddFolder="handleClickAddFolder"
-    @clickForceSync="handleClickUpdateData" />
+    @deleteNoteForever="handleClickDeleteNoteForever" @clickInfo="handleClickFormNotesInfo"
+    @clickHistory="handleClickFormNotesHistory" @clickMove="handleClickMoveNote"
+    @clickAddToTag="handleClickAddNoteToTag" />
+  <ModalMenuMoveNote v-if="isShowModalMenuMoveNote" :listFolders="moveNoteFolders"
+    @selectFolder="handleSelectMoveFolder" />
+  <ModalMenuTag v-if="isShowModalMenuTag" :tagId="activeTagId" @editTag="handleClickEditTag"
+    @deleteTag="handleClickDeleteTag" />
+  <ModalMenuNoteTags v-if="isShowModalMenuNoteTags" :listTags="listTagsMenu" :noteTagIds="activeNoteTagIds"
+    @toggleTag="handleToggleNoteTag" />
+  <ModalTagForm v-if="isShowModalTagForm" :tagId="tagIdToEdit" :tagName="tagFormInitial.name"
+    :tagColor="tagFormInitial.color" @confirm="handleConfirmTagForm" @close="handleClickCloseModalTagForm" />
+  <ModalConfirmDeleteTag v-if="isShowModalConfirmDeleteTag" :tagId="tagWillDelete" @confirm="handleConfirmDeleteTag"
+    @close="handleClickCloseModalConfirmDeleteTag" />
+  <ModalMenuSidebar v-if="isShowModalMenuSidebar" :isTagsMode="isTagsMode" @clickAddFolder="handleClickAddFolder"
+    @clickAddTag="handleClickAddTag" @clickForceSync="handleClickUpdateData" />
   <ModalInsertLink v-if="isShowModalInsertLink" ref="modalInsertLinkRef" @confirm="handleConfirmInsertLink"
     @close="handleClickCloseModalInsertLink" />
   <ModalInsertImage v-if="isShowModalInsertImage" ref="modalInsertImageRef" @confirm="handleConfirmInsertImage"
     @close="handleClickCloseModalInsertImage" />
 
   <!-- float button create new note -->
-  <FloatNewNotes v-if="!formNotes.id && initedApp && activeFolderId !== 'bottombar-trash'"
+  <FloatNewNotes v-if="!isInEditor && initedApp && !isTagsMode && activeFolderId !== 'bottombar-trash'"
     @clickNewNote="handleClickAddNote" />
 </template>

@@ -23,8 +23,36 @@ function toggleModalConfirmDeleteFolder(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-confirm-delete-folder", isOpen, state);
 }
 
+function toggleModalConfirmSampleData(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-confirm-sample-data", isOpen, state);
+}
+
 function toggleModalMenuNote(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-menu-note", isOpen, state);
+}
+
+function toggleModalMenuMoveNote(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-menu-move-note", isOpen, state);
+}
+
+function toggleModalMenuTag(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-menu-tag", isOpen, state);
+}
+
+function toggleModalTagForm(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-tag-form", isOpen, state);
+}
+
+function toggleModalTagColorCustom(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-tag-color-custom", isOpen, state);
+}
+
+function toggleModalConfirmDeleteTag(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-confirm-delete-tag", isOpen, state);
+}
+
+function toggleModalMenuNoteTags(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-menu-note-tags", isOpen, state);
 }
 
 function toggleModalSortNote(isOpen: boolean, state: Ref<boolean>) {
@@ -49,6 +77,22 @@ function toggleModalAlertSetPassword(isOpen: boolean, state: Ref<boolean>) {
 
 function toggleModalNotesDetail(isOpen: boolean, state: Ref) {
   _toggleModal("modal-notes-detail", isOpen, state);
+}
+
+function toggleModalNoteHistory(isOpen: boolean, state: Ref) {
+  _toggleModal("modal-note-history", isOpen, state);
+}
+
+function toggleModalNoteHistoryDiff(isOpen: boolean, state: Ref) {
+  _toggleModal("modal-note-history-diff", isOpen, state);
+}
+
+function toggleModalConfirmRestoreNoteHistory(isOpen: boolean, state: Ref) {
+  _toggleModal("modal-confirm-restore-note-history", isOpen, state);
+}
+
+function toggleModalConfirmDeleteNoteHistory(isOpen: boolean, state: Ref) {
+  _toggleModal("modal-confirm-delete-note-history", isOpen, state);
 }
 
 function toggleModalConfirmChangeAdapter(isOpen: boolean, state: Ref<boolean>) {
@@ -87,13 +131,24 @@ export {
   toggleModalMenuFolder,
   toggleModalChangeFolderName,
   toggleModalConfirmDeleteFolder,
+  toggleModalConfirmSampleData,
   toggleModalMenuNote,
+  toggleModalMenuMoveNote,
+  toggleModalMenuTag,
+  toggleModalTagForm,
+  toggleModalTagColorCustom,
+  toggleModalConfirmDeleteTag,
+  toggleModalMenuNoteTags,
   toggleModalSortNote,
   toggleModalMenuSidebar,
   toggleModalMenuEditor,
   toggleModalUnlockNotes,
   toggleModalAlertSetPassword,
   toggleModalNotesDetail,
+  toggleModalNoteHistory,
+  toggleModalNoteHistoryDiff,
+  toggleModalConfirmRestoreNoteHistory,
+  toggleModalConfirmDeleteNoteHistory,
   toggleModalConfirmChangeAdapter,
   toggleModalConfirmE2eeKey,
   toggleModalExportNotesConfirm,

@@ -2,8 +2,8 @@
 import { Crepe } from "@milkdown/crepe";
 import { editorViewCtx } from "@milkdown/core";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
-import { replaceAll, getMarkdown } from '@milkdown/utils'
-import { TextSelection } from '@milkdown/prose/state'
+import { replaceAll, getMarkdown, $prose } from '@milkdown/utils'
+import { TextSelection, Plugin } from '@milkdown/prose/state'
 import * as Diff from 'diff'
 
 const { $i18n } = useNuxtApp();
@@ -15,7 +15,12 @@ import {
   saveImage,
   resolveImageUrl,
   isOpenNotasImageUrl,
+  parseImageUrl,
+  getImageMeta,
 } from '~/services/image';
+import { syncImages } from '~/utils/image-sync';
+import cloudUploadSvgRaw from '~/assets/svg/cloud-upload.svg?raw';
+import alertSquareSvgRaw from '~/assets/svg/alert-square-rounded.svg?raw';
 
 const props = defineProps([
   'value',
@@ -33,6 +38,21 @@ const emit = defineEmits([
 const isLoading = ref(true);
 
 let editor: Crepe;
+
+// Track resolved blob URLs → imageId for badge lookup
+const blobUrlToImageId = new Map<string, string>();
+// Track injected badge elements per imageId
+const imageBadgeMap = new Map<string, HTMLElement>();
+let domObserver: MutationObserver | null = null;
+let linkEditObserver: MutationObserver | null = null;
+let refreshInterval: ReturnType<typeof setInterval> | null = null;
+let isRefreshingBadges = false;
+let imagePasteHandler: ((e: Event) => void) | null = null;
+let imageResizeHandler: ((e: PointerEvent) => void) | null = null;
+let isReplacingAll = false;
+
+const toolbarPos = ref<{ x: number; y: number } | null>(null);
+const toolbarWrapRef = ref<HTMLElement | null>(null);
 
 const handleImageUpload = async (file: File): Promise<string> => {
   if (!props.noteId) {
@@ -57,13 +77,190 @@ const handleImageUpload = async (file: File): Promise<string> => {
 const handleProxyDomURL = async (src: string): Promise<string> => {
   if (isOpenNotasImageUrl(src)) {
     try {
-      return await resolveImageUrl(src, props.settings);
+      const imageId = parseImageUrl(src);
+      const resolved = await resolveImageUrl(src, props.settings);
+      if (imageId && resolved.startsWith('blob:')) {
+        blobUrlToImageId.set(resolved, imageId);
+      }
+      return resolved;
     } catch (error) {
       console.error('Failed to resolve image URL:', error);
       return src;
     }
   }
   return src;
+};
+
+const createBadgeSvg = (type: 'upload' | 'warning' | 'spinner'): string => {
+  if (type === 'upload') return cloudUploadSvgRaw;
+  if (type === 'warning') return alertSquareSvgRaw;
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+};
+
+const handleManualSync = async () => {
+  // Mark all visible pending/failed badges as syncing
+  imageBadgeMap.forEach((badge) => {
+    if (!badge.classList.contains('image-sync-badge--syncing')) {
+      badge.className = 'image-sync-badge image-sync-badge--syncing';
+      badge.innerHTML = createBadgeSvg('spinner');
+      badge.title = $i18n.t('app.image_sync_badge_syncing');
+    }
+  });
+
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('timeout')), 15_000)
+  );
+
+  try {
+    const result = await Promise.race([syncImages(props.settings), timeout]);
+    await refreshSyncBadges();
+    if (result.synced > 0) {
+      showSuccess($i18n.t('app.message_image_sync_success') as string);
+    } else if (result.failed > 0) {
+      showError($i18n.t('app.message_image_sync_failed') as string);
+    }
+  } catch {
+    await refreshSyncBadges();
+    showError($i18n.t('app.message_image_sync_retry') as string);
+  }
+};
+
+const refreshSyncBadges = async () => {
+  if (isRefreshingBadges) return;
+  isRefreshingBadges = true;
+
+  // Disconnect observer to prevent re-entrant mutations from badge DOM changes
+  domObserver?.disconnect();
+
+  try {
+    if (!props.settings?.imageSync?.enabled) {
+      imageBadgeMap.forEach((badge) => badge.remove());
+      imageBadgeMap.clear();
+      stopRefreshInterval();
+      return;
+    }
+
+    const editorEl = document.querySelector('#crepe-editor');
+    if (!editorEl) return;
+
+    const imgs = editorEl.querySelectorAll<HTMLImageElement>('img');
+    const activeImageIds = new Set<string>();
+    let hasPendingOrFailed = false;
+
+    for (const img of imgs) {
+      const imageId = blobUrlToImageId.get(img.src);
+      if (!imageId) continue;
+      activeImageIds.add(imageId);
+
+      const meta = await getImageMeta(imageId);
+      if (!meta || meta.syncStatus === 'synced') {
+        const existing = imageBadgeMap.get(imageId);
+        if (existing) {
+          existing.remove();
+          imageBadgeMap.delete(imageId);
+        }
+        continue;
+      }
+
+      hasPendingOrFailed = true;
+      const status = meta.syncStatus;
+      let badge = imageBadgeMap.get(imageId);
+
+      if (!badge) {
+        badge = document.createElement('button');
+        badge.className = `image-sync-badge image-sync-badge--${status}`;
+        badge.innerHTML = createBadgeSvg(status === 'failed' ? 'warning' : 'upload');
+        badge.title = $i18n.t(status === 'failed' ? 'app.image_sync_badge_failed' : 'app.image_sync_badge_pending');
+        badge.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          handleManualSync();
+        });
+
+        const container = img.closest<HTMLElement>('.milkdown-image-block') ?? img.parentElement;
+        if (container) {
+          container.appendChild(badge);
+          imageBadgeMap.set(imageId, badge);
+        }
+      } else if (!badge.classList.contains('image-sync-badge--syncing')) {
+        badge.className = `image-sync-badge image-sync-badge--${status}`;
+        badge.innerHTML = createBadgeSvg(status === 'failed' ? 'warning' : 'upload');
+        badge.title = $i18n.t(status === 'failed' ? 'app.image_sync_badge_failed' : 'app.image_sync_badge_pending');
+      }
+    }
+
+    // Remove stale badges for images no longer in the editor
+    for (const [imageId, badge] of imageBadgeMap) {
+      if (!activeImageIds.has(imageId)) {
+        badge.remove();
+        imageBadgeMap.delete(imageId);
+      }
+    }
+
+    if (hasPendingOrFailed) {
+      startRefreshInterval();
+    } else {
+      stopRefreshInterval();
+    }
+  } finally {
+    isRefreshingBadges = false;
+    // Reconnect observer after DOM changes are done
+    const el = document.querySelector('#crepe-editor');
+    if (el && domObserver) {
+      domObserver.observe(el, { childList: true, subtree: true });
+    }
+  }
+};
+
+const startRefreshInterval = () => {
+  if (refreshInterval) return;
+  refreshInterval = setInterval(refreshSyncBadges, 10_000);
+};
+
+const stopRefreshInterval = () => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
+};
+
+const setupDomObserver = () => {
+  const editorEl = document.querySelector('#crepe-editor');
+  if (!editorEl) return;
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  domObserver = new MutationObserver(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(refreshSyncBadges, 300);
+  });
+  domObserver.observe(editorEl, { childList: true, subtree: true });
+};
+
+// Milkdown's link-edit popup focuses its input via requestAnimationFrame right when it
+// opens, which can race with the popup's own `data-show` flip and silently no-op if the
+// element is still `display:none` at that instant. Force-focus it ourselves whenever it
+// becomes visible so the popup never opens without focus landing in the input.
+const setupLinkEditFocusObserver = () => {
+  const editorEl = document.querySelector('#crepe-editor');
+  if (!editorEl) return;
+
+  linkEditObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      const target = mutation.target as HTMLElement;
+      if (!target.classList?.contains('milkdown-link-edit')) continue;
+      if (target.getAttribute('data-show') !== 'true') continue;
+
+      const input = target.querySelector<HTMLInputElement>('.link-edit input.input-area');
+      if (input && document.activeElement !== input) {
+        input.focus();
+      }
+    }
+  });
+  linkEditObserver.observe(editorEl, {
+    attributes: true,
+    attributeFilter: ['data-show'],
+    subtree: true,
+  });
 };
 
 onMounted(() => {
@@ -111,7 +308,146 @@ onMounted(() => {
       editor.setReadonly(true);
     }
 
+    editor.editor.use(
+      $prose(() => new Plugin({
+        appendTransaction(transactions, oldState, newState) {
+          if (isReplacingAll) return null;
+          if (!transactions.some(t => t.docChanged)) return null;
+
+          const oldSrcs = new Set<string>();
+          oldState.doc.descendants((node) => {
+            if (node.type.name === 'image-block') oldSrcs.add(node.attrs.src);
+          });
+
+          let tr = newState.tr;
+          let changed = false;
+          newState.doc.descendants((node, pos) => {
+            if (
+              node.type.name === 'image-block' &&
+              node.attrs.ratio === 1 &&
+              !oldSrcs.has(node.attrs.src)
+            ) {
+              tr = tr.setNodeMarkup(pos, null, { ...node.attrs, ratio: 0.7 });
+              changed = true;
+            }
+          });
+          return changed ? tr : null;
+        },
+      }))
+    );
+
     await editor.create();
+
+    // Intercept image paste before ProseMirror (capture phase runs first)
+    imagePasteHandler = (e: Event) => {
+      const event = e as ClipboardEvent;
+      const items = Array.from(event.clipboardData?.items ?? []);
+      const imageItem = items.find(
+        (item) => item.kind === 'file' && item.type.startsWith('image/')
+      );
+      if (!imageItem) return;
+
+      const file = imageItem.getAsFile();
+      if (!file) return;
+
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Capture insert position synchronously before async upload
+      let insertPos = -1;
+      editor.editor.action((ctx) => {
+        const view = ctx.get(editorViewCtx);
+        try {
+          insertPos = view.state.selection.$from.after(1);
+        } catch (_) {
+          insertPos = view.state.doc.content.size;
+        }
+      });
+
+      handleImageUpload(file).then((url) => {
+        editor.editor.action((ctx) => {
+          const view = ctx.get(editorViewCtx);
+          const schema = view.state.schema;
+          const imageBlockType = Object.entries(schema.nodes).find(
+            ([name, t]) => name.toLowerCase().includes('image') && !t.spec.inline && (t.spec as any).atom
+          )?.[1];
+          if (!imageBlockType) return;
+
+          const imageNode = imageBlockType.create({ src: url });
+          const pos = insertPos >= 0 ? insertPos : view.state.doc.content.size;
+          view.dispatch(view.state.tr.insert(pos, imageNode));
+        });
+      });
+    };
+
+    document.querySelector('#crepe-editor')
+      ?.addEventListener('paste', imagePasteHandler, true);
+
+    // Dampen image resize speed — Milkdown uses absolute 1:1 position, we use delta × damping
+    const RESIZE_DAMPING = 0.4;
+    imageResizeHandler = (e: PointerEvent) => {
+      const handle = (e.target as Element).closest<HTMLElement>('.image-resize-handle');
+      if (!handle) return;
+
+      const imgEl = handle.closest('.milkdown-image-block')?.querySelector<HTMLImageElement>('img');
+      if (!imgEl) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const startY = e.clientY;
+      const startHeight = imgEl.getBoundingClientRect().height;
+      let lastHeight = startHeight;
+
+      const onMove = (me: PointerEvent) => {
+        me.stopPropagation();
+        me.preventDefault();
+        const newHeight = Math.max(100, startHeight + (me.clientY - startY) * RESIZE_DAMPING);
+        lastHeight = newHeight;
+        imgEl.dataset.height = newHeight.toFixed(2);
+        imgEl.style.height = `${newHeight}px`;
+      };
+
+      const onUp = (ue: PointerEvent) => {
+        ue.stopPropagation();
+        window.removeEventListener('pointermove', onMove, true);
+        window.removeEventListener('pointerup', onUp, true);
+
+        const originHeight = parseFloat(imgEl.dataset.origin ?? '0');
+        if (!originHeight) return;
+
+        const ratio = parseFloat((lastHeight / originHeight).toFixed(2));
+        if (isNaN(ratio)) return;
+
+        editor.editor.action((ctx) => {
+          const view = ctx.get(editorViewCtx);
+          let targetPos = -1;
+          view.state.doc.descendants((node, pos) => {
+            if (targetPos !== -1) return false;
+            if (node.isAtom && node.attrs?.src !== undefined) {
+              const domNode = view.nodeDOM(pos);
+              if (domNode instanceof Element && domNode.contains(imgEl)) {
+                targetPos = pos;
+              }
+            }
+            return targetPos === -1;
+          });
+          if (targetPos === -1) return;
+          const node = view.state.doc.nodeAt(targetPos);
+          if (!node) return;
+          view.dispatch(view.state.tr.setNodeMarkup(targetPos, null, { ...node.attrs, ratio }));
+        });
+      };
+
+      window.addEventListener('pointermove', onMove, true);
+      window.addEventListener('pointerup', onUp, true);
+    };
+
+    document.querySelector('#crepe-editor')
+      ?.addEventListener('pointerdown', imageResizeHandler as EventListener, true);
+
+    setupDomObserver();
+    setupLinkEditFocusObserver();
     setTimeout(() => {
       focus();
     }, 100);
@@ -156,6 +492,21 @@ const focusState = () => {
 }
 
 onUnmounted(() => {
+  domObserver?.disconnect();
+  linkEditObserver?.disconnect();
+  stopRefreshInterval();
+  imageBadgeMap.clear();
+  blobUrlToImageId.clear();
+  if (imagePasteHandler) {
+    document.querySelector('#crepe-editor')
+      ?.removeEventListener('paste', imagePasteHandler, true);
+    imagePasteHandler = null;
+  }
+  if (imageResizeHandler) {
+    document.querySelector('#crepe-editor')
+      ?.removeEventListener('pointerdown', imageResizeHandler as EventListener, true);
+    imageResizeHandler = null;
+  }
   editor.destroy();
 });
 
@@ -167,6 +518,7 @@ const silent = ref<boolean>(false);
 const slientUpdateValue = async (value: string) => {
   if (!editor) return
   silent.value = true
+  isReplacingAll = true
 
   // try catch to avoid error
   try {
@@ -248,8 +600,64 @@ const slientUpdateValue = async (value: string) => {
     })
   } catch (_) { }
 
+  isReplacingAll = false
   silent.value = false
 }
+
+watch(() => props.noteId, () => {
+  toolbarPos.value = null;
+});
+
+const startToolbarDrag = (e: PointerEvent) => {
+  const el = toolbarWrapRef.value;
+  if (!el) return;
+
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const initRect = el.getBoundingClientRect();
+  const offsetX = startX - initRect.left;
+  const offsetY = startY - initRect.top;
+  const DRAG_THRESHOLD = 5;
+  let dragging = false;
+
+  const onMove = (me: PointerEvent) => {
+    if (!dragging) {
+      if (Math.hypot(me.clientX - startX, me.clientY - startY) < DRAG_THRESHOLD) return;
+      dragging = true;
+      if (!toolbarPos.value) {
+        toolbarPos.value = { x: initRect.left, y: initRect.top };
+      }
+    }
+
+    me.preventDefault();
+    const container = document.querySelector('#form-editors');
+    const cr = container?.getBoundingClientRect() ?? { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+    toolbarPos.value = {
+      x: Math.max(cr.left, Math.min(me.clientX - offsetX, cr.right - el.offsetWidth)),
+      y: Math.max(cr.top, Math.min(me.clientY - offsetY, cr.bottom - el.offsetHeight)),
+    };
+  };
+
+  const onUp = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+  };
+
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+};
+
+const toolbarStyle = computed(() => {
+  if (!toolbarPos.value) return {};
+  return {
+    position: 'fixed' as const,
+    left: `${toolbarPos.value.x}px`,
+    top: `${toolbarPos.value.y}px`,
+    bottom: 'auto',
+    zIndex: 50,
+    margin: 0,
+  };
+});
 
 defineExpose({
   focus,
@@ -274,7 +682,9 @@ defineExpose({
 
   </div>
 
-  <div v-if="props.isShowFormatToolbar" class="sticky bottom-4 left-0 w-fit max-w-screen-md mx-auto">
+  <div v-if="props.isShowFormatToolbar" ref="toolbarWrapRef"
+    :class="!toolbarPos ? 'sticky bottom-4 left-0 w-fit max-w-screen-md mx-auto' : 'w-fit'" :style="toolbarStyle"
+    style="cursor: grab; touch-action: none; user-select: none;" @pointerdown="startToolbarDrag">
     <ToolbarFormNotesFormat :editorType="'crepe'" :editor="editor?.editor" />
   </div>
 </template>

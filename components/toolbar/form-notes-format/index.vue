@@ -166,7 +166,7 @@ const handleClickCodeBlock = () => {
     <div class="flex flex-row gap-2 items-center">
       <div class="dropdown dropdown-top dropdown-start flex items-center">
         <div tabindex="0" role="button"
-          class="btn btn-xs lg:btn-sm btn-square border-none bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
+          class="btn btn-xs lg:btn-sm btn-square border-content bg-primary-content/20 hover:bg-primary-content/30 text-primary-content"
           :class="{ '!bg-primary-content !text-primary': false }">
           <H class="size-4 lg:size-5 cursor-pointer" />
         </div>

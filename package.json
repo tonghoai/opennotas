@@ -9,6 +9,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "db:generate": "drizzle-kit generate:sqlite --config=migrate/drizzle/drizzle.config.ts",
     "patch": "npm version patch",
     "minor": "npm version minor",
     "major": "npm version major"
