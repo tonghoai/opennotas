@@ -1,14 +1,23 @@
-import { showInfo, showError } from '~/composables/useToast';
+function showInfoSnackbar(message: string, elm?: HTMLElement) {
+  const snackbar = document.createElement('div');
+  snackbar.classList.add('fixed', 'bottom-20', 'left-1/2', 'transform', '-translate-x-1/2', 'text-sm', 'bg-base-content', 'text-base-200', 'px-2.5', 'py-1.5', 'rounded', 'z-1000', 'text-center', 'w-4/5', 'lg:w-max',);
+  snackbar.innerText = message;
+  elm ? elm.appendChild(snackbar) : document.body.appendChild(snackbar);
 
-// Legacy wrappers kept for backward compatibility.
-// The `elm` parameter (modal-scoped positioning) is intentionally ignored —
-// the global toast positioned bottom-right is visible in all contexts.
-function showInfoSnackbar(message: string, _elm?: HTMLElement) {
-  showInfo(message);
+  setTimeout(() => {
+    snackbar.remove();
+  }, 5000);
 }
 
-function showErrorSnackbar(message: string, _elm?: HTMLElement) {
-  showError(message);
+function showErrorSnackbar(message: string, elm?: HTMLElement) {
+  const snackbar = document.createElement('div');
+  snackbar.classList.add('fixed', 'bottom-20', 'left-1/2', 'transform', '-translate-x-1/2', 'text-sm', 'bg-error', 'text-base-100', 'px-2.5', 'py-1.5', 'rounded', 'z-1000', 'text-center', 'w-4/5', 'lg:w-max');
+  snackbar.innerText = message;
+  elm ? elm.appendChild(snackbar) : document.body.appendChild(snackbar);
+
+  setTimeout(() => {
+    snackbar.remove();
+  }, 5000);
 }
 
 export {

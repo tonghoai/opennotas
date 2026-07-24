@@ -514,14 +514,14 @@ const openLink = () => {
   }
 }
 
-.ProseMirror button {
+button {
   @apply bg-base-300 rounded border-none text-sm font-medium py-1 px-2 transition;
 }
 
-.ProseMirror button.is-active,
-.ProseMirror input.is-active,
-.ProseMirror select.is-active,
-.ProseMirror textarea.is-active {
+button.is-active,
+input.is-active,
+select.is-active,
+textarea.is-active {
   @apply bg-primary text-primary-content;
 }
 </style>

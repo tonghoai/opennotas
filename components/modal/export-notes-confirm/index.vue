@@ -36,9 +36,8 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-export-notes-confirm"
-    class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
+  <dialog id="modal-export-notes-confirm" class="modal modal-top lg:modal-middle">
+    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-neutral">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
@@ -58,10 +57,10 @@ const handleClickClose = () => {
 
         <div class="modal-action">
           <form method="dialog">
-            <button class="btn btn-sm mr-2" @click="handleIgnorePassword">
+            <button class="btn btn-sm lg:btn-md mr-2" @click="handleIgnorePassword">
               Bỏ qua
             </button>
-            <button class="btn btn-sm btn-primary" @click="handleConfirmPassword">
+            <button class="btn btn-sm lg:btn-md btn-primary" @click="handleConfirmPassword">
               Xác nhận
             </button>
           </form>

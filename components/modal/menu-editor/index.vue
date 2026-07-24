@@ -16,8 +16,8 @@ const handleClickInfo = () => {
 </script>
 
 <template>
-  <dialog id="modal-menu-editor" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box p-0 w-5/6 border border-base-content/15">
+  <dialog id="modal-menu-editor" class="modal">
+    <div class="modal-box p-0 w-5/6 border border-neutral">
       <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
         <li class="w-full text-center" @click="handleClickCopy">
           <a class="w-full block text-center">{{ $t('app.menu_note_copy') }}</a>

@@ -3,27 +3,21 @@ import { LibSQLDatabase, drizzle } from "drizzle-orm/libsql";
 import { gt } from "drizzle-orm";
 
 import type NotasAdapter from "../adapter";
-import type { FolderType, NoteType, TagType, NoteTagType } from "~/repositories/storage.type";
-import { applySchemaMigrations } from "~/migrate/scripts/apply-migrations";
+import type { FolderType, NoteType } from "~/repositories/storage.type";
 
 import noteModel from "./models/note";
 import folderModel from "./models/folder";
 import settingModel from "./models/setting";
-import tagModel from "./models/tag";
-import noteTagModel from "./models/note-tag";
 
 class TursoAdapter implements NotasAdapter {
   private turso: LibSQLDatabase;
-  private ready: Promise<void>;
   constructor(config: string) {
     const configJSON = JSON.parse(config);
     const client = createClient(configJSON);
     this.turso = drizzle(client);
-    this.ready = applySchemaMigrations(client);
   }
 
   async pullFolders(lastSync: number): Promise<FolderType[]> {
-    await this.ready;
     const folders = await this.turso
       .select()
       .from(folderModel)
@@ -41,7 +35,6 @@ class TursoAdapter implements NotasAdapter {
   }
 
   async pullNotes(lastSync: number): Promise<NoteType[]> {
-    await this.ready;
     const notes = await this.turso
       .select()
       .from(noteModel)
@@ -63,7 +56,6 @@ class TursoAdapter implements NotasAdapter {
   }
 
   async pushFolder(folder: any): Promise<any> {
-    await this.ready;
     return this.turso
       .insert(folderModel)
       .values({
@@ -98,7 +90,6 @@ class TursoAdapter implements NotasAdapter {
   }
 
   async pushNote(note: any): Promise<any> {
-    await this.ready;
     return this.turso
       .insert(noteModel)
       .values({
@@ -144,124 +135,8 @@ class TursoAdapter implements NotasAdapter {
       });
   }
 
-  // tags
-  async pullTags(lastSync: number): Promise<TagType[]> {
-    await this.ready;
-    const tags = await this.turso
-      .select()
-      .from(tagModel)
-      .where(gt(tagModel.updatedAt, lastSync))
-      .all();
-
-    return tags.map((tag: any) => ({
-      id: tag.id,
-      name: tag.name,
-      color: tag.color,
-      lastSync: tag.lastSync,
-      createdAt: tag.createdAt,
-      updatedAt: tag.updatedAt,
-      deletedAt: tag.deletedAt || null,
-    }));
-  }
-
-  async pushTag(tag: any): Promise<any> {
-    await this.ready;
-    return this.turso
-      .insert(tagModel)
-      .values({
-        id: tag.id,
-        name: tag.name,
-        color: tag.color,
-        lastSync: tag.lastSync,
-        createdAt: tag.createdAt,
-        updatedAt: tag.updatedAt,
-        deletedAt: tag.deletedAt,
-      })
-      .onConflictDoUpdate({
-        target: tagModel.id,
-        set: {
-          name: tag.name,
-          color: tag.color,
-          lastSync: tag.lastSync,
-          createdAt: tag.createdAt,
-          updatedAt: tag.updatedAt,
-          deletedAt: tag.deletedAt,
-        },
-      })
-      .returning({
-        id: tagModel.id,
-        name: tagModel.name,
-        color: tagModel.color,
-        lastSync: tagModel.lastSync,
-        createdAt: tagModel.createdAt,
-        updatedAt: tagModel.updatedAt,
-        deletedAt: tagModel.deletedAt,
-      })
-      .catch((err) => {
-        console.log("pushTag error", err);
-      });
-  }
-
-  async pullNoteTags(lastSync: number): Promise<NoteTagType[]> {
-    await this.ready;
-    const noteTags = await this.turso
-      .select()
-      .from(noteTagModel)
-      .where(gt(noteTagModel.updatedAt, lastSync))
-      .all();
-
-    return noteTags.map((noteTag: any) => ({
-      id: noteTag.id,
-      noteId: noteTag.noteId,
-      tagId: noteTag.tagId,
-      lastSync: noteTag.lastSync,
-      createdAt: noteTag.createdAt,
-      updatedAt: noteTag.updatedAt,
-      deletedAt: noteTag.deletedAt || null,
-    }));
-  }
-
-  async pushNoteTag(noteTag: any): Promise<any> {
-    await this.ready;
-    return this.turso
-      .insert(noteTagModel)
-      .values({
-        id: noteTag.id,
-        noteId: noteTag.noteId,
-        tagId: noteTag.tagId,
-        lastSync: noteTag.lastSync,
-        createdAt: noteTag.createdAt,
-        updatedAt: noteTag.updatedAt,
-        deletedAt: noteTag.deletedAt,
-      })
-      .onConflictDoUpdate({
-        target: noteTagModel.id,
-        set: {
-          noteId: noteTag.noteId,
-          tagId: noteTag.tagId,
-          lastSync: noteTag.lastSync,
-          createdAt: noteTag.createdAt,
-          updatedAt: noteTag.updatedAt,
-          deletedAt: noteTag.deletedAt,
-        },
-      })
-      .returning({
-        id: noteTagModel.id,
-        noteId: noteTagModel.noteId,
-        tagId: noteTagModel.tagId,
-        lastSync: noteTagModel.lastSync,
-        createdAt: noteTagModel.createdAt,
-        updatedAt: noteTagModel.updatedAt,
-        deletedAt: noteTagModel.deletedAt,
-      })
-      .catch((err) => {
-        console.log("pushNoteTag error", err);
-      });
-  }
-
   // settings
   async pushSettings(setting: any): Promise<any> {
-    await this.ready;
     return this.turso
       .insert(settingModel)
       .values({
@@ -289,7 +164,6 @@ class TursoAdapter implements NotasAdapter {
       });
   }
   async pullSettings(lastSync: number): Promise<any> {
-    await this.ready;
     const setting = await this.turso
       .select()
       .from(settingModel)
