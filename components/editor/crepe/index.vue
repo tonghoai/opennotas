@@ -19,6 +19,7 @@ import {
   getImageMeta,
 } from '~/services/image';
 import { syncImages } from '~/utils/image-sync';
+import { ensureCursorBottomMargin } from '~/utils/editor-scroll';
 import cloudUploadSvgRaw from '~/assets/svg/cloud-upload.svg?raw';
 import alertSquareSvgRaw from '~/assets/svg/alert-square-rounded.svg?raw';
 
@@ -336,6 +337,18 @@ onMounted(() => {
       }))
     );
 
+    // ProseMirror scrolls the selection into view (with no margin) on every
+    // local edit by default, which fights our own eased scroll in
+    // ensureCursorBottomMargin and produces a jump-then-smooth double motion.
+    // Suppressing it here makes our animation the only one that runs.
+    editor.editor.use(
+      $prose(() => new Plugin({
+        props: {
+          handleScrollToSelection: () => true,
+        },
+      }))
+    );
+
     await editor.create();
 
     // Intercept image paste before ProseMirror (capture phase runs first)
@@ -454,10 +467,18 @@ onMounted(() => {
     isLoading.value = false;
 
     editor.on((listener) => {
-      listener.updated(() => {
+      listener.updated((ctx) => {
         if (silent.value) return;
 
         emit('changeContent', editor.getMarkdown());
+
+        const view = ctx.get(editorViewCtx);
+        if (view) ensureCursorBottomMargin(() => view.coordsAtPos(view.state.selection.head));
+      });
+
+      listener.selectionUpdated((ctx) => {
+        const view = ctx.get(editorViewCtx);
+        if (view) ensureCursorBottomMargin(() => view.coordsAtPos(view.state.selection.head));
       });
     });
   }, 250);
@@ -677,7 +698,7 @@ defineExpose({
   </div>
 
   <div v-show="!isLoading" id="crepe-editor"
-    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_-_160px)] animate-fade-right animate-duration-100"
+    class="w-full mx-auto outline-none px-2 lg:px-8 pt-6 pb-40 min-h-[calc(100vh_-_160px)] animate-fade-right animate-duration-100"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }">
 
   </div>

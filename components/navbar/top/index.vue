@@ -535,12 +535,10 @@ defineExpose({
             </div>
 
             <div class="tabs tabs-bordered w-full">
-              <a class="tab flex-1" :class="{ 'tab-active': !isTagsTabActive }"
-                @click="handleClickFoldersTab">
+              <a class="tab flex-1" :class="{ 'tab-active': !isTagsTabActive }" @click="handleClickFoldersTab">
                 {{ $t('app.tab_folders') }}
               </a>
-              <a class="tab flex-1" :class="{ 'tab-active': isTagsTabActive }"
-                @click="handleClickTagsTab">
+              <a class="tab flex-1" :class="{ 'tab-active': isTagsTabActive }" @click="handleClickTagsTab">
                 {{ $t('app.tab_tags') }}
               </a>
             </div>
@@ -620,8 +618,9 @@ defineExpose({
               </SettingRow>
 
               <SettingRow :label="$t('app.setting_general_font_title')">
-                <input v-model="settings.general.fontFamily" type="text" class="input input-sm input-bordered w-40"
-                  @change="handleSaveSettings" autocomplete="off" />
+                <input v-model="settings.general.fontFamily" type="text"
+                  class="input input-sm input-bordered w-full min-w-0" @change="handleSaveSettings"
+                  autocomplete="off" />
               </SettingRow>
             </div>
           </div>
@@ -633,7 +632,8 @@ defineExpose({
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_security_title') }}</h2>
             <div class="">
               <SettingRow :label="$t('app.setting_general_security_title')">
-                <button class="btn rounded-md btn-sm font-normal shadow-none border border-base-content/20"
+                <button
+                  class="btn rounded-md btn-sm font-normal shadow-none border border-base-content/20 truncate max-w-full"
                   @click="handleClickSetPassword">
                   {{ props.isPasswordExist ? $t('app.setting_general_security_change_password') :
                     $t('app.setting_general_security_set_password') }}
@@ -651,7 +651,7 @@ defineExpose({
             <div class="space-y-6">
               <!-- Note Sync -->
               <div class="">
-                <div class="flex items-center justify-between gap-6 py-4">
+                <div class="grid grid-cols-[3fr_2fr] items-center gap-3 py-4">
                   <div class="min-w-0">
                     <p class="font-medium">{{ $t('app.setting_sync_adapter_title') }}</p>
                     <p class="text-xs text-base-content/60 mt-1">
@@ -661,7 +661,7 @@ defineExpose({
                         }}</a>
                     </p>
                   </div>
-                  <div class="shrink-0 flex items-center gap-2">
+                  <div class="min-w-0 flex justify-end items-center gap-2">
                     <SettingSelect v-model="adapterSelect" :options="[
                       { label: 'LocalForage (Offline)', value: 'LocalForage' },
                       { label: 'Turso (Online)', value: 'Turso' },
@@ -695,7 +695,7 @@ defineExpose({
                     @change="handleSaveSettings" />
                 </SettingRow>
 
-                <div v-if="settings.imageSync?.enabled" class="flex items-center justify-between gap-6 py-4">
+                <div v-if="settings.imageSync?.enabled" class="grid grid-cols-[3fr_2fr] items-center gap-3 py-4">
                   <div class="min-w-0">
                     <p class="font-medium">{{ $t('app.setting_image_sync_config_title') }}</p>
                     <p class="text-xs text-base-content/60 mt-1">
@@ -704,11 +704,13 @@ defineExpose({
                         class="underline text-xs hover:text-primary">{{ $t('app.setting_image_sync_setup_guide') }}</a>
                     </p>
                   </div>
-                  <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 shrink-0"
-                    @click="handleOpenImageSyncConfigModal">
-                    {{ $t('app.setting_configure_button') }}
-                  </button>
+                  <div class="min-w-0 flex justify-end">
+                    <button type="button"
+                      class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                      @click="handleOpenImageSyncConfigModal">
+                      {{ $t('app.setting_configure_button') }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -724,7 +726,7 @@ defineExpose({
               <div class="">
                 <SettingRow :label="$t('app.setting_tools_backup_export')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
                     @click="handleClickExportNotes">
                     {{ $t('app.setting_tools_backup_export_button') }}
                   </button>
@@ -732,7 +734,7 @@ defineExpose({
 
                 <SettingRow :label="$t('app.setting_tools_backup_import')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
                     @click="handleClickImportNotes">
                     {{ $t('app.setting_tools_backup_import_button') }}
                   </button>
@@ -741,14 +743,15 @@ defineExpose({
 
               <div class="">
                 <SettingRow label="Service Worker">
-                  <button class="btn btn-sm btn-outline btn-error" @click="handleClickResetServiceWorker">
+                  <button class="btn btn-sm btn-outline btn-error truncate max-w-full"
+                    @click="handleClickResetServiceWorker">
                     {{ $t('app.setting_tools_reset_service_worker_title') }}
                   </button>
                 </SettingRow>
 
                 <SettingRow :label="$t('app.setting_tools_force_update_title')"
                   :description="$t('app.setting_tools_force_update_description')">
-                  <button class="btn btn-sm btn-outline btn-error" @click="handleClickForceUpdate">
+                  <button class="btn btn-sm btn-outline btn-error truncate max-w-full" @click="handleClickForceUpdate">
                     {{ $t('app.setting_tools_force_update_button') }}
                   </button>
                 </SettingRow>

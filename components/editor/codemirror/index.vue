@@ -4,6 +4,7 @@ import { EditorView } from "codemirror";
 import { redo as _redo, undo as _undo, defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { drawSelection, dropCursor, rectangularSelection, keymap } from "@codemirror/view";
 import * as Diff from 'diff';
+import { ensureCursorBottomMargin } from '~/utils/editor-scroll';
 
 const props = defineProps([
   'value',
@@ -39,6 +40,9 @@ const state = EditorState.create({
       if (silent.value) return;
       if (v.docChanged) {
         emit('changeContent', v.state.doc.toString());
+      }
+      if (v.docChanged || v.selectionSet) {
+        ensureCursorBottomMargin(() => v.view.coordsAtPos(v.view.state.selection.main.head));
       }
     }),
     // markdown(),
@@ -173,7 +177,7 @@ defineExpose({
 }
 
 .cm-content {
-  margin-bottom: 100px !important;
+  margin-bottom: 150px !important;
 }
 
 .cm-focused .cm-cursor {

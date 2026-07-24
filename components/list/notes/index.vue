@@ -36,11 +36,13 @@ const handleRightClickNote = (e: any, noteId: number) => {
             :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
             {{ note.title?.trim() || $t('app.list_note_no_title') }}
           </div>
-          <div class="w-full select-none truncate overflow-hidden transition-all"
+          <div class="w-full flex items-center gap-1 select-none truncate overflow-hidden transition-all"
             :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
-            <span class="search-highlight" v-if="note.highlight" v-html="note.highlight"></span>
-            <span :class="{ 'italic': note.isLocked }" v-else>{{ note.content?.trim() || $t('app.list_note_no_content')
-              }}</span>
+            <Lock v-if="note.isLocked" class="w-3 h-3 shrink-0 text-warning" />
+            <span class="search-highlight truncate" v-if="note.highlight" v-html="note.highlight"></span>
+            <span :class="{ 'italic': note.isLocked }" v-else class="truncate min-w-0">{{ note.content?.trim() ||
+              $t('app.list_note_no_content')
+            }}</span>
           </div>
         </div>
 
@@ -48,7 +50,11 @@ const handleRightClickNote = (e: any, noteId: number) => {
           :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-r-xl': activeNoteId === note.id }">
           <div class="flex justify-end items-end flex-col">
             <Pin class="w-3 h-3 mb-2 text-error" v-if="note.isPinned" />
-            <Lock class="w-3 h-3 text-warning" v-if="note.isLocked" />
+            <div v-if="note.tags?.length" class="flex flex-row items-center">
+              <span v-for="(tag, idx) in note.tags.slice(0, 3)" :key="tag.id"
+                class="w-3 h-3 rounded-full border border-base-100" :class="{ '-ml-1.5': +idx > 0 }"
+                :style="{ backgroundColor: tag.color || '#94a3b8', zIndex: 3 - +idx }"></span>
+            </div>
           </div>
           <div class="flex justify-end items-end flex-col more-tools cursor-pointer"
             @click.stop="handleRightClickNote($event, note.id)">
