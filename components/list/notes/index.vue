@@ -39,8 +39,7 @@ const handleRightClickNote = (e: any, noteId: number) => {
           <div class="w-full select-none truncate overflow-hidden transition-all"
             :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
             <span class="search-highlight" v-if="note.highlight" v-html="note.highlight"></span>
-            <span :class="{ 'italic': note.isLocked }" v-else>{{ note.content?.trim() || $t('app.list_note_no_content')
-              }}</span>
+            <span v-else>{{ note.content?.trim() || $t('app.list_note_no_content') }}</span>
           </div>
         </div>
 

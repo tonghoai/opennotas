@@ -60,7 +60,7 @@ async function getAllNotes() {
 async function getNotes(folderId: string, sortType: 'createdAt' | 'updatedAt', lockedTitle: string, lockedContent: string) {
   const notes = await storage.getNotes(folderId);
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(substrTitle(note.content)) : (note.title || lockedTitle);
+    const title = !note.isLocked ? removeSpecialChar(substrTitle(note.content)) : lockedTitle;
     const content = !note.isLocked ? removeSpecialChar(substrContent(note.content)) : lockedContent;
     return {
       ...note,
@@ -119,16 +119,6 @@ async function setSortNote(sort: 'createdAt' | 'updatedAt') {
   return storage.setSortNote(sort);
 }
 
-async function getNoteHistory(noteId: string) {
-  return storage.getNoteHistory(noteId);
-}
-async function addNoteHistorySnapshot(noteId: string, content: string) {
-  return storage.addNoteHistorySnapshot(noteId, { id: randomUUID(), content, snapshotAt: nowUnix() });
-}
-async function deleteNoteHistorySnapshot(noteId: string, snapshotId: string) {
-  return storage.deleteNoteHistorySnapshot(noteId, snapshotId);
-}
-
 async function getNoteDetail(noteId: string) {
   return storage.getNoteDetail(noteId);
 }
@@ -136,7 +126,7 @@ async function getNoteDetail(noteId: string) {
 async function getDeletedNotes(lockedTitle: string, lockedContent: string) {
   const notes = await storage.getDeletedNotes();
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : (note.title || lockedTitle);
+    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : lockedTitle;
     const content = !note.isLocked ? removeSpecialChar(note.content.split('\n').slice(1).join('\n').substr(0, 60)) : lockedContent;
     return {
       ...note,
@@ -150,103 +140,6 @@ async function getDeletedNotes(lockedTitle: string, lockedContent: string) {
   });
 
   return sortNotes;
-}
-
-async function getAllTags() {
-  return storage.getAllTags();
-}
-async function getTags() {
-  return storage.getTags();
-}
-async function getTagDetail(tagId: string) {
-  return storage.getTagDetail(tagId);
-}
-async function createTag(tagData?: any) {
-  const tagPayload = tagData || {
-    id: randomUUID(),
-    name: "New Tag",
-    lastSync: 0,
-    createdAt: nowUnix(),
-    updatedAt: nowUnix(),
-    deletedAt: null,
-  };
-  return storage.createTag(tagPayload);
-}
-async function updateTag(tagId: string, data: any) {
-  return storage.updateTag(tagId, { ...data });
-}
-async function deleteTag(tagId: string) {
-  const tag = await storage.getTagDetail(tagId);
-  await storage.updateTag(tagId, { ...tag, deletedAt: nowUnix(), updatedAt: nowUnix() });
-
-  const noteTags = await storage.getNoteTagsByTag(tagId);
-  for (const noteTag of noteTags) {
-    await storage.updateNoteTag(noteTag.id, { deletedAt: nowUnix(), updatedAt: nowUnix() });
-  }
-  return true;
-}
-
-async function getTagsForNote(noteId: string) {
-  const noteTags = await storage.getNoteTagsByNote(noteId);
-  const tags = await Promise.all(noteTags.map((noteTag: any) => storage.getTagDetail(noteTag.tagId)));
-  return tags;
-}
-async function getNotesForTag(tagId: string, sortType: 'createdAt' | 'updatedAt', lockedTitle: string, lockedContent: string) {
-  const noteTags = await storage.getNoteTagsByTag(tagId);
-  const notes = await Promise.all(noteTags.map((noteTag: any) => storage.getNoteDetail(noteTag.noteId)));
-  const reformatNotes = notes.filter((note: any) => note.id && !note.deletedAt).map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(substrTitle(note.content)) : (note.title || lockedTitle);
-    const content = !note.isLocked ? removeSpecialChar(substrContent(note.content)) : lockedContent;
-    return {
-      ...note,
-      title,
-      content,
-    };
-  });
-
-  return reformatNotes.sort((a: any, b: any) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    if (sortType === 'createdAt') {
-      return b.createdAt - a.createdAt;
-    } else {
-      return b.updatedAt - a.updatedAt;
-    }
-  });
-}
-
-// raw passthrough, used both by pull-merge (utils/sync.ts) and the UI-facing helpers below
-async function getNoteTagsByNote(noteId: string) {
-  return storage.getNoteTagsByNote(noteId);
-}
-async function getNoteTagsByTag(tagId: string) {
-  return storage.getNoteTagsByTag(tagId);
-}
-async function getNoteTagDetail(noteTagId: string) {
-  const noteTags = await storage.getAllNoteTags();
-  return noteTags.find((noteTag: any) => noteTag.id === noteTagId) || {};
-}
-async function createNoteTag(noteTagData: any) {
-  return storage.createNoteTag(noteTagData);
-}
-async function updateNoteTag(noteTagId: string, data: any) {
-  return storage.updateNoteTag(noteTagId, { ...data });
-}
-
-async function addTagToNote(noteId: string, tagId: string) {
-  const noteTagPayload = {
-    id: `${noteId}:${tagId}`,
-    noteId,
-    tagId,
-    lastSync: 0,
-    createdAt: nowUnix(),
-    updatedAt: nowUnix(),
-    deletedAt: null,
-  };
-  return storage.createNoteTag(noteTagPayload);
-}
-async function removeTagFromNote(noteId: string, tagId: string) {
-  return storage.updateNoteTag(`${noteId}:${tagId}`, { deletedAt: nowUnix(), updatedAt: nowUnix() });
 }
 
 async function getSettings() {
@@ -280,15 +173,6 @@ async function getPassword() {
 }
 async function setPassword(password: string) {
   return storage.setPassword(password);
-}
-async function getPasswordChangeBackup() {
-  return storage.getPasswordChangeBackup();
-}
-async function savePasswordChangeBackup(data: any) {
-  return storage.savePasswordChangeBackup(data);
-}
-async function clearPasswordChangeBackup() {
-  return storage.clearPasswordChangeBackup();
 }
 
 // import
@@ -361,27 +245,7 @@ export {
   setSortNote,
   getNoteDetail,
 
-  getNoteHistory,
-  addNoteHistorySnapshot,
-  deleteNoteHistorySnapshot,
-
   getDeletedNotes,
-
-  getAllTags,
-  getTags,
-  getTagDetail,
-  createTag,
-  updateTag,
-  deleteTag,
-  getTagsForNote,
-  getNotesForTag,
-  getNoteTagsByNote,
-  getNoteTagsByTag,
-  getNoteTagDetail,
-  createNoteTag,
-  updateNoteTag,
-  addTagToNote,
-  removeTagFromNote,
 
   getSettings,
   setSettings,
@@ -394,9 +258,6 @@ export {
   checkPasswordExist,
   getPassword,
   setPassword,
-  getPasswordChangeBackup,
-  savePasswordChangeBackup,
-  clearPasswordChangeBackup,
 
   getImportData,
   setImportData,

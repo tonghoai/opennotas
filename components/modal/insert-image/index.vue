@@ -41,10 +41,8 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-insert-image"
-    class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div id="modal-insert-image-content"
-      class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
+  <dialog id="modal-insert-image" class="modal modal-top lg:modal-middle">
+    <div id="modal-insert-image-content" class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-neutral">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
@@ -70,7 +68,7 @@ const handleClickClose = () => {
         </div>
         <div class="form-control w-full pt-2">
           <div class="label"></div>
-          <button class="btn btn-sm btn-primary" :disabled="!isValidate" @click="handleConfirm">
+          <button class="btn btn-sm lg:btn-md btn-primary" :disabled="!isValidate" @click="handleConfirm">
             {{ $i18n.t('app.modal_insert_image_ok') }}
           </button>
         </div>

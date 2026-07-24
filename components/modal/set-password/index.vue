@@ -4,7 +4,6 @@ const { $i18n } = useNuxtApp();
 
 const props = defineProps([
   'type',
-  'isLoading',
 ]);
 
 const emit = defineEmits([
@@ -70,29 +69,15 @@ defineExpose({
 });
 
 const handleClickClose = () => {
-  if (props.isLoading) {
-    return;
-  }
   emit('close');
 }
-
-onMounted(() => {
-  document.getElementById('modal-set-password')?.addEventListener('cancel', (e) => {
-    if (props.isLoading) {
-      e.preventDefault();
-    }
-  });
-});
 </script>
 
 <template>
-  <dialog id="modal-set-password"
-    class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div id="modal-set-password-content"
-      class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
+  <dialog id="modal-set-password" class="modal modal-top lg:modal-middle">
+    <div id="modal-set-password-content" class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-neutral">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" :disabled="props.isLoading"
-          @click="handleClickClose">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">
         {{ props.type === 'set' ? $t('app.modal_set_password_title') : $t('app.modal_set_password_change_title') }}
@@ -121,7 +106,7 @@ onMounted(() => {
         <div class="form-control w-full pt-2">
           <div class="label">
             <span class="font-semibold label-text">{{ $t('app.modal_set_password_confirm_password_input_title')
-            }}</span>
+              }}</span>
           </div>
           <input ref="inputPasswordRef" v-model="confirmPassword" type="password"
             :placeholder="$t('app.modal_set_password_confirm_password_input_title')"
@@ -131,10 +116,8 @@ onMounted(() => {
 
         <div class="form-control w-full pt-2">
           <div class="label"></div>
-          <button class="btn btn-sm btn-primary" :disabled="!isValidate || props.isLoading"
-            @click="handleConfirmPassword">
-            <span v-if="props.isLoading" class="loading loading-spinner loading-xs"></span>
-            {{ props.isLoading ? $t('app.modal_set_password_processing') : $t('app.modal_set_password_ok') }}
+          <button class="btn btn-sm lg:btn-md btn-primary" :disabled="!isValidate" @click="handleConfirmPassword">
+            {{ $t('app.modal_set_password_ok') }}
           </button>
         </div>
       </div>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Notes from '../assets/svg/notes.svg?component';
-import Tag from '../assets/svg/tag.svg?component';
 import Trash from '../assets/svg/trash-2.svg?component';
 import Settings from '../assets/svg/settings.svg?component';
 import Refresh from '../assets/svg/refresh.svg?component';
@@ -24,7 +23,6 @@ watch(() => props.isSyncing, (value) => {
 
 const emit = defineEmits([
   'clickNotes',
-  'clickTags',
   'clickTrash',
   'clickSetting',
   'clickUpdateData',
@@ -39,9 +37,6 @@ const handleClickUpdateData = () => {
 }
 const handleClickNotes = () => {
   emit('clickNotes');
-}
-const handleClickTags = () => {
-  emit('clickTags');
 }
 const handleClickTrash = () => {
   emit('clickTrash');
@@ -61,16 +56,9 @@ const handleClickCollapseFolder = () => {
     <!-- Menu -->
     <div class="flex-1 flex flex-col items-center gap-4 mt-4">
       <div class="menu-item flex flex-col items-center gap-2 relative !text-base-content"
-        :class="{ active: props.activeFolderId !== 'bottombar-trash' && props.activeFolderId !== 'bottombar-tags' }"
-        @click="handleClickNotes">
+        :class="{ active: props.activeFolderId !== 'bottombar-trash' }" @click="handleClickNotes">
         <Notes />
         <span class="text-sm">Notes</span>
-      </div>
-
-      <div class="menu-item flex flex-col items-center gap-2 relative !text-base-content"
-        :class="{ active: props.activeFolderId === 'bottombar-tags' }" @click="handleClickTags">
-        <Tag />
-        <span class="text-sm">Tags</span>
       </div>
 
       <div class="menu-item flex flex-col items-center gap-2 relative !text-base-content"

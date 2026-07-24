@@ -2,10 +2,6 @@
 import Search from '../assets/svg/search.svg?component';
 import Plus from '../assets/svg/plus.svg?component';
 
-const props = defineProps([
-  'hideAddButton',
-]);
-
 const emit = defineEmits([
   'clickAddNote',
   'clickSearch',
@@ -51,7 +47,7 @@ defineExpose({
       <input type="text" class="grow" :placeholder="$t('app.toolbar_note_search_placeholder')" v-model="searchInput" />
     </label>
 
-    <button v-if="!props.hideAddButton" class="btn btn-sm bg-primary text-primary-content flex items-center gap-1 hover:bg-primary/90"
+    <button class="btn btn-sm bg-primary text-primary-content flex items-center gap-1 hover:bg-primary/90"
       @click="handleClickAddNote">
       <Plus />
       {{ $t('app.toolbar_note_add') }}

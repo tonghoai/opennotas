@@ -71,10 +71,6 @@ const focusPassword = () => {
 const focus = (location: 'start' | 'end' = 'start') => {
   editorRef.value?.focus(location);
 }
-const handleClickMarkdownBody = (e: MouseEvent) => {
-  if ((e.target as HTMLElement).closest('input, textarea, .dropdown, .milkdown-toolbar, .milkdown-link-edit, .milkdown-link-preview, .milkdown-slash-menu, .milkdown-block-handle')) return;
-  focus('end');
-}
 const readonly = () => {
   editorRef.value?.readonly();
 }
@@ -122,7 +118,7 @@ defineExpose({
 <template>
   <div class="flex justify-center bg-svg h-full transition-all" v-if="!id"></div>
 
-  <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="handleClickMarkdownBody">
+  <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="() => focus('end')">
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :key="editorTiptapKey" :isShowFormatToolbar="props.isShowFormatToolbar"
       @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"

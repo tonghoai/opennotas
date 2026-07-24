@@ -15,8 +15,8 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-confirm-change-adapter" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
+  <dialog id="modal-confirm-change-adapter" class="modal">
+    <div class="modal-box p-4 lg:p-6 w-5/6 lg:w-96 border border-neutral">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
@@ -27,10 +27,10 @@ const handleClickClose = () => {
         <div class="modal-action">
           <form method="dialog">
             <!-- if there is a button in form, it will close the modal -->
-            <button class="btn btn-sm mr-2">
+            <button class="btn btn-sm lg:btn-md mr-2">
               {{ $t('app.modal_confirm_change_adapter_cancel') }}
             </button>
-            <button class="btn btn-outline btn-sm btn-error text-error-content" @click="handleConfirm">
+            <button class="btn btn-outline btn-sm lg:btn-md btn-error text-error-content" @click="handleConfirm">
               {{ $t('app.modal_confirm_change_adapter_ok') }}
             </button>
           </form>

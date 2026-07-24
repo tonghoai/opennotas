@@ -15,15 +15,13 @@ const handleClickDeleteFolder = () => {
 </script>
 
 <template>
-  <dialog id="modal-menu-folder" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box p-0 w-5/6 border border-base-content/15">
+  <dialog id="modal-menu-folder" class="modal">
+    <div class="modal-box p-0 w-5/6 border border-neutral">
       <!-- <div class="bg-base-100 shadow-sm rounded"> -->
       <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
         <li class="w-full text-center" @click="handleClickRenameFolder">
           <a class="w-full block text-center">{{ $t('app.modal_menu_folder_rename') }}</a>
         </li>
-
-        <li></li>
 
         <li class="text-rose-500 w-full" @click="handleClickDeleteFolder">
           <a class="w-full block text-center">{{ $t('app.modal_menu_folder_delete') }}</a>

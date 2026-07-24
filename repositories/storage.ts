@@ -6,11 +6,6 @@ import type {
   NoteSortType,
   NoteType,
   NoteUpdateType,
-  TagCreateType,
-  TagType,
-  TagUpdateType,
-  NoteTagCreateType,
-  NoteTagType,
 } from "./storage.type";
 
 class NotasStorage {
@@ -70,51 +65,6 @@ class NotasStorage {
     throw new Error('Not implemented');
   }
 
-  // history
-  async getNoteHistory(noteId: string): Promise<any[]> {
-    throw new Error('Not implemented');
-  }
-  async addNoteHistorySnapshot(noteId: string, snapshot: any, maxDays: number = 3, maxPerDay: number = 5): Promise<any[]> {
-    throw new Error('Not implemented');
-  }
-  async deleteNoteHistorySnapshot(noteId: string, snapshotId: string): Promise<any[]> {
-    throw new Error('Not implemented');
-  }
-
-  // tags
-  async getAllTags(): Promise<TagType[]> {
-    throw new Error('Not implemented');
-  }
-  async getTags(): Promise<TagType[]> {
-    throw new Error('Not implemented');
-  }
-  async getTagDetail(tagId: string): Promise<TagType> {
-    throw new Error('Not implemented');
-  }
-  async createTag(data: TagCreateType): Promise<TagType> {
-    throw new Error('Not implemented');
-  }
-  async updateTag(tagId: string, data: TagUpdateType): Promise<TagType> {
-    throw new Error('Not implemented');
-  }
-
-  // note tags (map note <-> tag)
-  async getAllNoteTags(): Promise<NoteTagType[]> {
-    throw new Error('Not implemented');
-  }
-  async getNoteTagsByNote(noteId: string): Promise<NoteTagType[]> {
-    throw new Error('Not implemented');
-  }
-  async getNoteTagsByTag(tagId: string): Promise<NoteTagType[]> {
-    throw new Error('Not implemented');
-  }
-  async createNoteTag(data: NoteTagCreateType): Promise<NoteTagType> {
-    throw new Error('Not implemented');
-  }
-  async updateNoteTag(noteTagId: string, data: Partial<NoteTagType>): Promise<NoteTagType> {
-    throw new Error('Not implemented');
-  }
-
   // password | settings
   async getSettings(): Promise<any> {
     throw new Error('Not implemented');
@@ -123,15 +73,6 @@ class NotasStorage {
     throw new Error('Not implemented');
   }
   async setPassword(password: string): Promise<string> {
-    throw new Error('Not implemented');
-  }
-  async getPasswordChangeBackup(): Promise<any> {
-    throw new Error('Not implemented');
-  }
-  async savePasswordChangeBackup(data: any): Promise<any> {
-    throw new Error('Not implemented');
-  }
-  async clearPasswordChangeBackup(): Promise<boolean> {
     throw new Error('Not implemented');
   }
 
