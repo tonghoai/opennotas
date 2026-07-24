@@ -215,6 +215,11 @@ const handleClickSetPassword = () => {
   emit('clickSetPassword');
 }
 const adapterSelect = ref<string>('');
+// Explicit intent flag: only true once the user actually touches the adapter
+// dropdown. See components/modal/setting/index.vue for the full race-condition
+// explanation this guards against (async settings load racing the drawer mount
+// on mobile, which mounts eagerly at page load rather than on-demand).
+const userEditedAdapter = ref(false);
 
 type S3Config = {
   s3Endpoint: string;
@@ -244,9 +249,11 @@ onMounted(() => {
 const isAdapterChanged = computed(() => adapterSelect.value !== settings.value.sync.adapter);
 const handleSaveAdapter = (e: Event) => {
   emit('saveAdapter', adapterSelect.value);
+  userEditedAdapter.value = false;
 }
 const handleCancelAdapterChange = () => {
   adapterSelect.value = settings.value.sync.adapter;
+  userEditedAdapter.value = false;
 }
 
 const handleChangeLanguage = () => {
@@ -401,9 +408,8 @@ const handleSaveImageSyncConfigModal = () => {
 
 const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
-  const hasPendingAdapterChange = isAdapterChanged.value;
   settings.value = newValue;
-  if (!hasPendingAdapterChange) {
+  if (!userEditedAdapter.value) {
     adapterSelect.value = settings.value.sync.adapter;
   }
   draftS3Config.value = buildDraft(newValue?.imageSync);
@@ -662,7 +668,7 @@ defineExpose({
                     </p>
                   </div>
                   <div class="min-w-0 flex justify-end items-center gap-2">
-                    <SettingSelect v-model="adapterSelect" :options="[
+                    <SettingSelect v-model="adapterSelect" @update:modelValue="userEditedAdapter = true" :options="[
                       { label: 'LocalForage (Offline)', value: 'LocalForage' },
                       { label: 'Turso (Online)', value: 'Turso' },
                     ]" />
