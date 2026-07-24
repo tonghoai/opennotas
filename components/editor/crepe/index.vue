@@ -272,6 +272,15 @@ onMounted(() => {
       [Crepe.Feature.Latex]: false,
     },
     featureConfigs: {
+      [Crepe.Feature.Cursor]: {
+        // prosemirror-virtual-cursor races with the list-item NodeView's own
+        // requestAnimationFrame-deferred selection fix on every Enter inside a
+        // list, suspected to cause duplicated lines on real mobile
+        // soft-keyboard input (not reproducible via synthetic keydown
+        // testing). Keep the feature enabled (still get the drag/drop
+        // indicator) but disable just the virtual caret.
+        virtual: false,
+      },
       [Crepe.Feature.BlockEdit]: {
         textGroup: {
           label: 'Text Blocks',
