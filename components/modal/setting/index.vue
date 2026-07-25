@@ -8,6 +8,7 @@ import SettingRow from './setting-row.vue';
 import SettingSelect from './setting-select.vue';
 import S3ProxyAdapter from '~/adapter/s3';
 import { resetSyncedImages } from '~/services/image';
+import { hasNewVersion } from '~/utils/check-app-version';
 
 const { setLocale } = useI18n();
 const { $i18n } = useNuxtApp();
@@ -486,9 +487,13 @@ const handleSaveImageSyncConfigModal = () => {
 
                 <SettingRow :label="$t('app.setting_tools_force_update_title')"
                   :description="$t('app.setting_tools_force_update_description')">
-                  <button class="btn btn-sm btn-outline btn-error" @click="handleClickForceUpdate">
-                    {{ $t('app.setting_tools_force_update_button') }}
-                  </button>
+                  <div class="relative inline-block">
+                    <span v-if="hasNewVersion"
+                      class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-base-100"></span>
+                    <button class="btn btn-sm btn-outline btn-error" @click="handleClickForceUpdate">
+                      {{ $t('app.setting_tools_force_update_button') }}
+                    </button>
+                  </div>
                 </SettingRow>
               </div>
             </div>

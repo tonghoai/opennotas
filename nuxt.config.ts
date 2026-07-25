@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     public: {
       env: "",
       version: require("./package.json").version,
+      buildId: Date.now(),
       ga: "",
     },
   },

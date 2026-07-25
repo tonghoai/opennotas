@@ -3,6 +3,7 @@ import { defineProps, onMounted } from 'vue';
 
 import S3ProxyAdapter from '~/adapter/s3';
 import { resetSyncedImages } from '~/services/image';
+import { hasNewVersion } from '~/utils/check-app-version';
 import { toggleModalMenuEditor } from '~/utils/modal';
 import { useMobileBackToggle } from '~/utils/mobile-back';
 import SettingRow from '../../modal/setting/setting-row.vue';
@@ -478,7 +479,11 @@ defineExpose({
 
           <div v-if="!isShowSearchInput" class="flex">
             <Search class="press mr-4 cursor-pointer opacity-80" @click="handleToggleSearch" />
-            <Setting class="press cursor-pointer opacity-80" @click="handleClickSetting" />
+            <span class="relative inline-block">
+              <Setting class="press cursor-pointer opacity-80" @click="handleClickSetting" />
+              <span v-if="hasNewVersion"
+                class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-base-100"></span>
+            </span>
           </div>
         </div>
       </div>
@@ -757,9 +762,14 @@ defineExpose({
 
                 <SettingRow :label="$t('app.setting_tools_force_update_title')"
                   :description="$t('app.setting_tools_force_update_description')">
-                  <button class="btn btn-sm btn-outline btn-error truncate max-w-full" @click="handleClickForceUpdate">
-                    {{ $t('app.setting_tools_force_update_button') }}
-                  </button>
+                  <div class="relative inline-block max-w-full">
+                    <span v-if="hasNewVersion"
+                      class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-base-100"></span>
+                    <button class="btn btn-sm btn-outline btn-error truncate max-w-full"
+                      @click="handleClickForceUpdate">
+                      {{ $t('app.setting_tools_force_update_button') }}
+                    </button>
+                  </div>
                 </SettingRow>
               </div>
             </div>

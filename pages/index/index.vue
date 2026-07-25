@@ -57,6 +57,7 @@ import {
 import Mutex from "~/utils/mutex";
 import { removeMarkdownEscape } from "~/utils/string";
 import { pushMobileBackState, closeMobileBackState, initMobileBackHandler } from "~/utils/mobile-back";
+import { checkAppVersion } from "~/utils/check-app-version";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
@@ -90,8 +91,14 @@ onMounted(async () => {
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === 'visible') {
       idleSync(true);
+      checkAppVersion(runtimeConfig.public.buildId);
     }
   });
+
+  checkAppVersion(runtimeConfig.public.buildId);
+  setInterval(() => {
+    checkAppVersion(runtimeConfig.public.buildId);
+  }, 24 * 60 * 60 * 1000);
 
   // document.addEventListener('gesturestart', function (e) {
   //   e.preventDefault();
