@@ -67,6 +67,8 @@ const emit = defineEmits([
   'clickMenuSidebar',
   'clickFormatToolbar',
   'clickPlainText',
+  'clickExportSettings',
+  'triggerImportSettings',
 ]);
 
 const { $i18n } = useNuxtApp();
@@ -269,6 +271,15 @@ const handleClickExportNotes = () => {
 // import notes
 const handleClickImportNotes = () => {
   emit('clickImportNotes', true);
+}
+
+// export settings
+const handleClickExportSettings = () => {
+  emit('clickExportSettings');
+}
+// import settings
+const handleClickImportSettings = () => {
+  emit('triggerImportSettings');
 }
 
 const handleClickAddFolder = () => {
@@ -748,6 +759,23 @@ defineExpose({
                     class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
                     @click="handleClickImportNotes">
                     {{ $t('app.setting_tools_backup_import_button') }}
+                  </button>
+                </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_settings_export')"
+                  :description="$t('app.setting_tools_settings_export_description')">
+                  <button type="button"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    @click="handleClickExportSettings">
+                    {{ $t('app.setting_tools_settings_export_button') }}
+                  </button>
+                </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_settings_import')">
+                  <button type="button"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    @click="handleClickImportSettings">
+                    {{ $t('app.setting_tools_settings_import_button') }}
                   </button>
                 </SettingRow>
               </div>

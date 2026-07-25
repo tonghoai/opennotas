@@ -26,7 +26,7 @@ const formattedUpdatedAt = computed(() => {
 
 <template>
   <div v-if="props.noteId"
-    class="flex justify-between items-center gap-4 h-7 px-4 opacity-70 bg-base-100 border-t border-base-300 select-none overflow-hidden">
+    class="flex justify-between items-center gap-4 h-7 px-4 opacity-70 bg-base-100 border-t border-base-content/15 select-none overflow-hidden">
     <div class="flex items-center gap-3 min-w-0">
       <span class="whitespace-nowrap truncate text-xs font-semibold" :title="formattedUpdatedAt">
         {{ $t('app.status_bar_last_modified') }}: {{ formattedUpdatedAt }}

@@ -58,6 +58,7 @@ import Mutex from "~/utils/mutex";
 import { removeMarkdownEscape } from "~/utils/string";
 import { pushMobileBackState, closeMobileBackState, initMobileBackHandler } from "~/utils/mobile-back";
 import { checkAppVersion } from "~/utils/check-app-version";
+import { resetSyncedImages } from "~/services/image";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
@@ -1375,6 +1376,10 @@ const handleCloseSetPassword = () => {
   toggleModalSetPassword(false, isShowModalSetPassword);
 }
 const adapterWillChange = ref<string>("");
+// non-null when the pending adapter-change confirmation was triggered by an Import Settings
+// conflict (rather than the manual adapter dropdown) — holds the full imported settings object
+// so handleConfirmChangeAdapter can apply all of it, not just the adapter name
+const pendingImportedSettings = ref<any>(null);
 const handleSaveAdapter = async (adapterName: string) => {
   adapterWillChange.value = adapterName;
   toggleModalConfirmChangeAdapter(true, isShowModalConfirmChangeAdapter);
@@ -1385,13 +1390,18 @@ const handleChangeAdapter = async () => {
 }
 const isShowModalConfirmChangeAdapter = ref<boolean>(false);
 const handleClickCloseModalConfirmChangeAdapter = () => {
+  pendingImportedSettings.value = null;
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
 }
 const handleConfirmChangeAdapter = async (e2eeKey: string) => {
   // automatically export notes if user change adapter
   await handleExportNotes(true);
 
-  settings.value.sync.adapter = adapterWillChange.value;
+  if (pendingImportedSettings.value) {
+    settings.value = deepMerge(settings.value, pendingImportedSettings.value);
+  } else {
+    settings.value.sync.adapter = adapterWillChange.value;
+  }
   await handleChangeAdapter();
   await handleSaveSettings(settings.value);
 
@@ -1404,18 +1414,23 @@ const handleConfirmChangeAdapter = async (e2eeKey: string) => {
     saveTextFile(e2eeKey, 'opennotas-e2ee-key.txt');
   }
 
+  const wasImport = !!pendingImportedSettings.value;
+  pendingImportedSettings.value = null;
+
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
-  showSuccess($i18n.t('app.message_setting_sync_adapter_saved'));
+  showSuccess($i18n.t(wasImport ? 'app.message_import_settings' : 'app.message_setting_sync_adapter_saved'));
 
   // trigger 1 time full sync to pull/push all data with the new adapter
   handleClickUpdateData(SYNC_LEVELS.length - 1);
 }
 const isShowModalConfirmE2eeKey = ref<boolean>(false);
 const handleClickCloseModalConfirmE2eeKey = () => {
+  pendingImportedSettings.value = null;
   toggleModalConfirmE2eeKey(false, isShowModalConfirmE2eeKey);
 }
 const handleConfirmChangeAdapterOnline = async () => {
-  if (adapterWillChange.value === 'LocalForage') {
+  const targetAdapter = pendingImportedSettings.value?.sync?.adapter ?? adapterWillChange.value;
+  if (targetAdapter === 'LocalForage') {
     toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
     return handleConfirmChangeAdapter('');
   }
@@ -1556,6 +1571,144 @@ const handleExportNotesConfirm = async (data: any) => {
 const handleExportNotesIgnorePassword = async () => {
   return handleExportNotes(false);
 }
+
+const isShowModalExportSettingsConfirm = ref<boolean>(false);
+const modalExportSettingsConfirm = ref<any>(null);
+const isShowModalImportSettings = ref<boolean>(false);
+
+const handleExportSettings = (includeSensitive: boolean) => {
+  const exportedSettings = includeSensitive
+    ? JSON.parse(JSON.stringify(settings.value))
+    : sanitizeSettingsForExport(settings.value);
+  const dataExport = {
+    settings: exportedSettings,
+    metadata: {
+      version: runtimeConfig.public.version,
+      exportedAt: new Date().toISOString(),
+    }
+  };
+  saveJsonFile(JSON.stringify(dataExport, null, 2), 'opennotas-export-settings.json');
+}
+const handleClickExportSettings = async () => {
+  // if password exist, need to input password to export sensitive connection settings
+  // else, only export settings without connection secrets
+  const password = await getPassword();
+  if (password) {
+    toggleModalExportSettingsConfirm(true, isShowModalExportSettingsConfirm);
+    return;
+  }
+
+  return handleExportSettings(false);
+}
+const handleClickCloseModalExportSettingsConfirm = () => {
+  toggleModalExportSettingsConfirm(false, isShowModalExportSettingsConfirm);
+}
+const handleExportSettingsConfirm = async (data: any) => {
+  const password = await getPassword();
+  const newHashPassword = await hashPassword(data.password);
+  if (password !== newHashPassword) {
+    modalExportSettingsConfirm.value?.showFailedPassword();
+    return;
+  }
+
+  toggleModalExportSettingsConfirm(false, isShowModalExportSettingsConfirm);
+  return handleExportSettings(true);
+}
+const handleExportSettingsIgnorePassword = () => {
+  return handleExportSettings(false);
+}
+
+const handleClickImportSettings = () => {
+  toggleModalImportSettings(true, isShowModalImportSettings);
+}
+const handleClickCloseModalImportSettings = () => {
+  toggleModalImportSettings(false, isShowModalImportSettings);
+}
+const isValidTursoConfig = (configStr: string) => {
+  try {
+    const cfg = JSON.parse(configStr || '{}');
+    return !!cfg.url;
+  } catch {
+    return false;
+  }
+}
+// Warn whenever the imported file touches sync/imageSync at all, regardless of whether the
+// values actually differ from what's currently configured — predictable over clever.
+const detectSyncConflict = (imported: any) => {
+  return !!imported?.sync;
+}
+const detectImageSyncConflict = (imported: any) => {
+  return !!imported?.imageSync;
+}
+
+const isShowModalConfirmImportImageSyncChange = ref<boolean>(false);
+const handleConfirmImportImageSyncChange = async () => {
+  const merged = deepMerge(settings.value, pendingImportedSettings.value);
+  settings.value = merged;
+  await setSettings(merged);
+  changeFontFamily(merged.general?.fontFamily);
+  pendingImportedSettings.value = null;
+  toggleModalConfirmImportImageSyncChange(false, isShowModalConfirmImportImageSyncChange);
+  showSuccess($i18n.t('app.message_import_settings'));
+  await resetSyncedImages();
+}
+const handleCancelImportImageSyncChange = async () => {
+  // drop only the imageSync portion of the import; the rest (general/sync) still applies
+  const { imageSync, ...rest } = pendingImportedSettings.value;
+  const merged = deepMerge(settings.value, rest);
+  settings.value = merged;
+  await setSettings(merged);
+  changeFontFamily(merged.general?.fontFamily);
+  pendingImportedSettings.value = null;
+  toggleModalConfirmImportImageSyncChange(false, isShowModalConfirmImportImageSyncChange);
+}
+
+const handleConfirmImportSettings = async (importedSettings: any) => {
+  toggleModalImportSettings(false, isShowModalImportSettings);
+
+  // if the import would end up pointing at Turso with no usable connection config,
+  // skip the sync portion rather than saving the app into a broken sync state
+  const prospectiveAdapter = importedSettings.sync?.adapter ?? settings.value.sync.adapter;
+  const prospectiveConfig = importedSettings.sync?.configuration ?? settings.value.sync.configuration;
+  if (prospectiveAdapter === 'Turso' && !isValidTursoConfig(prospectiveConfig)) {
+    delete importedSettings.sync;
+    showError($i18n.t('app.message_import_settings_sync_skipped_invalid_config'));
+  }
+
+  const syncConflict = detectSyncConflict(importedSettings);
+  const imageSyncConflict = detectImageSyncConflict(importedSettings);
+
+  if (syncConflict) {
+    pendingImportedSettings.value = importedSettings;
+    adapterWillChange.value = importedSettings.sync?.adapter ?? settings.value.sync.adapter;
+    toggleModalConfirmChangeAdapter(true, isShowModalConfirmChangeAdapter);
+    return;
+  }
+
+  if (imageSyncConflict) {
+    pendingImportedSettings.value = importedSettings;
+    toggleModalConfirmImportImageSyncChange(true, isShowModalConfirmImportImageSyncChange);
+    return;
+  }
+
+  const merged = deepMerge(settings.value, importedSettings);
+  settings.value = merged;
+  await setSettings(merged);
+  changeFontFamily(merged.general?.fontFamily);
+  showSuccess($i18n.t('app.message_import_settings'));
+}
+
+const importAlsoChangesImageSync = computed(() => {
+  return !!pendingImportedSettings.value && detectImageSyncConflict(pendingImportedSettings.value);
+});
+const importMissingImageSyncCredentials = computed(() => {
+  const img = pendingImportedSettings.value?.imageSync;
+  if (!img) return false;
+  const locationChanged = ('s3Endpoint' in img && img.s3Endpoint !== settings.value.imageSync.s3Endpoint) ||
+    ('s3Bucket' in img && img.s3Bucket !== settings.value.imageSync.s3Bucket);
+  const hasNewCredentials = ('s3AccessKey' in img) || ('s3SecretKey' in img);
+  return locationChanged && !hasNewCredentials;
+});
 
 
 // when screen resize, if from desktop to mobile or mobile to desktop
@@ -1831,6 +1984,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
         @clickAddFolder="handleClickAddFolder" @clickSwitchEditor="handleClickSwitchEditor" @clickUndo="handleClickUndo"
         @clickRedo="handleClickRedo" @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch"
         @clickSetPassword="handleClickSetPassword" @clickImportNotes="handleClickImportNotes"
+        @clickExportSettings="handleClickExportSettings" @triggerImportSettings="handleClickImportSettings"
         @clickMenuSidebar="handleClickMenuSidebar" @clickFormatToolbar="handleClickFormatToolbar"
         @clickPlainText="handleClickPlainText" />
     </div>
@@ -1970,20 +2124,30 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     @changeDefaultEditor="handleChangeDefaultEditor" @clickExportNotes="handleClickExportNotes"
     @triggerImportNotes="handleTriggerImportNotes" @saveSettings="handleSaveSettings" @saveAdapter="handleSaveAdapter"
     @clickSetPassword="handleClickSetPassword" @closeSetPassword="handleCloseSetPassword"
-    @clickImportNotes="handleClickImportNotes" @closeSetting="handleClickCloseSettings" />
+    @clickImportNotes="handleClickImportNotes" @clickExportSettings="handleClickExportSettings"
+    @triggerImportSettings="handleClickImportSettings" @closeSetting="handleClickCloseSettings" />
   <ModalAlertSetPassword v-if="isShowModalAlertSetPassword" @close="handleClickCloseModalAlertSetPassword" />
   <ModalSetPassword v-if="isShowModalSetPassword" ref="modalSetPasswordRef" :type="isPasswordExist ? 'change' : 'set'"
     :isLoading="isChangingPassword" @confirm="handleConfirmSetPassword" @close="handleCloseSetPassword" />
   <ModalConfirmChangeAdapter v-if="isShowModalConfirmChangeAdapter" :adapterName="''"
-    :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" @confirm="handleConfirmChangeAdapterOnline"
+    :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" :fromImport="!!pendingImportedSettings"
+    :alsoImageSync="importAlsoChangesImageSync" @confirm="handleConfirmChangeAdapterOnline"
     @close="handleClickCloseModalConfirmChangeAdapter" />
   <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" @confirm="handleConfirmChangeAdapter"
     @close="handleClickCloseModalConfirmE2eeKey" />
+  <ModalConfirmImportImageSyncChange v-if="isShowModalConfirmImportImageSyncChange"
+    :missingCredentials="importMissingImageSyncCredentials" @confirm="handleConfirmImportImageSyncChange"
+    @close="handleCancelImportImageSyncChange" />
   <ModalImportNotes v-if="isShowModalImportNotes" @confirm="handleTriggerImportNotes"
     @close="handleClickCloseModalImportNotes" />
   <ModalExportNotesConfirm v-if="isShowModalExportNotesConfirm" ref="modalExportNotesConfirm"
     @confirmPassword="handleExportNotesConfirm" @confirmIgnorePassword="handleExportNotesIgnorePassword"
     @close="handleClickCloseModalExportNotesConfirm" />
+  <ModalImportSettings v-if="isShowModalImportSettings" @confirm="handleConfirmImportSettings"
+    @close="handleClickCloseModalImportSettings" />
+  <ModalExportSettingsConfirm v-if="isShowModalExportSettingsConfirm" ref="modalExportSettingsConfirm"
+    @confirmPassword="handleExportSettingsConfirm" @confirmIgnorePassword="handleExportSettingsIgnorePassword"
+    @close="handleClickCloseModalExportSettingsConfirm" />
   <ModalUnlockNotes v-if="isShowModalUnlockNotes" ref="modalUnlockNotesRef" :noteId="activeNoteId"
     :formNotes="formNotes" @confirmPassword="handleUnlockNote" @close="handleClickCloseModalUnlockNotes" />
   <ModalChangeFolderName v-if="isShowModalChangeFolderName" ref="modalChangeFolderNameRef" :folderId="activeFolderId"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps(['adapterName']);
+const props = defineProps(['adapterName', 'fromImport', 'alsoImageSync']);
 const emit = defineEmits([
   'confirm',
   'close',
@@ -22,7 +22,11 @@ const handleClickClose = () => {
       </form>
       <h3 class="font-bold text-lg">{{ $t('app.modal_confirm_change_adapter_title') }}</h3>
       <div class="pt-4">
-        <div>{{ $t('app.modal_confirm_change_adapter_content') }}</div>
+        <div v-if="fromImport">
+          {{ $t('app.modal_confirm_change_adapter_import_content') }}
+          <span v-if="alsoImageSync">{{ $t('app.modal_confirm_change_adapter_import_also_image_sync') }}</span>
+        </div>
+        <div v-else>{{ $t('app.modal_confirm_change_adapter_content') }}</div>
 
         <div class="modal-action">
           <form method="dialog">

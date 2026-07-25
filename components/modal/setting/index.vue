@@ -173,6 +173,16 @@ const handleClickExportNotes = () => {
 const handleClickImportNotes = () => {
   emit('clickImportNotes');
 }
+
+// export settings
+const handleClickExportSettings = () => {
+  emit('clickExportSettings');
+}
+
+// import settings
+const handleClickImportSettings = () => {
+  emit('triggerImportSettings');
+}
 const handleClickResetServiceWorker = () => {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     registrations.forEach((registration) => {
@@ -474,6 +484,23 @@ const handleSaveImageSyncConfigModal = () => {
                     class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
                     @click="handleClickImportNotes">
                     {{ $t('app.setting_tools_backup_import_button') }}
+                  </button>
+                </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_settings_export')"
+                  :description="$t('app.setting_tools_settings_export_description')">
+                  <button type="button"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                    @click="handleClickExportSettings">
+                    {{ $t('app.setting_tools_settings_export_button') }}
+                  </button>
+                </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_settings_import')">
+                  <button type="button"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                    @click="handleClickImportSettings">
+                    {{ $t('app.setting_tools_settings_import_button') }}
                   </button>
                 </SettingRow>
               </div>

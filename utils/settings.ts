@@ -26,4 +26,14 @@ function getDefaultSettings() {
   }
 }
 
-export { getDefaultSettings, DEFAULT_IMAGE_PROXY_URL };
+function sanitizeSettingsForExport(settings: any) {
+  const clone = JSON.parse(JSON.stringify(settings));
+  if (clone.sync) delete clone.sync.configuration;
+  if (clone.imageSync) {
+    delete clone.imageSync.s3AccessKey;
+    delete clone.imageSync.s3SecretKey;
+  }
+  return clone;
+}
+
+export { getDefaultSettings, DEFAULT_IMAGE_PROXY_URL, sanitizeSettingsForExport };
