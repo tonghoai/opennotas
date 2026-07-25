@@ -310,6 +310,10 @@ const activeFolderName = computed(() => {
   const folder = listFoldersMenu.value.find((folder: any) => folder.id === activeFolderId.value);
   return folder?.name || "";
 });
+// Suppresses the notes list entrance animation while the whole list is being replaced by a
+// folder switch (hundreds of <li> mounting/unmounting at once is the main remaining jank source
+// after the data-layer caching fix) — normal single-note inserts (add note) are unaffected.
+const isSwitchingFolder = ref<boolean>(false);
 const handleClickFolderName = async (folderId: string) => {
   navbarTopRef.value?.resetSearchInput();
   toolbarNotesRef.value?.resetSearchInput();
@@ -317,7 +321,10 @@ const handleClickFolderName = async (folderId: string) => {
   isCollapsePanel.value = false;
   setActiveFolder(folderId);
 
-  reloadNotes();
+  isSwitchingFolder.value = true;
+  await reloadNotes();
+  await nextTick();
+  isSwitchingFolder.value = false;
 };
 const isShowModalMenuFolder = ref<boolean>(false);
 const menuFolderKey = ref<number>(0);
@@ -407,7 +414,10 @@ const handleClickBottombarTrash = async () => {
   isCollapsePanel.value = false;
   setActiveFolder('bottombar-trash');
 
+  isSwitchingFolder.value = true;
   listNotes.value = await loadTrashNotes();
+  await nextTick();
+  isSwitchingFolder.value = false;
 
   if (listNotes.value.find((note: any) => note.id === activeNoteId.value)) {
     formNotes.value = await getNoteDetail(activeNoteId.value);
@@ -638,6 +648,7 @@ const handleClickSearch = async (value: string) => {
   }
 
   const currentNotes = await loadNotes();
+  await ensureFlexSearchReady();
   const result = flexsearch!.search({
     query: value,
     highlight: {
@@ -650,8 +661,9 @@ const handleClickSearch = async (value: string) => {
   });
   // await reloadNotes(false, activeFolderId.value === 'bottombar-trash');
   // listNotes.value = currentNotes.filter((item: any) => result[0]?.result?.includes(item.id));
-  listNotes.value = result[0]?.result.reduce((acc: any[], item: any) => {
+  listNotes.value = (result[0]?.result || []).reduce((acc: any[], item: any) => {
     const currentNote = currentNotes.find((note: any) => note.id === item.id);
+    if (!currentNote) return acc;
     currentNote.highlight = item.highlight;
     acc.push(currentNote);
 
@@ -1226,25 +1238,15 @@ const loadNotesWithContent = async (folderId: string) => {
 }
 const listNotesToSearch = ref<any[]>([]);
 let flexsearch: any | null = null;
-onMounted(() => {
-  setTimeout(async () => {
-    listNotesToSearch.value = await loadNotesWithContent(activeFolderId.value);
-    flexsearch = newFlexSearch();
-
-    listNotesToSearch.value.forEach((note: any) => {
-      addToFlexSearch(flexsearch, toRaw(note));
-    });
-  }, 1000);
-});
-watch(() => activeFolderId.value, async () => {
-  await new Promise(resolve => setTimeout(resolve, 500));
+let flexsearchFolderId: string | null = null;
+const ensureFlexSearchReady = async () => {
+  if (flexsearch && flexsearchFolderId === activeFolderId.value) return;
   listNotesToSearch.value = await loadNotesWithContent(activeFolderId.value);
   flexsearch = newFlexSearch();
 
-  listNotesToSearch.value.forEach((note: any) => {
-    addToFlexSearch(flexsearch, toRaw(note));
-  });
-});
+  await Promise.all(listNotesToSearch.value.map((note: any) => addToFlexSearch(flexsearch, toRaw(note))));
+  flexsearchFolderId = activeFolderId.value;
+};
 
 
 // all logic of settings
@@ -2049,8 +2051,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
           :syncToastMessage="syncToastMessage" @clickSort="handleClickSort" @clickRetrySync="handleClickRetrySync" />
 
         <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
-          :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
-          @rightClickNote="handleRightClickNote" />
+          :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" :animateEntrance="!isSwitchingFolder"
+          @clickNote="handleClickNote" @rightClickNote="handleRightClickNote" />
       </div>
     </div>
 
