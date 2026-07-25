@@ -18,10 +18,12 @@ import {
   parseImageUrl,
   getImageMeta,
 } from '~/services/image';
-import { syncImages } from '~/utils/image-sync';
+import { syncImages, isImageSyncing } from '~/utils/image-sync';
 import { ensureCursorBottomMargin } from '~/utils/editor-scroll';
 import cloudUploadSvgRaw from '~/assets/svg/cloud-upload.svg?raw';
 import alertSquareSvgRaw from '~/assets/svg/alert-square-rounded.svg?raw';
+import photoUpSvgRaw from '~/assets/svg/photo-up.svg?raw';
+import subtitlesSvgRaw from '~/assets/svg/subtitles.svg?raw';
 
 const props = defineProps([
   'value',
@@ -50,6 +52,8 @@ let refreshInterval: ReturnType<typeof setInterval> | null = null;
 let isRefreshingBadges = false;
 let imagePasteHandler: ((e: Event) => void) | null = null;
 let imageResizeHandler: ((e: PointerEvent) => void) | null = null;
+let imageEditMouseDownHandler: ((e: MouseEvent) => void) | null = null;
+let imageEditClickSwallowHandler: ((e: MouseEvent) => void) | null = null;
 let isReplacingAll = false;
 
 const toolbarPos = ref<{ x: number; y: number } | null>(null);
@@ -218,6 +222,24 @@ const startRefreshInterval = () => {
   refreshInterval = setInterval(refreshSyncBadges, 10_000);
 };
 
+// syncImages() also runs from the app's general background sync (utils/sync.ts, via
+// pullPush/idleSync) — not just from handleManualSync's own badge click. Watching the
+// shared isImageSyncing flag lets badges show the loading spinner for that path too,
+// instead of sitting static on the upload icon for the whole background sync.
+watch(isImageSyncing, (syncing) => {
+  if (syncing) {
+    imageBadgeMap.forEach((badge) => {
+      if (!badge.classList.contains('image-sync-badge--syncing')) {
+        badge.className = 'image-sync-badge image-sync-badge--syncing';
+        badge.innerHTML = createBadgeSvg('spinner');
+        badge.title = $i18n.t('app.image_sync_badge_syncing');
+      }
+    });
+  } else {
+    refreshSyncBadges();
+  }
+});
+
 const stopRefreshInterval = () => {
   if (refreshInterval) {
     clearInterval(refreshInterval);
@@ -306,8 +328,8 @@ onMounted(() => {
       [Crepe.Feature.ImageBlock]: {
         onUpload: handleImageUpload,
         proxyDomURL: handleProxyDomURL,
-        blockCaptionIcon: '💬',
-        blockImageIcon: '🖼️',
+        blockImageIcon: photoUpSvgRaw,
+        blockCaptionIcon: subtitlesSvgRaw,
       },
     },
     defaultValue: props.value,
@@ -404,6 +426,74 @@ onMounted(() => {
 
     document.querySelector('#crepe-editor')
       ?.addEventListener('paste', imagePasteHandler, true);
+
+    // Milkdown's image-block NodeView only claims (stopEvent) clicks landing directly on a
+    // real <input> — a click anywhere else in the empty-state placeholder (the upload
+    // label, the "or paste link" text, the surrounding empty space) is left unclaimed.
+    // ProseMirror sets its NodeSelection (flashing the "selected" overlay) on MOUSEDOWN,
+    // before any 'click' handler ever runs — intercepting only 'click' (as an earlier
+    // version of this did) is always too late: the overlay has already flashed on by the
+    // time 'click' fires. Intercept at 'mousedown' instead, in the capture phase, so
+    // ProseMirror never sees the event at all: open the file picker directly on the
+    // upload label, and just focus the link input for everything else in the placeholder.
+    imageEditMouseDownHandler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Bail out for a mousedown landing directly on a real <input> — Milkdown's own
+      // NodeView already stopEvent's these correctly. This also guards against
+      // re-entrancy: the input?.click() call below dispatches a real, bubbling click
+      // event (not 'mousedown', so it can't loop back into this same listener).
+      if (target instanceof HTMLInputElement) return;
+      // Let the Confirm button (shown once the link input has a value) work natively too —
+      // it isn't part of the empty-state placeholder this handler exists to fix, and
+      // intercepting it here would eat the click Milkdown needs to actually insert the image.
+      if (target.closest('.confirm')) return;
+
+      const editEl = target.closest<HTMLElement>(
+        '.milkdown-image-block .image-edit, .milkdown-image-inline .empty-image-inline'
+      );
+      if (!editEl) return;
+
+      const uploader = target.closest<HTMLLabelElement>('.uploader');
+      if (uploader) {
+        e.preventDefault();
+        e.stopPropagation();
+        const inputId = uploader.getAttribute('for');
+        const input = inputId ? document.getElementById(inputId) as HTMLInputElement | null : null;
+        input?.click();
+        return;
+      }
+
+      const linkInput = editEl.querySelector<HTMLInputElement>('.link-input-area');
+      if (linkInput) {
+        e.preventDefault();
+        e.stopPropagation();
+        linkInput.focus();
+      }
+    };
+    document.querySelector('#crepe-editor')
+      ?.addEventListener('mousedown', imageEditMouseDownHandler, true);
+    // The mousedown handler above already did the real work (focus the link input, or open
+    // the file picker) and stopped the mousedown from reaching ProseMirror. The 'click' that
+    // naturally follows the same physical click still reaches ProseMirror separately, and
+    // its own click handling steals focus back to the editor root — so it also needs
+    // blocking. This must NOT re-run the branch logic above though: for a real click on the
+    // upload label (as opposed to the synthetic one our own input.click() call dispatches,
+    // whose target is the input and already gets skipped by the HTMLInputElement guard), the
+    // target is still the label, so re-running that branch would call input.click() a SECOND
+    // time and open the file picker twice. Just swallow the event instead.
+    imageEditClickSwallowHandler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target instanceof HTMLInputElement) return;
+      if (target.closest('.confirm')) return;
+      const editEl = target.closest<HTMLElement>(
+        '.milkdown-image-block .image-edit, .milkdown-image-inline .empty-image-inline'
+      );
+      if (!editEl) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    document.querySelector('#crepe-editor')
+      ?.addEventListener('click', imageEditClickSwallowHandler, true);
 
     // Dampen image resize speed — Milkdown uses absolute 1:1 position, we use delta × damping
     const RESIZE_DAMPING = 0.4;
@@ -536,6 +626,13 @@ onUnmounted(() => {
     document.querySelector('#crepe-editor')
       ?.removeEventListener('pointerdown', imageResizeHandler as EventListener, true);
     imageResizeHandler = null;
+  }
+  if (imageEditMouseDownHandler || imageEditClickSwallowHandler) {
+    const editorEl = document.querySelector('#crepe-editor');
+    if (imageEditMouseDownHandler) editorEl?.removeEventListener('mousedown', imageEditMouseDownHandler, true);
+    if (imageEditClickSwallowHandler) editorEl?.removeEventListener('click', imageEditClickSwallowHandler, true);
+    imageEditMouseDownHandler = null;
+    imageEditClickSwallowHandler = null;
   }
   editor.destroy();
 });

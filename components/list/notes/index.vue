@@ -97,7 +97,7 @@ const rows = computed(() => {
               <span class="search-highlight truncate" v-if="note.highlight" v-html="note.highlight"></span>
               <span :class="{ 'italic': note.isLocked }" v-else class="truncate min-w-0">{{ note.content?.trim() ||
                 $t('app.list_note_no_content')
-              }}</span>
+                }}</span>
             </div>
           </div>
 
@@ -107,7 +107,7 @@ const rows = computed(() => {
               <Pin class="w-3 h-3 mb-2 text-error" v-if="note.isPinned" />
               <div v-if="note.tags?.length" class="flex flex-row items-center">
                 <span v-for="(tag, idx) in note.tags.slice(0, 3)" :key="tag.id"
-                  class="w-3 h-3 rounded-full border border-base-100" :class="{ '-ml-1.5': +idx > 0 }"
+                  class="w-3 h-3 rounded-full border border-base-content/15" :class="{ '-ml-1.5': +idx > 0 }"
                   :style="{ backgroundColor: tag.color || '#94a3b8', zIndex: 3 - +idx }"></span>
               </div>
             </div>

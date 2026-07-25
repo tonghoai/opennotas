@@ -69,7 +69,11 @@
 .milkdown .editor::selection,
 .milkdown .editor *::selection {
   color: oklch(var(--p)) !important;
-  background-color: color-mix(in oklch, oklch(var(--p)) 20%, oklch(var(--b1)) 80%) !important;
+  background-color: color-mix(
+    in oklch,
+    oklch(var(--p)) 20%,
+    oklch(var(--b1)) 80%
+  ) !important;
 }
 
 /* Các thẻ h1, h2, h3, h4, h5, h6 */
@@ -111,7 +115,11 @@
    outrank that rule's equal class-count specificity. */
 #crepe-editor .milkdown .editor .milkdown-code-block .cm-selectionBackground,
 #crepe-editor .milkdown .editor .milkdown-code-block .cm-editor ::selection {
-  background-color: color-mix(in oklch, oklch(var(--p)) 20%, var(--crepe-color-surface) 80%) !important;
+  background-color: color-mix(
+    in oklch,
+    oklch(var(--p)) 20%,
+    var(--crepe-color-surface) 80%
+  ) !important;
   color: oklch(var(--p)) !important;
 }
 .milkdown .editor .milkdown-code-block .tools .language-button {
@@ -139,12 +147,12 @@
 }
 .image-sync-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   z-index: 20;
   cursor: pointer;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -173,8 +181,8 @@
   animation: sync-badge-spin 1s linear infinite;
 }
 .image-sync-badge svg {
-  width: 18px;
-  height: 18px;
+  width: 32px;
+  height: 32px;
   color: #f59e0b;
 }
 @keyframes sync-badge-spin {
@@ -186,16 +194,105 @@
   }
 }
 
-/* image */
+/* image upload placeholder — Crepe's default is a flat, borderless bar with no
+   affordance that it's an interactive drop/upload zone. Give it an actual
+   dashed dropzone treatment, a circled icon, a pill-shaped upload button, and
+   a primary-colored confirm button, all via daisyui theme tokens so it stays
+   correct in both light/dark themes without extra rules. */
 .milkdown .milkdown-image-block .image-edit {
+  border-radius: 0.75rem !important;
+  padding: 1rem 1.25rem !important;
+  min-height: 72px !important;
+  background: oklch(var(--b1)) !important;
+  border: 1.5px dashed oklch(var(--p) / 0.2) !important;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s !important;
+}
+.milkdown .milkdown-image-block .image-edit:hover {
+  border-color: oklch(var(--p) / 0.4) !important;
+  background: oklch(var(--b2)) !important;
+}
+.milkdown .milkdown-image-block .image-edit .image-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: oklch(var(--p) / 0.08) !important;
+}
+.milkdown .milkdown-image-block .image-edit .image-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: oklch(var(--p) / 0.6) !important;
+  fill: none !important;
+}
+/* .link-importer defaults to flex:1, stretching the real (invisible) text input far past
+   the visible placeholder content. Constrain it to a reasonable width, and push the empty
+   caret's position (via padding-left, since an empty input's caret always renders at its
+   text-align edge regardless of click position) to land right at the start of the "or
+   paste link" hint text — i.e. right after the upload button — since that hint text is
+   meant to read as a placeholder for typing/pasting a link. */
+.milkdown .milkdown-image-block .image-edit .link-importer {
+  flex: 1 1 auto !important;
+  min-width: 200px !important;
+  max-width: 360px !important;
+}
+.milkdown .milkdown-image-block .image-edit .link-importer .link-input-area {
+  text-align: left !important;
+  padding-left: 0 !important;
+}
+/* The 114px offset above is only wanted while the "or paste link" hint overlay is showing
+   (empty link value) — Crepe removes the .placeholder element entirely once the input has a
+   value, so once real text is typed/pasted it should start right at the input's own left
+   edge (flush with where the upload icon/button sit above it), not still be pushed in by the
+   padding meant for the empty-state caret position — otherwise most of the box is wasted
+   padding and the visible text area looks squeezed. */
+.milkdown
+  .milkdown-image-block
+  .image-edit
+  .link-importer:has(.placeholder)
+  .link-input-area {
+  padding-left: 114px !important;
+}
+.milkdown
+  .milkdown-image-block
+  .image-edit
+  .link-importer
+  .placeholder
+  .uploader {
+  padding: 0.375rem 0.75rem !important;
   border-radius: 0.5rem !important;
-  padding: 0.5rem !important;
+  background: oklch(var(--p) / 0.05) !important;
+  border: 1px solid oklch(var(--p) / 0.15) !important;
+  color: oklch(var(--p)) !important;
+  font-weight: 600 !important;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s !important;
+}
+.milkdown
+  .milkdown-image-block
+  .image-edit
+  .link-importer
+  .placeholder
+  .uploader:hover {
+  background: oklch(var(--p) / 0.1) !important;
+  border-color: oklch(var(--p) / 0.3) !important;
+}
+.milkdown .milkdown-image-block .image-edit .link-importer .placeholder .text {
+  color: oklch(var(--p) / 0.45) !important;
+  font-size: 0.8125rem !important;
 }
 .milkdown .milkdown-image-block .image-edit .confirm {
   border-radius: 0.5rem !important;
+  background: oklch(var(--p)) !important;
+  color: oklch(var(--pc)) !important;
 }
-.milkdown .milkdown-image-block .image-edit {
-  border-radius: 0.75rem !important;
+.milkdown .milkdown-image-block .image-edit .confirm:hover {
+  background: oklch(var(--p) / 0.85) !important;
 }
 .milkdown .milkdown-image-block.selected > .image-wrapper::before {
   border-radius: 0.5rem !important;
@@ -265,7 +362,9 @@
   border: 1px solid var(--neutral) !important;
   background-color: oklch(var(--p)) !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
 }
 .milkdown .milkdown-toolbar .divider {
   background: oklch(var(--pc) / 0.2) !important;
