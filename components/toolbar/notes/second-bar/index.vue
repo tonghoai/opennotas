@@ -8,9 +8,6 @@ const props = defineProps([
   'isSyncError',
   'syncErrorClass',
   'syncErrorMessage',
-  'isSyncToast',
-  'syncToastClass',
-  'syncToastMessage',
 ]);
 
 const emit = defineEmits([
@@ -38,11 +35,6 @@ const handleOpenSortModal = () => {
         :class="{ 'bg-warning': props.syncErrorClass === 'warning', 'text-warning-content': props.syncErrorClass === 'warning', 'bg-error': props.syncErrorClass === 'error', 'text-error-content': props.syncErrorClass === 'error' }"
         @click="handleClickRetrySync">
         {{ props.syncErrorMessage }}
-      </div>
-      <div v-show="!props.isSyncError && props.isSyncToast"
-        class="h-6 mx-2 rounded-lg text-xs text-center py-1 font-semibold text-primary-content"
-        :class="{ 'bg-info': props.syncToastClass === 'info', 'bg-success': props.syncToastClass === 'success' }">
-        {{ props.syncToastMessage }}
       </div>
     </div>
 

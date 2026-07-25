@@ -203,10 +203,7 @@ watch(() => initedApp.value, (newVal) => {
     // delay 1000ms before sync to avoid sync when app is not ready
     setTimeout(() => {
       if (settings.value.sync?.adapter !== 'LocalForage' && navigator.onLine) {
-        // showInfoSnackbar($i18n.t('app.message_sync_init'));
-        isSyncToast.value = true;
-        syncToastMessage.value = $i18n.t('app.message_sync_init');
-        syncToastClass.value = 'info';
+        showInfo($i18n.t('app.message_sync_init'));
       }
 
       idleSync(true, newVal);
@@ -283,11 +280,17 @@ const handleClickUpdateData = async (forcedLevelIndex?: number) => {
   isSyncAll.value = levelIndex === SYNC_LEVELS.length - 1;
   lastPull.value = level.seconds === 0 ? 0 : nowUnix() - level.seconds;
 
-  await pullPush().catch(() => { });
-  isSyncAll.value = false;
-  isSyncingAll.value = false;
-
-  showInfoSnackbar($i18n.t(level.labelKey));
+  try {
+    await pullPush();
+    showSuccess($i18n.t(level.labelKey));
+  } catch (error) {
+    showError($i18n.t(error instanceof NetworkError
+      ? 'app.message_sync_network_offline_error'
+      : 'app.message_sync_internal_error'));
+  } finally {
+    isSyncAll.value = false;
+    isSyncingAll.value = false;
+  }
 
   syncLevel.value = (levelIndex + 1) % SYNC_LEVELS.length;
 
@@ -303,6 +306,7 @@ const handleClickAddFolder = async () => {
   setActionObject('folder', newFolder);
   await updateLastPull(nowUnix());
   listFoldersMenu.value = await loadFolder();
+  showSuccess($i18n.t('app.message_folder_created'));
   handleClickFolderName(newFolder.id);
 };
 const activeFolderId = ref<string>("");
@@ -362,6 +366,7 @@ const handleRenameFolderName = async (data: any) => {
   setActionObject('folder', updatedFolder);
   modalChangeFolderNameRef.value?.reset();
   toggleModalChangeFolderName(false, isShowModalChangeFolderName);
+  showSuccess($i18n.t('app.message_folder_renamed'));
 
   reloadFolder();
 }
@@ -374,6 +379,7 @@ const handleReorderFolderName = async (data: any[]) => {
     }
   }
 
+  showSuccess($i18n.t('app.message_folder_reordered'));
   reloadFolder();
 }
 const folderWillDelete = ref<string>("");
@@ -581,10 +587,12 @@ const handleToggleNoteTag = async (tagId: string) => {
     const updated = await removeTagFromNote(noteIdForTags.value, tagId);
     setActionObject('noteTag', updated);
     activeNoteTagIds.value = activeNoteTagIds.value.filter((id: string) => id !== tagId);
+    showSuccess($i18n.t('app.message_tag_removed_from_note'));
   } else {
     const created = await addTagToNote(noteIdForTags.value, tagId);
     setActionObject('noteTag', created);
     activeNoteTagIds.value = [...activeNoteTagIds.value, tagId];
+    showSuccess($i18n.t('app.message_tag_added_to_note'));
   }
 
   if (isTagsMode.value && activeTagId.value) {
@@ -611,9 +619,7 @@ const handleClickRetrySync = async () => {
   syncErrorMessage.value = "";
   syncErrorClass.value = "";
 
-  isSyncToast.value = true;
-  syncToastMessage.value = $i18n.t('app.message_sync_init');
-  syncToastClass.value = 'info';
+  showInfo($i18n.t('app.message_sync_init'));
 
   await new Promise(resolve => setTimeout(resolve, 3000));
 
@@ -636,6 +642,7 @@ const handleClickAddNote = async () => {
   const newNote = await createNote(activeFolderId.value);
   setActionObject('note', newNote);
   listNotes.value = await loadNotes();
+  showSuccess($i18n.t('app.message_note_created'));
 
   handleClickNote(newNote.id, true, true);
 };
@@ -772,17 +779,20 @@ const handleClickDeleteNoteForever = async (noteId: string) => {
   listNotes.value = await loadTrashNotes();
   formNotes.value = {};
   toggleModalMenuNote(false, isShowModalMenuNote);
+  showWarning($i18n.t('app.message_note_deleted_forever'));
 }
 const handleClickPinNote = async (data: any) => {
   toggleModalMenuNote(false, isShowModalMenuNote);
 
+  const isPinning = data.status != 1;
   const updatedNote = await updateNote(data.noteId, {
-    isPinned: data.status == 1 ? 0 : 1,
+    isPinned: isPinning ? 1 : 0,
     updatedAt: nowUnix(),
   });
   setActionObject('note', updatedNote);
 
   listNotes.value = await loadNotes();
+  showSuccess($i18n.t(isPinning ? 'app.message_note_pinned' : 'app.message_note_unpinned'));
 
   // scroll to top id notes-instance
   const notesInstance = document.getElementById('notes-instance');
@@ -826,6 +836,7 @@ const handleClickLockNote = async (data: any) => {
 
   setActionObject('note', updatedNote);
   listNotes.value = await loadNotes();
+  showSuccess($i18n.t('app.message_note_locked'));
 }
 const modalUnlockNotesRef = ref<any>(null);
 const handleUnlockNote = async (data: any) => {
@@ -1255,11 +1266,15 @@ const handleChangeDefaultEditor = async () => {
 
   reloadFolder();
 }
-const handleSaveSettings = async (data: any) => {
+const handleSaveSettings = async (data: any, options: { silent?: boolean } = {}) => {
   settings.value = data;
   await setSettings(data);
 
   changeFontFamily(data.general?.fontFamily);
+
+  if (!options.silent) {
+    showSuccess($i18n.t('app.message_settings_saved'));
+  }
 }
 const modalSettingRef = ref<any>(null);
 const modalSetPasswordRef = ref<any>(null);
@@ -1275,6 +1290,7 @@ const handleSetPassword = async (data: any) => {
   isPasswordExist.value = true;
   modalSettingRef.value?.closeSetPasswordModal();
   modalSetPasswordRef.value?.reset();
+  showSuccess($i18n.t('app.message_password_set'));
 }
 const isChangingPassword = ref<boolean>(false);
 const handleBeforeUnloadWarning = (e: BeforeUnloadEvent) => {
@@ -1397,7 +1413,7 @@ const handleClickCloseModalConfirmChangeAdapter = () => {
 }
 const handleConfirmChangeAdapter = async (e2eeKey: string) => {
   // automatically export notes if user change adapter
-  await handleExportNotes(true);
+  await handleExportNotes(true, true);
 
   if (pendingImportedSettings.value) {
     settings.value = deepMerge(settings.value, pendingImportedSettings.value);
@@ -1405,7 +1421,7 @@ const handleConfirmChangeAdapter = async (e2eeKey: string) => {
     settings.value.sync.adapter = adapterWillChange.value;
   }
   await handleChangeAdapter();
-  await handleSaveSettings(settings.value);
+  await handleSaveSettings(settings.value, { silent: true });
 
   if (e2eeKey) {
     const keyString = atob(e2eeKey);
@@ -1456,7 +1472,7 @@ const handleClickExportNotes = async () => {
   return handleExportNotes(false);
 }
 
-const handleExportNotes = async (includeLock: boolean) => {
+const handleExportNotes = async (includeLock: boolean, silent = false) => {
   const notes = await getAllNotes();
   const folders = await getFolders($i18n.t('app.list_folder_all'));
   const foldersObject = folders.reduce((acc: any, folder: any) => {
@@ -1491,6 +1507,10 @@ const handleExportNotes = async (includeLock: boolean) => {
   };
   const data = JSON.stringify(dataExport, null, 2);
   saveJsonFile(data, 'opennotas-export-notes.json');
+
+  if (!silent) {
+    showSuccess($i18n.t('app.message_export_notes_success'));
+  }
 }
 const navbarTopRef = ref<any>(null);
 const toolbarNotesRef = ref<any>(null);
@@ -1590,6 +1610,7 @@ const handleExportSettings = (includeSensitive: boolean) => {
     }
   };
   saveJsonFile(JSON.stringify(dataExport, null, 2), 'opennotas-export-settings.json');
+  showSuccess($i18n.t('app.message_export_settings_success'));
 }
 const handleClickExportSettings = async () => {
   // if password exist, need to input password to export sensitive connection settings
@@ -1828,25 +1849,14 @@ const idleSync = async (immediate = false, initedApp = false) => {
     isSyncing.value = true;
     await pullPush()
       .then(() => {
-        if (immediate && initedApp && settings.value?.sync.adapter !== 'LocalForage') {
-          // showInfoSnackbar($i18n.t('app.message_sync_success'));
-          isSyncToast.value = true;
-          syncToastMessage.value = $i18n.t('app.message_sync_success');
-          syncToastClass.value = 'success';
-          setTimeout(() => {
-            isSyncToast.value = false;
-          }, 3000);
+        if (
+          (immediate && initedApp && settings.value?.sync.adapter !== 'LocalForage') ||
+          isSyncError.value
+        ) {
+          showSuccess($i18n.t('app.message_sync_success'));
         }
 
         // reset message
-        if (isSyncError.value) {
-          isSyncToast.value = true;
-          syncToastMessage.value = $i18n.t('app.message_sync_success');
-          syncToastClass.value = 'success';
-          setTimeout(() => {
-            isSyncToast.value = false;
-          }, 3000);
-        }
         isSyncError.value = false;
         syncErrorMessage.value = "";
         syncErrorClass.value = "";
@@ -1856,14 +1866,17 @@ const idleSync = async (immediate = false, initedApp = false) => {
           isSyncError.value = true;
           syncErrorMessage.value = $i18n.t('app.message_sync_network_offline_error');
           syncErrorClass.value = 'warning';
+          showWarning(syncErrorMessage.value);
         } else if (err instanceof SyncError) {
           isSyncError.value = true;
           syncErrorMessage.value = $i18n.t('app.message_sync_internal_error');
           syncErrorClass.value = 'error';
+          showError(syncErrorMessage.value);
         } else {
           isSyncError.value = true;
           syncErrorMessage.value = $i18n.t('app.message_sync_internal_error');
           syncErrorClass.value = 'error';
+          showError(syncErrorMessage.value);
         }
       });
     isSyncing.value = false;
@@ -1914,10 +1927,6 @@ watch(() => lastPull.value, async (newVal: number) => {
 const isSyncError = ref<boolean>(false);
 const syncErrorMessage = ref<string>("");
 const syncErrorClass = ref<string>("");
-
-const isSyncToast = ref<boolean>(false);
-const syncToastMessage = ref<string>("");
-const syncToastClass = ref<string>("");
 
 const changeThemeColor = () => {
   const metaThemeColor = document.querySelector("meta[name=theme-color]");
@@ -2047,8 +2056,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
 
       <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
         <ToolbarNotesSecondBar :sortType="sortType" :isSyncError="isSyncError" :syncErrorClass="syncErrorClass"
-          :syncErrorMessage="syncErrorMessage" :isSyncToast="isSyncToast" :syncToastClass="syncToastClass"
-          :syncToastMessage="syncToastMessage" @clickSort="handleClickSort" @clickRetrySync="handleClickRetrySync" />
+          :syncErrorMessage="syncErrorMessage" @clickSort="handleClickSort" @clickRetrySync="handleClickRetrySync" />
 
         <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
           :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" :animateEntrance="!isSwitchingFolder"
