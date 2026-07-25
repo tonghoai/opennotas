@@ -17,6 +17,14 @@ import type {
 } from "./storage.type";
 
 class LocalForageRepository implements NotasRepository {
+  // in-memory cache for full-table reads — any new code path that writes to the
+  // notes/folders/tags/noteTags localForage keys directly (bypassing the create*/update*/delete*
+  // methods below) must also invalidate the matching cache field here.
+  private notesCache: NoteType[] | null = null;
+  private foldersCache: FolderType[] | null = null;
+  private tagsCache: TagType[] | null = null;
+  private noteTagsCache: NoteTagType[] | null = null;
+
   // common
   async get(key: string): Promise<any> {
     return await localForage.getItem(key);
@@ -27,8 +35,10 @@ class LocalForageRepository implements NotasRepository {
 
   // logic
   async getAllFolders(): Promise<FolderType[]> {
+    if (this.foldersCache) return [...this.foldersCache];
     const folders = JSON.parse(await localForage.getItem('folders') || '[]');
-    return folders as FolderType[];
+    this.foldersCache = folders;
+    return [...folders] as FolderType[];
   }
   async getFolders(): Promise<FolderType[]> {
     const folders = await this.getAllFolders();
@@ -46,6 +56,7 @@ class LocalForageRepository implements NotasRepository {
     const newFolder = [data, ...folders];
     await localForage.setItem('folders', JSON.stringify(newFolder));
     await localForage.setItem(`folders-${data.id}`, JSON.stringify(data));
+    this.foldersCache = null;
     return data as FolderType;
   }
   async updateFolder(folderId: string, data: FolderUpdateType): Promise<FolderType> {
@@ -54,6 +65,7 @@ class LocalForageRepository implements NotasRepository {
     folders[folderIndex] = { ...folders[folderIndex], ...data };
     await localForage.setItem('folders', JSON.stringify(folders));
     await localForage.setItem(`folders-${folderId}`, JSON.stringify(folders[folderIndex]));
+    this.foldersCache = null;
     return folders[folderIndex] as FolderType;
   }
   async deleteFolder(folderId: string): Promise<boolean> {
@@ -61,6 +73,7 @@ class LocalForageRepository implements NotasRepository {
     const newFolders = folders.filter((folder: any) => folder.id !== folderId);
     await localForage.setItem('folders', JSON.stringify(newFolders));
     // await localForage.removeItem(`folders-${folderId}`);
+    this.foldersCache = null;
     return true;
   }
   async getActiveFolder(): Promise<string | null> {
@@ -72,8 +85,10 @@ class LocalForageRepository implements NotasRepository {
   }
 
   async getAllNotes(): Promise<NoteType[]> {
+    if (this.notesCache) return [...this.notesCache];
     const notes = JSON.parse(await localForage.getItem(`notes`) || '[]');
-    return notes as NoteType[];
+    this.notesCache = notes;
+    return [...notes] as NoteType[];
   }
   async getNotes(folderId: string): Promise<NoteType[]> {
     const notes = await this.getAllNotes()
@@ -99,6 +114,7 @@ class LocalForageRepository implements NotasRepository {
     const newNote = [data, ...notes];
     await localForage.setItem('notes', JSON.stringify(newNote));
     await localForage.setItem(`notes-${data.id}`, JSON.stringify(data));
+    this.notesCache = null;
     return data as NoteType;
   }
   async updateNote(noteId: string, data: NoteUpdateType): Promise<NoteType> {
@@ -107,6 +123,7 @@ class LocalForageRepository implements NotasRepository {
     notes[noteIndex] = { ...notes[noteIndex], ...data };
     await localForage.setItem('notes', JSON.stringify(notes));
     await localForage.setItem(`notes-${noteId}`, JSON.stringify(notes[noteIndex]));
+    this.notesCache = null;
     return notes[noteIndex];
   }
   async deleteNote(noteId: string): Promise<boolean> {
@@ -114,6 +131,7 @@ class LocalForageRepository implements NotasRepository {
     const newNotes = notes.filter((note: any) => note.id !== noteId);
     await localForage.setItem('notes', JSON.stringify(newNotes));
     // await localForage.removeItem(`notes-${noteId}`);
+    this.notesCache = null;
     return true;
   }
   async getNoteHistory(noteId: string): Promise<any[]> {
@@ -168,8 +186,10 @@ class LocalForageRepository implements NotasRepository {
 
   // tags
   async getAllTags(): Promise<TagType[]> {
+    if (this.tagsCache) return [...this.tagsCache];
     const tags = JSON.parse(await localForage.getItem('tags') || '[]');
-    return tags as TagType[];
+    this.tagsCache = tags;
+    return [...tags] as TagType[];
   }
   async getTags(): Promise<TagType[]> {
     const tags = await this.getAllTags();
@@ -183,6 +203,7 @@ class LocalForageRepository implements NotasRepository {
     const newTags = [data, ...tags];
     await localForage.setItem('tags', JSON.stringify(newTags));
     await localForage.setItem(`tags-${data.id}`, JSON.stringify(data));
+    this.tagsCache = null;
     return data as TagType;
   }
   async updateTag(tagId: string, data: TagUpdateType): Promise<TagType> {
@@ -191,13 +212,16 @@ class LocalForageRepository implements NotasRepository {
     tags[tagIndex] = { ...tags[tagIndex], ...data };
     await localForage.setItem('tags', JSON.stringify(tags));
     await localForage.setItem(`tags-${tagId}`, JSON.stringify(tags[tagIndex]));
+    this.tagsCache = null;
     return tags[tagIndex] as TagType;
   }
 
   // note tags (map note <-> tag)
   async getAllNoteTags(): Promise<NoteTagType[]> {
+    if (this.noteTagsCache) return [...this.noteTagsCache];
     const noteTags = JSON.parse(await localForage.getItem('noteTags') || '[]');
-    return noteTags as NoteTagType[];
+    this.noteTagsCache = noteTags;
+    return [...noteTags] as NoteTagType[];
   }
   async getNoteTagsByNote(noteId: string): Promise<NoteTagType[]> {
     const noteTags = await this.getAllNoteTags();
@@ -212,6 +236,7 @@ class LocalForageRepository implements NotasRepository {
     const newNoteTags = [data, ...noteTags];
     await localForage.setItem('noteTags', JSON.stringify(newNoteTags));
     await localForage.setItem(`noteTags-${data.id}`, JSON.stringify(data));
+    this.noteTagsCache = null;
     return data as NoteTagType;
   }
   async updateNoteTag(noteTagId: string, data: Partial<NoteTagType>): Promise<NoteTagType> {
@@ -220,6 +245,7 @@ class LocalForageRepository implements NotasRepository {
     noteTags[noteTagIndex] = { ...noteTags[noteTagIndex], ...data };
     await localForage.setItem('noteTags', JSON.stringify(noteTags));
     await localForage.setItem(`noteTags-${noteTagId}`, JSON.stringify(noteTags[noteTagIndex]));
+    this.noteTagsCache = null;
     return noteTags[noteTagIndex] as NoteTagType;
   }
 
@@ -304,6 +330,10 @@ class LocalForageRepository implements NotasRepository {
   // dangerus
   async cleanData(): Promise<boolean> {
     await localForage.clear();
+    this.notesCache = null;
+    this.foldersCache = null;
+    this.tagsCache = null;
+    this.noteTagsCache = null;
     return true;
   }
 }

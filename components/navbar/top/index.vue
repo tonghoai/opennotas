@@ -3,6 +3,7 @@ import { defineProps, onMounted } from 'vue';
 
 import S3ProxyAdapter from '~/adapter/s3';
 import { resetSyncedImages } from '~/services/image';
+import { hasNewVersion } from '~/utils/check-app-version';
 import { toggleModalMenuEditor } from '~/utils/modal';
 import { useMobileBackToggle } from '~/utils/mobile-back';
 import SettingRow from '../../modal/setting/setting-row.vue';
@@ -66,6 +67,8 @@ const emit = defineEmits([
   'clickMenuSidebar',
   'clickFormatToolbar',
   'clickPlainText',
+  'clickExportSettings',
+  'triggerImportSettings',
 ]);
 
 const { $i18n } = useNuxtApp();
@@ -215,6 +218,11 @@ const handleClickSetPassword = () => {
   emit('clickSetPassword');
 }
 const adapterSelect = ref<string>('');
+// Explicit intent flag: only true once the user actually touches the adapter
+// dropdown. See components/modal/setting/index.vue for the full race-condition
+// explanation this guards against (async settings load racing the drawer mount
+// on mobile, which mounts eagerly at page load rather than on-demand).
+const userEditedAdapter = ref(false);
 
 type S3Config = {
   s3Endpoint: string;
@@ -244,9 +252,11 @@ onMounted(() => {
 const isAdapterChanged = computed(() => adapterSelect.value !== settings.value.sync.adapter);
 const handleSaveAdapter = (e: Event) => {
   emit('saveAdapter', adapterSelect.value);
+  userEditedAdapter.value = false;
 }
 const handleCancelAdapterChange = () => {
   adapterSelect.value = settings.value.sync.adapter;
+  userEditedAdapter.value = false;
 }
 
 const handleChangeLanguage = () => {
@@ -261,6 +271,15 @@ const handleClickExportNotes = () => {
 // import notes
 const handleClickImportNotes = () => {
   emit('clickImportNotes', true);
+}
+
+// export settings
+const handleClickExportSettings = () => {
+  emit('clickExportSettings');
+}
+// import settings
+const handleClickImportSettings = () => {
+  emit('triggerImportSettings');
 }
 
 const handleClickAddFolder = () => {
@@ -401,9 +420,8 @@ const handleSaveImageSyncConfigModal = () => {
 
 const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
-  const hasPendingAdapterChange = isAdapterChanged.value;
   settings.value = newValue;
-  if (!hasPendingAdapterChange) {
+  if (!userEditedAdapter.value) {
     adapterSelect.value = settings.value.sync.adapter;
   }
   draftS3Config.value = buildDraft(newValue?.imageSync);
@@ -472,7 +490,11 @@ defineExpose({
 
           <div v-if="!isShowSearchInput" class="flex">
             <Search class="press mr-4 cursor-pointer opacity-80" @click="handleToggleSearch" />
-            <Setting class="press cursor-pointer opacity-80" @click="handleClickSetting" />
+            <span class="relative inline-block">
+              <Setting class="press cursor-pointer opacity-80" @click="handleClickSetting" />
+              <span v-if="hasNewVersion"
+                class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-base-100"></span>
+            </span>
           </div>
         </div>
       </div>
@@ -662,7 +684,7 @@ defineExpose({
                     </p>
                   </div>
                   <div class="min-w-0 flex justify-end items-center gap-2">
-                    <SettingSelect v-model="adapterSelect" :options="[
+                    <SettingSelect v-model="adapterSelect" @update:modelValue="userEditedAdapter = true" :options="[
                       { label: 'LocalForage (Offline)', value: 'LocalForage' },
                       { label: 'Turso (Online)', value: 'Turso' },
                     ]" />
@@ -739,6 +761,23 @@ defineExpose({
                     {{ $t('app.setting_tools_backup_import_button') }}
                   </button>
                 </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_settings_export')"
+                  :description="$t('app.setting_tools_settings_export_description')">
+                  <button type="button"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    @click="handleClickExportSettings">
+                    {{ $t('app.setting_tools_settings_export_button') }}
+                  </button>
+                </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_settings_import')">
+                  <button type="button"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    @click="handleClickImportSettings">
+                    {{ $t('app.setting_tools_settings_import_button') }}
+                  </button>
+                </SettingRow>
               </div>
 
               <div class="">
@@ -751,9 +790,14 @@ defineExpose({
 
                 <SettingRow :label="$t('app.setting_tools_force_update_title')"
                   :description="$t('app.setting_tools_force_update_description')">
-                  <button class="btn btn-sm btn-outline btn-error truncate max-w-full" @click="handleClickForceUpdate">
-                    {{ $t('app.setting_tools_force_update_button') }}
-                  </button>
+                  <div class="relative inline-block max-w-full">
+                    <span v-if="hasNewVersion"
+                      class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-base-100"></span>
+                    <button class="btn btn-sm btn-outline btn-error truncate max-w-full"
+                      @click="handleClickForceUpdate">
+                      {{ $t('app.setting_tools_force_update_button') }}
+                    </button>
+                  </div>
                 </SettingRow>
               </div>
             </div>

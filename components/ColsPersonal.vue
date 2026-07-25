@@ -6,6 +6,7 @@ import Settings from '../assets/svg/settings.svg?component';
 import Refresh from '../assets/svg/refresh.svg?component';
 import ArrowLeftToLine from '../assets/svg/arrow-left-to-line.svg?component';
 import ArrowRightToLine from '../assets/svg/arrow-right-to-line.svg?component';
+import { hasNewVersion } from '~/utils/check-app-version';
 
 const props = defineProps([
   'activeFolderId',
@@ -92,8 +93,10 @@ const handleClickCollapseFolder = () => {
           <Refresh />
         </span>
       </button>
-      <button class="btn btn-ghost btn-sm w-full" @click="handleClickSetting">
+      <button class="btn btn-ghost btn-sm w-full relative" @click="handleClickSetting">
         <Settings />
+        <span v-if="hasNewVersion"
+          class="absolute top-1 right-2 w-2 h-2 bg-error rounded-full ring-2 ring-base-100"></span>
       </button>
       <div class="avatar placeholder flex items-center justify-center">
         <div class="bg-primary text-primary-content rounded-full w-10 h-10 cursor-pointer" @click="handleClickSetting">

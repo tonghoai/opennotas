@@ -56,22 +56,20 @@
 }
 
 /* Selection */
-.milkdown .editor p::selection,
-.milkdown .editor h1::selection,
-.milkdown .editor h2::selection,
-.milkdown .editor h3::selection,
-.milkdown .editor h4::selection,
-.milkdown .editor h5::selection,
-.milkdown .editor h6::selection,
-.milkdown .editor strong::selection,
-.milkdown .editor em::selection,
-.milkdown .editor del::selection,
-.milkdown .editor code::selection,
-.milkdown .editor blockquote::selection,
-.milkdown .editor li::selection,
-.milkdown .editor a::selection {
+/* opaque color-mix instead of an alpha background: elements with their own
+   background (e.g. inline code chips) would otherwise show through a
+   transparent overlay differently than plain text, making the highlight
+   look uneven across a single selection.
+   ::selection only applies to the element it directly targets, not to
+   descendants by inheritance, so this needs an explicit descendant
+   selector (actual text always lives inside nested h1/p/strong/etc, not
+   as a direct child of .editor) to outrank markdown.css's generic
+   `.ProseMirror ::selection` rule, which otherwise wins here since
+   Crepe's root also carries the shared `.ProseMirror` class. */
+.milkdown .editor::selection,
+.milkdown .editor *::selection {
   color: oklch(var(--p)) !important;
-  background-color: oklch(var(--p) / 0.2) !important;
+  background-color: color-mix(in oklch, oklch(var(--p)) 20%, oklch(var(--b1)) 80%) !important;
 }
 
 /* Các thẻ h1, h2, h3, h4, h5, h6 */
@@ -104,6 +102,17 @@
 }
 .milkdown .editor .milkdown-code-block .cm-content {
   margin-bottom: 0 !important;
+}
+/* CodeMirror's own selection overlay (used for whitespace/empty-line spans a
+   native ::selection can't cover) inherits an opaque near-black rule meant
+   for the standalone CodeMirror editor (components/editor/codemirror/index.vue,
+   global/unscoped style) — override it here so it matches the code block's own
+   background instead of solid black. The #crepe-editor id anchor is needed to
+   outrank that rule's equal class-count specificity. */
+#crepe-editor .milkdown .editor .milkdown-code-block .cm-selectionBackground,
+#crepe-editor .milkdown .editor .milkdown-code-block .cm-editor ::selection {
+  background-color: color-mix(in oklch, oklch(var(--p)) 20%, var(--crepe-color-surface) 80%) !important;
+  color: oklch(var(--p)) !important;
 }
 .milkdown .editor .milkdown-code-block .tools .language-button {
   opacity: 1 !important;
@@ -248,8 +257,34 @@
 }
 
 /* Toolbar */
+/* restyle Crepe's built-in selection popup to match the custom format
+   toolbar (components/toolbar/form-notes-format/index.vue): solid primary
+   background, rounded-lg, shadow-lg, primary-content colored icons on
+   semi-transparent squares instead of the default surface/outline look */
 .milkdown .milkdown-toolbar {
   border: 1px solid var(--neutral) !important;
+  background-color: oklch(var(--p)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+.milkdown .milkdown-toolbar .divider {
+  background: oklch(var(--pc) / 0.2) !important;
+}
+.milkdown .milkdown-toolbar .toolbar-item {
+  background-color: oklch(var(--pc) / 0.2) !important;
+  border-radius: 0.375rem !important;
+}
+.milkdown .milkdown-toolbar .toolbar-item:hover {
+  background-color: oklch(var(--pc) / 0.3) !important;
+}
+.milkdown .milkdown-toolbar .toolbar-item:active,
+.milkdown .milkdown-toolbar .toolbar-item.active {
+  background-color: oklch(var(--pc) / 0.3) !important;
+}
+.milkdown .milkdown-toolbar .toolbar-item svg,
+.milkdown .milkdown-toolbar .toolbar-item.active svg {
+  color: oklch(var(--pc)) !important;
+  fill: oklch(var(--pc)) !important;
 }
 
 /* Slash menu */
@@ -324,5 +359,8 @@
   border-bottom-right-radius: 0.5rem !important;
 }
 .ͼ1 .cm-lineNumbers .cm-gutterElement {
-  line-height: 2 !important;
+  /* must match .cm-line's real line-height (font-size * 1.5); a mismatch here
+     leaves the line-number's line box taller than its actual row, so the
+     digit sits off-center and its ::selection highlight overflows the row */
+  line-height: 1.5 !important;
 }

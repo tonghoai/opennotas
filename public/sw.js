@@ -12,6 +12,13 @@ self.addEventListener("install", function (event) {
 
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
+  // Always hit the network for the app-version check — this endpoint's whole
+  // purpose is detecting a fresher deploy than the one that shipped this SW,
+  // so it must never be served from this (potentially stale) SW's own cache.
+  if (event.request.url.includes("/api/app-version")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   event.respondWith(
     fromCache(event.request)
       .then(function (response) {
