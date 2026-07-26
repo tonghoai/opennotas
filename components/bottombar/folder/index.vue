@@ -59,7 +59,7 @@ const handleClickMenuSidebar = () => {
       <span class="lg:hidden flex-none animate-fade-down animate-duration-200 px-2 flex items-end"
         @click="handleClickMenuSidebar">
         <span class="flex">
-          <Menu2 class="w-4 h-4" />
+          <Menu2 class="w-5 h-5" />
         </span>
       </span>
     </li>

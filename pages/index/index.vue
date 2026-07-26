@@ -636,6 +636,15 @@ const loadActiveNote = async () => {
 const loadTrashNotes = async () => {
   return getDeletedNotes($i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
 }
+const loadActiveList = async () => {
+  if (activeFolderId.value === 'bottombar-trash') {
+    return loadTrashNotes();
+  }
+  if (isTagsMode.value && activeTagId.value) {
+    return loadNotesForActiveTag();
+  }
+  return loadNotes();
+}
 
 const listNotes = ref<any[]>([]);
 const handleClickAddNote = async () => {
@@ -648,13 +657,13 @@ const handleClickAddNote = async () => {
 };
 const handleClickSearch = async (value: string) => {
   if (!value) {
-    listNotes.value = await loadNotes();
+    listNotes.value = await loadActiveList();
     navbarTopRef.value?.searchLoadingDone();
     toolbarNotesRef.value?.searchLoadingDone();
     return;
   }
 
-  const currentNotes = await loadNotes();
+  const currentNotes = await loadActiveList();
   await ensureFlexSearchReady();
   const result = flexsearch!.search({
     query: value,
@@ -684,7 +693,7 @@ const handleClickSearch = async (value: string) => {
   }
 }
 const handleClickCancelSearch = async () => {
-  listNotes.value = await loadNotes();
+  listNotes.value = await loadActiveList();
 }
 const activeNoteId = ref<string>("");
 const activeNoteBaseline = ref<{ noteId: string, content: string }>({ noteId: '', content: '' });
