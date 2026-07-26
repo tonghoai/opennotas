@@ -154,7 +154,8 @@ const _scrollTo = (elm: Element) => {
             <li @click="scrollToHome"><a>{{ $t('landing.navbar_home') }}</a></li>
             <li @click="scrollToFeature"><a>{{ $t('landing.navbar_feature') }}</a></li>
             <li @click="scrollToSignature"><a>{{ $t('landing.navbar_signature') }}</a></li>
-            <li><a href="https://docs.opennotas.io" target="_blank">{{ $t('landing.navbar_document') }}</a></li>
+            <li><a href="https://docs.opennotas.io" target="_blank" rel="noopener noreferrer">{{
+              $t('landing.navbar_document') }}</a></li>
             <li @click="scrollToFaq"><a>{{ $t('landing.navbar_faqs') }}</a></li>
             <li>
               <div class="dropdown p-0">
@@ -179,14 +180,14 @@ const _scrollTo = (elm: Element) => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-16">
             <a class="flex justify-center md:justify-end"
               href="https://www.producthunt.com/posts/opennotas?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-opennotas"
-              target="_blank"><img
+              target="_blank" rel="noopener noreferrer"><img
                 src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=455329&theme=light&period=daily"
                 alt="OpenNotas - The&#0032;best&#0032;personal&#0032;note&#0045;taking&#0032;app&#0044;&#0032;fast&#0044;&#0032;secure&#0032;&#0038;&#0032;free | Product Hunt"
                 style="width: 250px; height: 54px;" width="250" height="54" /></a>
 
             <a class="flex justify-center md:justify-start"
               href="https://www.producthunt.com/posts/opennotas?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-opennotas"
-              target="_blank"><img
+              target="_blank" rel="noopener noreferrer"><img
                 src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=455329&theme=light"
                 alt="OpenNotas - The&#0032;best&#0032;personal&#0032;note&#0045;taking&#0032;app&#0044;&#0032;fast&#0044;&#0032;secure&#0032;&#0038;&#0032;free | Product Hunt"
                 style="width: 250px; height: 54px;" width="250" height="54" /></a>
@@ -203,7 +204,8 @@ const _scrollTo = (elm: Element) => {
 
               <span class="mx-4 hidden lg:block">Or</span>
 
-              <a href="/app" target="_blank" id="install-btn" class="btn btn-outline hidden lg:flex">
+              <a href="/app" target="_blank" rel="noopener noreferrer" id="install-btn"
+                class="btn btn-outline hidden lg:flex">
                 <Globe />
                 {{ $t('landing.try_web_version') }}
               </a>
@@ -299,7 +301,8 @@ const _scrollTo = (elm: Element) => {
               <div class="h-2 w-8 my-2 bg-primary"></div>
               <p class="mt-4">{{ $t('landing.signature_sync_desc') }}</p>
               <p class="mt-2">
-                <a class="link" href="https://docs.opennotas.io/advanced/sync-flow" target="_blank">
+                <a class="link" href="https://docs.opennotas.io/advanced/sync-flow" target="_blank"
+                  rel="noopener noreferrer">
                   {{ $t('landing.read_more') }} »
                 </a>
               </p>
@@ -320,7 +323,8 @@ const _scrollTo = (elm: Element) => {
               <div class="h-2 w-8 my-2 bg-primary"></div>
               <p class="mt-4">{{ $t('landing.signature_e2e_desc') }}</p>
               <p class="mt-2">
-                <a class="link" href="https://docs.opennotas.io/advanced/security" target="_blank">
+                <a class="link" href="https://docs.opennotas.io/advanced/security" target="_blank"
+                  rel="noopener noreferrer">
                   {{ $t('landing.read_more') }} »
                 </a>
               </p>
@@ -415,11 +419,12 @@ const _scrollTo = (elm: Element) => {
         </aside>
         <nav class="flex flex-col gap-2">
           <h6 class="footer-title">{{ $t('landing.footer_page_title') }}</h6>
-          <a class="link link-hover" href="https://github.com/tonghoai/opennotas" target="_blank">
+          <a class="link link-hover" href="https://github.com/tonghoai/opennotas" target="_blank"
+            rel="noopener noreferrer">
             {{ $t('landing.footer_page_github') }}
           </a>
           <a class="link link-hover" @click="scrollToHome">{{ $t('landing.footer_page_intro') }}</a>
-          <a class="link link-hover" href="https://docs.opennotas.io" target="_blank">
+          <a class="link link-hover" href="https://docs.opennotas.io" target="_blank" rel="noopener noreferrer">
             {{ $t('landing.footer_page_document') }}
           </a>
         </nav>
@@ -429,7 +434,8 @@ const _scrollTo = (elm: Element) => {
           <a class="link link-hover" href="#">
             {{ $t('landing.footer_information_contact') }}
           </a>
-          <a class="link link-hover" href="https://docs.opennotas.io/community" target="_blank">
+          <a class="link link-hover" href="https://docs.opennotas.io/community" target="_blank"
+            rel="noopener noreferrer">
             {{ $t('landing.footer_information_community') }}
           </a>
         </nav>

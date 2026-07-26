@@ -62,6 +62,21 @@ const virtualizer = useVirtualizer(computed(() => ({
   getItemKey: (index: number) => props.listNotes[index]?.id ?? index,
 })));
 
+// FlexSearch's highlight() only ever inserts our own "<b>$1</b>" template around the matched
+// term; the surrounding boundary text is raw, unescaped note content. Parsing it into segments
+// and rendering them as text nodes (instead of v-html) keeps HTML in note content inert.
+const parseHighlight = (highlight: string) => {
+  return highlight
+    .split(/(<b>.*?<\/b>)/g)
+    .filter((part) => part !== '')
+    .map((part) => {
+      if (part.startsWith('<b>') && part.endsWith('</b>')) {
+        return { text: part.slice(3, -4), bold: true };
+      }
+      return { text: part, bold: false };
+    });
+};
+
 const totalSize = computed(() => virtualizer.value.getTotalSize());
 // Pairs each virtual row with its note and drops any row whose index is momentarily out of
 // range (e.g. mid-flush right after the note list shrinks), so the template never touches
@@ -94,10 +109,15 @@ const rows = computed(() => {
             <div class="w-full flex items-center gap-1 select-none truncate overflow-hidden transition-all"
               :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
               <Lock v-if="note.isLocked" class="w-3 h-3 shrink-0 text-warning" />
-              <span class="search-highlight truncate" v-if="note.highlight" v-html="note.highlight"></span>
+              <span class="search-highlight truncate" v-if="note.highlight">
+                <template v-for="(seg, idx) in parseHighlight(note.highlight)" :key="idx">
+                  <b v-if="seg.bold">{{ seg.text }}</b>
+                  <template v-else>{{ seg.text }}</template>
+                </template>
+              </span>
               <span :class="{ 'italic': note.isLocked }" v-else class="truncate min-w-0">{{ note.content?.trim() ||
                 $t('app.list_note_no_content')
-              }}</span>
+                }}</span>
             </div>
           </div>
 
@@ -107,7 +127,7 @@ const rows = computed(() => {
               <Pin class="w-3 h-3 mb-2 text-error" v-if="note.isPinned" />
               <div v-if="note.tags?.length" class="flex flex-row items-center">
                 <span v-for="(tag, idx) in note.tags.slice(0, 3)" :key="tag.id"
-                  class="w-3 h-3 rounded-full border border-base-100" :class="{ '-ml-1.5': +idx > 0 }"
+                  class="w-3 h-3 rounded-full border border-base-content/15" :class="{ '-ml-1.5': +idx > 0 }"
                   :style="{ backgroundColor: tag.color || '#94a3b8', zIndex: 3 - +idx }"></span>
               </div>
             </div>

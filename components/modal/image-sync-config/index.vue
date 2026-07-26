@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import Eye from '~/assets/svg/eye.svg?component';
+import EyeOff from '~/assets/svg/eye-off.svg?component';
+
 defineProps<{
   s3Config: {
     s3Endpoint: string;
@@ -15,6 +18,9 @@ defineProps<{
 const emit = defineEmits(['save', 'test', 'close']);
 
 const handleClickClose = () => emit('close');
+
+const isAccessKeyVisible = ref(false);
+const isSecretKeyVisible = ref(false);
 </script>
 
 <template>
@@ -39,16 +45,31 @@ const handleClickClose = () => emit('close');
           <div class="label py-1">
             <span class="label-text text-xs">{{ $t('app.setting_image_sync_s3_access_key') }}</span>
           </div>
-          <input v-model="s3Config.s3AccessKey" type="text" placeholder="AKIAIOSFODNN7EXAMPLE"
-            class="input input-sm input-bordered w-full" autocomplete="off" />
+          <div class="join w-full">
+            <input v-model="s3Config.s3AccessKey" :type="isAccessKeyVisible ? 'text' : 'password'"
+              placeholder="AKIAIOSFODNN7EXAMPLE" class="input input-sm input-bordered w-full join-item"
+              autocomplete="off" />
+            <button type="button" class="btn btn-sm btn-square join-item border border-base-content/20"
+              @click="isAccessKeyVisible = !isAccessKeyVisible">
+              <EyeOff v-if="isAccessKeyVisible" class="w-4 h-4" />
+              <Eye v-else class="w-4 h-4" />
+            </button>
+          </div>
         </label>
 
         <label class="form-control w-full">
           <div class="label py-1">
             <span class="label-text text-xs">{{ $t('app.setting_image_sync_s3_secret_key') }}</span>
           </div>
-          <input v-model="s3Config.s3SecretKey" type="password" placeholder="••••••••"
-            class="input input-sm input-bordered w-full" autocomplete="off" />
+          <div class="join w-full">
+            <input v-model="s3Config.s3SecretKey" :type="isSecretKeyVisible ? 'text' : 'password'"
+              placeholder="••••••••" class="input input-sm input-bordered w-full join-item" autocomplete="off" />
+            <button type="button" class="btn btn-sm btn-square join-item border border-base-content/20"
+              @click="isSecretKeyVisible = !isSecretKeyVisible">
+              <EyeOff v-if="isSecretKeyVisible" class="w-4 h-4" />
+              <Eye v-else class="w-4 h-4" />
+            </button>
+          </div>
         </label>
 
         <label class="form-control w-full">
