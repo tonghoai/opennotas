@@ -356,6 +356,7 @@ const handleSaveImageSyncConfigModal = () => {
                 <SettingSelect v-model="settings.general.lang" @update:modelValue="handleChangeLanguage" :options="[
                   { label: $t('app.setting_general_language_vi'), value: 'vi' },
                   { label: $t('app.setting_general_language_en'), value: 'en' },
+                  { label: $t('app.setting_general_language_ru'), value: 'ru' },
                   { label: $t('app.setting_general_language_zhtw'), value: 'zhtw' },
                 ]" />
               </SettingRow>

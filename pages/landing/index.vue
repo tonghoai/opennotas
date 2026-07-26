@@ -216,6 +216,7 @@ const _scrollTo = (elm: Element) => {
                   style="top: 42px; left: 0">
                   <li @click="setLocale('vi')"><a>{{ $t('vi') }}</a></li>
                   <li @click="setLocale('en')"><a>{{ $t('en') }}</a></li>
+                  <li @click="setLocale('ru')"><a>{{ $t('ru') }}</a></li>
                   <li @click="setLocale('zhtw')"><a>{{ $t('zhtw') }}</a></li>
                 </ul>
               </div>
