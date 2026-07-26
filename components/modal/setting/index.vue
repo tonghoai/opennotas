@@ -412,7 +412,8 @@ const handleSaveImageSyncConfigModal = () => {
                     <p class="text-xs text-base-content/60 mt-1">
                       {{ $t('app.setting_sync_adapter_description') }}
                       <br /><a href="https://docs.opennotas.io/started/setup-sync" target="_blank"
-                        class="underline text-xs hover:text-primary">{{ $t('app.setting_sync_adapter_setup_guide')
+                        rel="noopener noreferrer" class="underline text-xs hover:text-primary">{{
+                          $t('app.setting_sync_adapter_setup_guide')
                         }}</a>
                     </p>
                   </div>
@@ -456,7 +457,8 @@ const handleSaveImageSyncConfigModal = () => {
                     <p class="text-xs text-base-content/60 mt-1">
                       {{ $t('app.setting_image_sync_description') }}
                       <br /><a href="https://docs.opennotas.io/started/setup-sync/s3-storage" target="_blank"
-                        class="underline text-xs hover:text-primary">{{ $t('app.setting_image_sync_setup_guide') }}</a>
+                        rel="noopener noreferrer" class="underline text-xs hover:text-primary">{{
+                          $t('app.setting_image_sync_setup_guide') }}</a>
                     </p>
                   </div>
                   <button type="button"

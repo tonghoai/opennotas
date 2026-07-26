@@ -79,6 +79,15 @@ const handleImageUpload = async (file: File): Promise<string> => {
   }
 };
 
+const ALLOWED_IMAGE_SRC_SCHEMES = ['http:', 'https:', 'data:', 'blob:'];
+const isAllowedImageSrc = (src: string): boolean => {
+  try {
+    return ALLOWED_IMAGE_SRC_SCHEMES.includes(new URL(src, window.location.href).protocol);
+  } catch {
+    return false;
+  }
+};
+
 const handleProxyDomURL = async (src: string): Promise<string> => {
   if (isOpenNotasImageUrl(src)) {
     try {
@@ -93,7 +102,7 @@ const handleProxyDomURL = async (src: string): Promise<string> => {
       return src;
     }
   }
-  return src;
+  return isAllowedImageSrc(src) ? src : '';
 };
 
 const createBadgeSvg = (type: 'upload' | 'warning' | 'spinner'): string => {

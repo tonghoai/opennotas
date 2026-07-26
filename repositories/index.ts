@@ -1,6 +1,7 @@
 import localForage from 'localforage';
 
 import NotasRepository from "./storage";
+import { encryptSensitiveSettings, decryptSensitiveSettings } from "~/utils/settings";
 import type {
   FolderCreateType,
   FolderType,
@@ -250,11 +251,32 @@ class LocalForageRepository implements NotasRepository {
   }
 
   // password | settings
+  // Random, device-local key (never exported or synced) used only to keep secrets like S3/sync
+  // credentials out of plaintext in IndexedDB. Deliberately independent of the note-lock
+  // password so it isn't invalidated by a password change and also protects users who haven't
+  // set one — see getSettings/setSettings below.
+  private async getOrCreateSettingsEncryptionKey(): Promise<string> {
+    const existing = await localForage.getItem('settingsEncryptionKey') as string | null;
+    if (existing) return existing;
+
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const key = Array.prototype.map.call(bytes, (x: number) => ('00' + x.toString(16)).slice(-2)).join('');
+    await localForage.setItem('settingsEncryptionKey', key);
+    return key;
+  }
   async getSettings(): Promise<any> {
-    return JSON.parse(await localForage.getItem('settings') || '{}');
+    const raw = JSON.parse(await localForage.getItem('settings') || '{}');
+    if (!raw.encryptedFields?.length) return raw;
+
+    const key = await this.getOrCreateSettingsEncryptionKey();
+    const decrypted = await decryptSensitiveSettings(raw, raw.encryptedFields, key);
+    delete decrypted.encryptedFields;
+    return decrypted;
   }
   async setSettings(data: any): Promise<any> {
-    await localForage.setItem('settings', JSON.stringify(data));
+    const key = await this.getOrCreateSettingsEncryptionKey();
+    const { settings: encrypted, encryptedFields } = await encryptSensitiveSettings(data, key);
+    await localForage.setItem('settings', JSON.stringify({ ...encrypted, encryptedFields }));
     return data;
   }
   async checkPasswordExist(): Promise<boolean> {

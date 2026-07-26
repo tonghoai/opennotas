@@ -159,6 +159,8 @@
     "modal_import_settings_cancel": "Cancel",
     "modal_import_settings_ok": "Import",
     "modal_import_settings_data_not_invalid": "Invalid Data",
+    "modal_import_settings_password_title": "Enter Password to Unlock Connection Configuration",
+    "modal_import_settings_no_password_skip_sensitive": "No local password set — connection configuration (Turso, S3 keys) from the file was skipped.",
     "message_import_settings": "Settings Imported",
     "setting_tools_reset_service_worker_title": "Reset",
     "setting_tools_force_update_title": "Force Update",

@@ -1598,12 +1598,20 @@ const isShowModalExportSettingsConfirm = ref<boolean>(false);
 const modalExportSettingsConfirm = ref<any>(null);
 const isShowModalImportSettings = ref<boolean>(false);
 
-const handleExportSettings = (includeSensitive: boolean) => {
-  const exportedSettings = includeSensitive
-    ? JSON.parse(JSON.stringify(settings.value))
-    : sanitizeSettingsForExport(settings.value);
+const handleExportSettings = async (includeSensitive: boolean) => {
+  let exportedSettings: any;
+  let encryptedFields: string[] = [];
+  if (includeSensitive) {
+    const password = await getPassword();
+    const encrypted = await encryptSensitiveSettings(settings.value, password);
+    exportedSettings = encrypted.settings;
+    encryptedFields = encrypted.encryptedFields;
+  } else {
+    exportedSettings = sanitizeSettingsForExport(settings.value);
+  }
   const dataExport = {
     settings: exportedSettings,
+    encryptedFields,
     metadata: {
       version: runtimeConfig.public.version,
       exportedAt: new Date().toISOString(),
