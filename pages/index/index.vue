@@ -2097,8 +2097,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
           @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleClickCloseModalInsertImage"
           @alertMessage="handleAlertMessage" />
       </div>
-      <ToolbarFormNotesStatus :noteId="formNotes.id" :formNotes="formNotes" :actionObjectKeys="actionObjectKeys"
-        :idPulled="idPulled" />
+      <ToolbarFormNotesStatus v-if="!formNotes.isLocked" :noteId="formNotes.id" :formNotes="formNotes"
+        :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" />
     </div>
   </div>
 
