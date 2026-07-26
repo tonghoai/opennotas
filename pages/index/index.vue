@@ -59,6 +59,8 @@ import { removeMarkdownEscape } from "~/utils/string";
 import { pushMobileBackState, closeMobileBackState, initMobileBackHandler } from "~/utils/mobile-back";
 import { checkAppVersion } from "~/utils/check-app-version";
 import { resetSyncedImages } from "~/services/image";
+import { usePullToRefresh } from "~/utils/pull-to-refresh";
+import Refresh from "~/assets/svg/refresh.svg?component";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
@@ -1845,6 +1847,28 @@ watch(() => settings.value.sync.frequency, (newVal) => {
     }, +newVal * 1000);
   }
 });
+
+// pull-to-refresh on the mobile notes list — mirrors the sidebar "Sync data"
+// action (handleClickUpdateData, rotating sync level). The indicator's icon
+// spins while isSyncingAll is true, just like the desktop sidebar sync icon.
+const ptrIndicatorRef = ref<HTMLElement | null>(null);
+const ptrIconRef = ref<HTMLElement | null>(null);
+watch(() => isSyncingAll.value, (value) => {
+  if (value) {
+    ptrIconRef.value?.classList.add('spin');
+  } else {
+    ptrIconRef.value?.classList.remove('spin');
+  }
+});
+usePullToRefresh({
+  target: () => document.getElementById('notes-instance'),
+  indicator: () => ptrIndicatorRef.value,
+  iconEl: () => ptrIconRef.value,
+  onRefresh: async () => { await handleClickUpdateData(); },
+  isRefreshing: () => isSyncingAll.value || isSyncing.value,
+  enabled: () => isMobile.value,
+});
+
 // by default, if actionObject has data, it will be sync continuously
 // so when user do nothing, idleKey will auto increase to trigger auto sync
 const idleKey = ref<number>(0);
@@ -2071,7 +2095,15 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
+      <div id="notes-instance" class="overflow-auto relative" style="height: calc(100vh - 55px); overscroll-behavior-y: contain;">
+        <!-- Pull-to-refresh indicator (mobile only) -->
+        <div ref="ptrIndicatorRef"
+          class="absolute left-1/2 -ml-7 w-12 h-12 flex items-center justify-center rounded-full bg-neutral text-neutral-content border border-neutral-content/10 shadow-md pointer-events-none opacity-0 z-1"
+          style="transform: translateY(-160%);">
+          <span ref="ptrIconRef" class="block">
+            <Refresh class="w-6 h-6" />
+          </span>
+        </div>
         <ToolbarNotesSecondBar :sortType="sortType" :isSyncError="isSyncError" :syncErrorClass="syncErrorClass"
           :syncErrorMessage="syncErrorMessage" @clickSort="handleClickSort" @clickRetrySync="handleClickRetrySync" />
 
