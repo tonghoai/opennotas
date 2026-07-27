@@ -196,6 +196,9 @@ const reloadFolder = async (isFirst: boolean = false, focus = true) => {
   activeFolderId.value = (isFirst && (activeFolder === 'bottombar-trash' || activeFolder === 'bottombar-tags')) ? "" : activeFolder || "";
 
   await reloadNotes(focus, isFirst ? false : activeFolder === 'bottombar-trash');
+
+  // Ensure tags list is loaded after reload (fix tags disappearing after app reload)
+  listTagsMenu.value = await loadTags();
 }
 
 // initedApp using for app ready to use
@@ -494,6 +497,7 @@ const tagFormInitial = computed(() => {
   return { name: tag?.name || '', color: tag?.color || '' };
 });
 const handleClickAddTag = () => {
+  toggleModalMenuSidebar(false, isShowModalMenuSidebar);
   tagIdToEdit.value = '';
   toggleModalTagForm(true, isShowModalTagForm);
 }
@@ -506,30 +510,35 @@ const handleClickCloseModalTagForm = () => {
   toggleModalTagForm(false, isShowModalTagForm);
 }
 const handleConfirmTagForm = async (data: { tagId: string; name: string; color: string }) => {
-  if (!data.tagId) {
-    const newTag = await createTag({
-      id: randomUUID(),
-      name: data.name,
-      color: data.color,
-      lastSync: 0,
-      createdAt: nowUnix(),
-      updatedAt: nowUnix(),
-      deletedAt: null,
-    });
-    setActionObject('tag', newTag);
-    showSuccess($i18n.t('app.message_tag_created'));
-  } else {
-    const updatedTag = await updateTag(data.tagId, {
-      name: data.name,
-      color: data.color,
-      updatedAt: nowUnix(),
-    });
-    setActionObject('tag', updatedTag);
-    showSuccess($i18n.t('app.message_tag_updated'));
+  try {
+    if (!data.tagId) {
+      const newTag = await createTag({
+        id: randomUUID(),
+        name: data.name,
+        color: data.color,
+        lastSync: 0,
+        createdAt: nowUnix(),
+        updatedAt: nowUnix(),
+        deletedAt: null,
+      });
+      setActionObject('tag', newTag);
+      showSuccess($i18n.t('app.message_tag_created'));
+    } else {
+      const updatedTag = await updateTag(data.tagId, {
+        name: data.name,
+        color: data.color,
+        updatedAt: nowUnix(),
+      });
+      setActionObject('tag', updatedTag);
+      showSuccess($i18n.t('app.message_tag_updated'));
+    }
+  } catch (err) {
+    console.error(err);
+    showErrorSnackbar(err instanceof Error ? err.message : String(err));
+  } finally {
+    toggleModalTagForm(false, isShowModalTagForm);
+    listTagsMenu.value = await loadTags();
   }
-
-  toggleModalTagForm(false, isShowModalTagForm);
-  listTagsMenu.value = await loadTags();
 }
 
 const tagWillDelete = ref<string>("");
@@ -569,6 +578,9 @@ const handleClickAddNoteToTag = async (payload: any) => {
   const noteId = typeof payload === 'object' ? payload.noteId : payload;
   noteIdForTags.value = noteId;
   activeNoteTagIds.value = (await getNoteTagsByNote(noteId)).map((noteTag: any) => noteTag.tagId);
+
+  // Ensure tags list is loaded (fix race condition on mobile)
+  listTagsMenu.value = await loadTags();
 
   if (isMobile.value) {
     toggleModalMenuNote(false, isShowModalMenuNote);
@@ -2095,7 +2107,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="notes-instance" class="overflow-auto relative" style="height: calc(100vh - 55px); overscroll-behavior-y: contain;">
+      <div id="notes-instance" class="overflow-auto relative"
+        style="height: calc(100vh - 55px); overscroll-behavior-y: contain;">
         <!-- Pull-to-refresh indicator (mobile only) -->
         <div ref="ptrIndicatorRef"
           class="absolute left-1/2 -ml-7 w-12 h-12 flex items-center justify-center rounded-full bg-neutral text-neutral-content border border-neutral-content/10 shadow-md pointer-events-none opacity-0 z-1"

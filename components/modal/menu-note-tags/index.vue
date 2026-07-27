@@ -17,13 +17,14 @@ const handleToggle = (tagId: string) => {
       <div class="bg-base-100 shadow-sm rounded">
         <div class="text-center text-xs opacity-60 pt-3 pb-1">{{ $t('app.menu_note_add_to_tag') }}</div>
 
-        <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1 max-h-[60vh] overflow-y-auto">
+        <ul
+          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1 max-h-[60vh] overflow-y-auto">
           <li v-if="!props.listTags.length" class="w-full text-center py-2 opacity-60">
             {{ $t('app.menu_note_tags_empty') }}
           </li>
 
           <li v-for="tag in props.listTags" :key="tag.id" class="w-full" @click.stop="handleToggle(tag.id)">
-            <a class="w-full flex flex-row items-center justify-center gap-3">
+            <a class="w-full flex flex-row items-center justify-start gap-3">
               <input type="checkbox" class="checkbox checkbox-sm" :checked="props.noteTagIds.includes(tag.id)"
                 @click.stop="handleToggle(tag.id)" />
               <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: tag.color || '#94a3b8' }"></span>
