@@ -63,6 +63,16 @@ class LocalForageRepository implements NotasRepository {
   async updateFolder(folderId: string, data: FolderUpdateType): Promise<FolderType> {
     const folders = await this.getAllFolders();
     const folderIndex = folders.findIndex((folder: any) => folder.id === folderId);
+    if (folderIndex < 0) {
+      // folder not found in array — fetch individually and prepend
+      const existing = await this.getFolderDetail(folderId);
+      const merged = { ...existing, ...data } as FolderType;
+      folders.unshift(merged);
+      await localForage.setItem('folders', JSON.stringify(folders));
+      await localForage.setItem(`folders-${folderId}`, JSON.stringify(merged));
+      this.foldersCache = null;
+      return merged;
+    }
     folders[folderIndex] = { ...folders[folderIndex], ...data };
     await localForage.setItem('folders', JSON.stringify(folders));
     await localForage.setItem(`folders-${folderId}`, JSON.stringify(folders[folderIndex]));
@@ -121,6 +131,16 @@ class LocalForageRepository implements NotasRepository {
   async updateNote(noteId: string, data: NoteUpdateType): Promise<NoteType> {
     const notes = JSON.parse(await localForage.getItem(`notes`) || '[]');
     const noteIndex = notes.findIndex((note: any) => note.id === noteId);
+    if (noteIndex < 0) {
+      // note not found in array — fetch individually and prepend
+      const existing = await this.getNoteDetail(noteId);
+      const merged = { ...existing, ...data } as NoteType;
+      notes.unshift(merged);
+      await localForage.setItem('notes', JSON.stringify(notes));
+      await localForage.setItem(`notes-${noteId}`, JSON.stringify(merged));
+      this.notesCache = null;
+      return merged;
+    }
     notes[noteIndex] = { ...notes[noteIndex], ...data };
     await localForage.setItem('notes', JSON.stringify(notes));
     await localForage.setItem(`notes-${noteId}`, JSON.stringify(notes[noteIndex]));
@@ -210,6 +230,16 @@ class LocalForageRepository implements NotasRepository {
   async updateTag(tagId: string, data: TagUpdateType): Promise<TagType> {
     const tags = await this.getAllTags();
     const tagIndex = tags.findIndex((tag: any) => tag.id === tagId);
+    if (tagIndex < 0) {
+      // tag not found in array — fetch from individual key and prepend
+      const existing = await this.getTagDetail(tagId);
+      const merged = { ...existing, ...data } as TagType;
+      tags.unshift(merged);
+      await localForage.setItem('tags', JSON.stringify(tags));
+      await localForage.setItem(`tags-${tagId}`, JSON.stringify(merged));
+      this.tagsCache = null;
+      return merged;
+    }
     tags[tagIndex] = { ...tags[tagIndex], ...data };
     await localForage.setItem('tags', JSON.stringify(tags));
     await localForage.setItem(`tags-${tagId}`, JSON.stringify(tags[tagIndex]));
@@ -243,6 +273,16 @@ class LocalForageRepository implements NotasRepository {
   async updateNoteTag(noteTagId: string, data: Partial<NoteTagType>): Promise<NoteTagType> {
     const noteTags = await this.getAllNoteTags();
     const noteTagIndex = noteTags.findIndex((noteTag: any) => noteTag.id === noteTagId);
+    if (noteTagIndex < 0) {
+      // noteTag not found in array — fetch from individual key and prepend
+      const existing = JSON.parse(await localForage.getItem(`noteTags-${noteTagId}`) || '{}') as NoteTagType;
+      const merged = { ...existing, ...data } as NoteTagType;
+      noteTags.unshift(merged);
+      await localForage.setItem('noteTags', JSON.stringify(noteTags));
+      await localForage.setItem(`noteTags-${noteTagId}`, JSON.stringify(merged));
+      this.noteTagsCache = null;
+      return merged;
+    }
     noteTags[noteTagIndex] = { ...noteTags[noteTagIndex], ...data };
     await localForage.setItem('noteTags', JSON.stringify(noteTags));
     await localForage.setItem(`noteTags-${noteTagId}`, JSON.stringify(noteTags[noteTagIndex]));
