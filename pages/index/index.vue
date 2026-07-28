@@ -1504,6 +1504,7 @@ const handleExportNotes = async (includeLock: boolean, silent = false) => {
     return acc;
   }, {});
   const tagsByNoteId = await buildTagsByNoteId();
+  const allTags = await getTags();
 
   const notesFiltered = notes.filter((note: any) => !note.deleteCompletelyAt);
   const notesReformated = [];
@@ -1527,6 +1528,8 @@ const handleExportNotes = async (includeLock: boolean, silent = false) => {
 
   const dataExport = {
     data: notesReformated,
+    folders: folders.filter((folder: any) => folder.id).map((folder: any) => folder.name),
+    tags: allTags.map((tag: any) => ({ name: tag.name, color: tag.color })),
     metadata: {
       version: runtimeConfig.public.version,
       exportedAt: new Date().toISOString(),
@@ -1552,7 +1555,7 @@ const handleTriggerImportNotes = async () => {
   const jsonData: any = await getImportData();
 
   const foldersInJson = jsonData.data.map((note: any) => note.folderName);
-  const foldersInJsonUnique = [...new Set(foldersInJson)];
+  const foldersInJsonUnique = [...new Set([...foldersInJson, ...(jsonData.folders || [])])];
   const localFoldersName = listFoldersMenu.value.map((folder: any) => folder.name);
   for (const folderName of foldersInJsonUnique) {
     if (!folderName) {
@@ -1580,7 +1583,7 @@ const handleTriggerImportNotes = async () => {
     return acc;
   }, {});
 
-  const tagsInJson = jsonData.data.flatMap((note: any) => note.tags || []);
+  const tagsInJson = [...(jsonData.tags || []), ...jsonData.data.flatMap((note: any) => note.tags || [])];
   const tagNameToColor = new Map<string, string | undefined>();
   for (const tag of tagsInJson) {
     if (!tag?.name) continue;
