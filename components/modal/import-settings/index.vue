@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { checkPasswordExist, getPassword } from '~/services/main';
-
 const { $i18n } = useNuxtApp();
 
 const emit = defineEmits([
@@ -70,24 +68,29 @@ const handleClickSubmit = async (e: Event) => {
     return;
   }
 
-  const hasPassword = await checkPasswordExist();
-  if (!hasPassword) {
-    showError($i18n.t('app.modal_import_settings_no_password_skip_sensitive'));
-    const settingsToImport = stripEncryptedFields(parsedSettings.value, encryptedFields.value);
-    resetState();
-    emit('confirm', settingsToImport);
-    return;
-  }
-
-  const storedHash = await getPassword();
-  const enteredHash = await hashPassword(password.value);
-  if (storedHash !== enteredHash) {
-    showError($i18n.t('app.message_note_unlocked_failed'));
+  if (!password.value) {
+    showError($i18n.t('app.modal_import_settings_password_required'));
     shakePasswordInput();
     return;
   }
 
-  const settingsToImport = await decryptSensitiveSettings(parsedSettings.value, encryptedFields.value, storedHash);
+  const enteredHash = await hashPassword(password.value);
+  let settingsToImport: any;
+  try {
+    settingsToImport = await decryptSensitiveSettings(parsedSettings.value, encryptedFields.value, enteredHash);
+  } catch (_) {
+    showError($i18n.t('app.modal_import_settings_wrong_password'));
+    shakePasswordInput();
+    return;
+  }
+
+  resetState();
+  emit('confirm', settingsToImport);
+}
+
+const handleClickSkipSensitive = () => {
+  showWarning($i18n.t('app.modal_import_settings_skip_sensitive_success'));
+  const settingsToImport = stripEncryptedFields(parsedSettings.value, encryptedFields.value);
   resetState();
   emit('confirm', settingsToImport);
 }
@@ -129,9 +132,12 @@ const handleClickClose = () => {
         </div>
 
         <div class="modal-action">
-          <form method="dialog">
+          <form method="dialog" class="flex">
             <button class="btn btn-sm mr-2">
               {{ $t('app.modal_import_settings_cancel') }}
+            </button>
+            <button v-if="needsPassword" type="button" class="btn btn-sm mr-2 flex-1" @click="handleClickSkipSensitive">
+              {{ $t('app.modal_import_settings_skip_sensitive') }}
             </button>
             <button class="btn btn-sm btn-primary" @click="handleClickSubmit" :disabled="!isValidate">
               {{ $t('app.modal_import_settings_ok') }}

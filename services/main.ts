@@ -375,6 +375,7 @@ export {
   getNotesWithContent,
   createNote,
   updateNote,
+  buildTagsByNoteId,
 
   getActiveNote,
   setActiveNote,

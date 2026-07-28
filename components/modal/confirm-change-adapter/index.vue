@@ -1,24 +1,36 @@
 <script setup lang="ts">
-const props = defineProps(['adapterName', 'fromImport', 'alsoImageSync']);
+const props = defineProps(['adapterName', 'fromImport', 'alsoImageSync', 'isLoading']);
 const emit = defineEmits([
   'confirm',
   'close',
 ]);
 
-const handleConfirm = () => {
+const handleConfirm = (e: Event) => {
+  e.preventDefault();
+  if (props.isLoading) return;
   emit('confirm', props.adapterName);
 };
 
 const handleClickClose = () => {
+  if (props.isLoading) return;
   emit('close');
 }
+
+onMounted(() => {
+  document.getElementById('modal-confirm-change-adapter')?.addEventListener('cancel', (e) => {
+    if (props.isLoading) {
+      e.preventDefault();
+    }
+  });
+});
 </script>
 
 <template>
   <dialog id="modal-confirm-change-adapter" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
     <div class="modal-box p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" :disabled="props.isLoading"
+          @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">{{ $t('app.modal_confirm_change_adapter_title') }}</h3>
       <div class="pt-4">
@@ -29,13 +41,16 @@ const handleClickClose = () => {
         <div v-else>{{ $t('app.modal_confirm_change_adapter_content') }}</div>
 
         <div class="modal-action">
-          <form method="dialog">
+          <form method="dialog" class="flex">
             <!-- if there is a button in form, it will close the modal -->
-            <button class="btn btn-sm mr-2">
+            <button class="btn btn-sm mr-2" :disabled="props.isLoading">
               {{ $t('app.modal_confirm_change_adapter_cancel') }}
             </button>
-            <button class="btn btn-outline btn-sm btn-error text-error-content" @click="handleConfirm">
-              {{ $t('app.modal_confirm_change_adapter_ok') }}
+            <button class="btn btn-outline btn-sm btn-error text-error-content" :disabled="props.isLoading"
+              @click="handleConfirm">
+              <span v-if="props.isLoading" class="loading loading-spinner loading-xs"></span>
+              {{ props.isLoading ? $t('app.modal_confirm_change_adapter_processing') :
+                $t('app.modal_confirm_change_adapter_ok') }}
             </button>
           </form>
         </div>
