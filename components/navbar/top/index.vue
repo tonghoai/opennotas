@@ -474,17 +474,17 @@ defineExpose({
           </div>
 
           <div v-if="isShowSearchInput"
-            class="p-2 flex items-center h-12 w-full animate-fade-down animate-duration-200">
-            <div class="relative flex-1 mr-2">
-              <input ref="searchInputRef" type="text" class="input input-sm input-bordered text-base-content w-full"
-                placeholder="" autocomplete="off" name="hidden" v-model="searchInput" />
-              <span v-if="isShowSearchLoading"
-                class="loading loading-spinner loading-sm absolute right-1.5 top-1.5"></span>
-            </div>
+            class="p-2 flex items-center h-12 w-full gap-2 animate-fade-down animate-duration-200">
+            <label class="input input-sm flex-1 flex items-center gap-2 rounded-full border-none bg-base-200">
+              <Search class="w-4 h-4 opacity-50 flex-none" />
+              <input ref="searchInputRef" type="text" class="grow bg-transparent"
+                :placeholder="$t('app.toolbar_note_search_placeholder')" autocomplete="off" name="hidden"
+                v-model="searchInput" />
+              <span v-if="isShowSearchLoading" class="loading loading-spinner loading-xs flex-none"></span>
+            </label>
 
-            <button class="flex-none btn bg-primary text-primary-content btn-sm" @click="handleToggleSearch">
-              <!-- {{ $t('app.toolbar_note_search_cancel') }} -->
-              <X />
+            <button class="flex-none btn btn-ghost btn-circle btn-sm" @click="handleToggleSearch">
+              <X class="w-4 h-4" />
             </button>
           </div>
 
