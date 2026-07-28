@@ -2,6 +2,8 @@
 import { setImportData } from '~/services/main';
 const { $i18n } = useNuxtApp();
 
+const props = defineProps(['isLoading', 'progressCurrent', 'progressTotal']);
+
 const emit = defineEmits([
   'confirm',
   'close',
@@ -57,15 +59,25 @@ const showSnackbar = (message: string) => {
 }
 
 const handleClickClose = () => {
+  if (props.isLoading) return;
   emit('close');
 }
+
+onMounted(() => {
+  document.getElementById('modal-import-notes')?.addEventListener('cancel', (e) => {
+    if (props.isLoading) {
+      e.preventDefault();
+    }
+  });
+});
 </script>
 
 <template>
   <dialog id="modal-import-notes" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
     <div class="modal-box p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" :disabled="props.isLoading"
+          @click="handleClickClose">✕</button>
       </form>
       <h3 class="font-bold text-lg">
         {{ $t('app.modal_import_notes_title') }}
@@ -74,18 +86,26 @@ const handleClickClose = () => {
         <div>{{ $t('app.modal_import_notes_content') }}</div>
 
         <label class="form-control w-full mt-4">
-          <input :key="fileImportNotesKey" type="file"
+          <input :key="fileImportNotesKey" type="file" :disabled="props.isLoading"
             class="file-input file-input-bordered w-full file-input-sm lg:file-input-md" @change="handleChooseFile"
             autocomplete="off" autofocus />
         </label>
 
+        <div v-if="props.isLoading" class="text-sm opacity-70 mt-2">
+          {{ props.progressTotal
+            ? $t('app.modal_import_notes_progress', { current: props.progressCurrent, total: props.progressTotal })
+            : $t('app.modal_import_notes_preparing') }}
+        </div>
+
         <div class="modal-action">
-          <form method="dialog">
-            <button class="btn btn-sm mr-2">
+          <form method="dialog" class="flex">
+            <button class="btn btn-sm mr-2" :disabled="props.isLoading">
               {{ $t('app.modal_import_notes_cancel') }}
             </button>
-            <button class="btn btn-sm btn-primary" @click="handleClickSubmit" :disabled="!isValidate">
-              {{ $t('app.modal_import_notes_ok') }}
+            <button class="btn btn-sm btn-primary" @click="handleClickSubmit"
+              :disabled="!isValidate || props.isLoading">
+              <span v-if="props.isLoading" class="loading loading-spinner loading-xs"></span>
+              {{ props.isLoading ? $t('app.modal_import_notes_processing') : $t('app.modal_import_notes_ok') }}
             </button>
           </form>
         </div>

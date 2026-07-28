@@ -1422,6 +1422,7 @@ const adapterWillChange = ref<string>("");
 // conflict (rather than the manual adapter dropdown) — holds the full imported settings object
 // so handleConfirmChangeAdapter can apply all of it, not just the adapter name
 const pendingImportedSettings = ref<any>(null);
+const isApplyingSyncChange = ref<boolean>(false);
 const handleSaveAdapter = async (adapterName: string) => {
   adapterWillChange.value = adapterName;
   toggleModalConfirmChangeAdapter(true, isShowModalConfirmChangeAdapter);
@@ -1436,34 +1437,42 @@ const handleClickCloseModalConfirmChangeAdapter = () => {
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
 }
 const handleConfirmChangeAdapter = async (e2eeKey: string) => {
-  // automatically export notes if user change adapter
-  await handleExportNotes(true, true);
+  isApplyingSyncChange.value = true;
+  try {
+    // automatically export notes if user change adapter
+    await handleExportNotes(true, true);
 
-  if (pendingImportedSettings.value) {
-    settings.value = deepMerge(settings.value, pendingImportedSettings.value);
-  } else {
-    settings.value.sync.adapter = adapterWillChange.value;
+    if (pendingImportedSettings.value) {
+      settings.value = deepMerge(settings.value, pendingImportedSettings.value);
+    } else {
+      settings.value.sync.adapter = adapterWillChange.value;
+    }
+    await handleChangeAdapter();
+    await handleSaveSettings(settings.value, { silent: true });
+
+    if (e2eeKey) {
+      const keyString = atob(e2eeKey);
+      const key = await importKey(keyString);
+      await saveE2EEKey(key);
+      privateKey.value = key;
+
+      saveTextFile(e2eeKey, 'opennotas-e2ee-key.txt');
+    }
+
+    const wasImport = !!pendingImportedSettings.value;
+    pendingImportedSettings.value = null;
+
+    // keep the confirm modal open (spinner) through the full pull/push sync below,
+    // so the user sees a continuous "syncing" indicator instead of the modal
+    // closing right before the actual network sync starts
+    await handleClickUpdateData(SYNC_LEVELS.length - 1);
+
+    toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
+    toggleModalConfirmE2eeKey(false, isShowModalConfirmE2eeKey);
+    showSuccess($i18n.t(wasImport ? 'app.message_import_settings' : 'app.message_setting_sync_adapter_saved'));
+  } finally {
+    isApplyingSyncChange.value = false;
   }
-  await handleChangeAdapter();
-  await handleSaveSettings(settings.value, { silent: true });
-
-  if (e2eeKey) {
-    const keyString = atob(e2eeKey);
-    const key = await importKey(keyString);
-    await saveE2EEKey(key);
-    privateKey.value = key;
-
-    saveTextFile(e2eeKey, 'opennotas-e2ee-key.txt');
-  }
-
-  const wasImport = !!pendingImportedSettings.value;
-  pendingImportedSettings.value = null;
-
-  toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
-  showSuccess($i18n.t(wasImport ? 'app.message_import_settings' : 'app.message_setting_sync_adapter_saved'));
-
-  // trigger 1 time full sync to pull/push all data with the new adapter
-  handleClickUpdateData(SYNC_LEVELS.length - 1);
 }
 const isShowModalConfirmE2eeKey = ref<boolean>(false);
 const handleClickCloseModalConfirmE2eeKey = () => {
@@ -1545,6 +1554,9 @@ const handleExportNotes = async (includeLock: boolean, silent = false) => {
 const navbarTopRef = ref<any>(null);
 const toolbarNotesRef = ref<any>(null);
 const isShowModalImportNotes = ref<boolean>(false);
+const isImportingNotes = ref<boolean>(false);
+const importNotesProgressCurrent = ref<number>(0);
+const importNotesProgressTotal = ref<number>(0);
 const handleClickCloseModalImportNotes = () => {
   toggleModalImportNotes(false, isShowModalImportNotes);
 }
@@ -1552,96 +1564,105 @@ const handleClickImportNotes = () => {
   toggleModalImportNotes(true, isShowModalImportNotes);
 }
 const handleTriggerImportNotes = async () => {
-  const jsonData: any = await getImportData();
+  isImportingNotes.value = true;
+  importNotesProgressCurrent.value = 0;
+  importNotesProgressTotal.value = 0;
+  try {
+    const jsonData: any = await getImportData();
+    importNotesProgressTotal.value = jsonData.data.length;
 
-  const foldersInJson = jsonData.data.map((note: any) => note.folderName);
-  const foldersInJsonUnique = [...new Set([...foldersInJson, ...(jsonData.folders || [])])];
-  const localFoldersName = listFoldersMenu.value.map((folder: any) => folder.name);
-  for (const folderName of foldersInJsonUnique) {
-    if (!folderName) {
-      continue;
+    const foldersInJson = jsonData.data.map((note: any) => note.folderName);
+    const foldersInJsonUnique = [...new Set([...foldersInJson, ...(jsonData.folders || [])])];
+    const localFoldersName = listFoldersMenu.value.map((folder: any) => folder.name);
+    for (const folderName of foldersInJsonUnique) {
+      if (!folderName) {
+        continue;
+      }
+
+      if (!localFoldersName.includes(folderName)) {
+        const newFolder = await createFolder({
+          id: randomUUID(),
+          name: folderName,
+          lastSync: 0,
+          createdAt: nowUnix(),
+          updatedAt: nowUnix(),
+          deletedAt: null,
+        });
+        setActionObject('folder', newFolder);
+      }
     }
+    await reloadFolder();
+    const foldersObj = listFoldersMenu.value.reduce((acc: any, folder: any) => {
+      if (folder.id) {
+        acc[folder.name] = folder.id;
+      }
 
-    if (!localFoldersName.includes(folderName)) {
-      const newFolder = await createFolder({
-        id: randomUUID(),
-        name: folderName,
-        lastSync: 0,
-        createdAt: nowUnix(),
-        updatedAt: nowUnix(),
-        deletedAt: null,
-      });
-      setActionObject('folder', newFolder);
-    }
-  }
-  await reloadFolder();
-  const foldersObj = listFoldersMenu.value.reduce((acc: any, folder: any) => {
-    if (folder.id) {
-      acc[folder.name] = folder.id;
-    }
+      return acc;
+    }, {});
 
-    return acc;
-  }, {});
-
-  const tagsInJson = [...(jsonData.tags || []), ...jsonData.data.flatMap((note: any) => note.tags || [])];
-  const tagNameToColor = new Map<string, string | undefined>();
-  for (const tag of tagsInJson) {
-    if (!tag?.name) continue;
-    if (!tagNameToColor.has(tag.name)) tagNameToColor.set(tag.name, tag.color);
-  }
-
-  const localTags = await getTags();
-  const tagNameToId = new Map<string, string>(localTags.map((tag: any) => [tag.name, tag.id]));
-  for (const [tagName, tagColor] of tagNameToColor) {
-    if (!tagNameToId.has(tagName)) {
-      const newTag = await createTag({
-        id: randomUUID(),
-        name: tagName,
-        color: tagColor,
-        lastSync: 0,
-        createdAt: nowUnix(),
-        updatedAt: nowUnix(),
-        deletedAt: null,
-      });
-      setActionObject('tag', newTag);
-      tagNameToId.set(tagName, newTag.id);
-    }
-  }
-  listTagsMenu.value = await loadTags();
-
-  let i = 0;
-  for (const note of jsonData.data) {
-    const folderId = foldersObj[note.folderName];
-    const newNote = await createNote(folderId, {
-      id: randomUUID(),
-      folderId: folderId || "",
-      content: note.content,
-      isLocked: false,
-      isPinned: false,
-      lastSync: 0,
-      createdAt: nowUnix(),
-      updatedAt: nowUnix(),
-      deletedAt: note.deletedAt,
-      deleteCompletelyAt: null,
-    });
-    setActionObject('note', newNote);
-
-    for (const tag of (note.tags || [])) {
+    const tagsInJson = [...(jsonData.tags || []), ...jsonData.data.flatMap((note: any) => note.tags || [])];
+    const tagNameToColor = new Map<string, string | undefined>();
+    for (const tag of tagsInJson) {
       if (!tag?.name) continue;
-      const tagId = tagNameToId.get(tag.name);
-      if (!tagId) continue;
-      const createdNoteTag = await addTagToNote(newNote.id, tagId);
-      setActionObject('noteTag', createdNoteTag);
+      if (!tagNameToColor.has(tag.name)) tagNameToColor.set(tag.name, tag.color);
     }
 
-    i++;
+    const localTags = await getTags();
+    const tagNameToId = new Map<string, string>(localTags.map((tag: any) => [tag.name, tag.id]));
+    for (const [tagName, tagColor] of tagNameToColor) {
+      if (!tagNameToId.has(tagName)) {
+        const newTag = await createTag({
+          id: randomUUID(),
+          name: tagName,
+          color: tagColor,
+          lastSync: 0,
+          createdAt: nowUnix(),
+          updatedAt: nowUnix(),
+          deletedAt: null,
+        });
+        setActionObject('tag', newTag);
+        tagNameToId.set(tagName, newTag.id);
+      }
+    }
+    listTagsMenu.value = await loadTags();
+
+    let i = 0;
+    for (const note of jsonData.data) {
+      const folderId = foldersObj[note.folderName];
+      const newNote = await createNote(folderId, {
+        id: randomUUID(),
+        folderId: folderId || "",
+        content: note.content,
+        isLocked: false,
+        isPinned: false,
+        lastSync: 0,
+        createdAt: nowUnix(),
+        updatedAt: nowUnix(),
+        deletedAt: note.deletedAt,
+        deleteCompletelyAt: null,
+      });
+      setActionObject('note', newNote);
+
+      for (const tag of (note.tags || [])) {
+        if (!tag?.name) continue;
+        const tagId = tagNameToId.get(tag.name);
+        if (!tagId) continue;
+        const createdNoteTag = await addTagToNote(newNote.id, tagId);
+        setActionObject('noteTag', createdNoteTag);
+      }
+
+      i++;
+      importNotesProgressCurrent.value = i;
+    }
+
+    await reloadFolder();
+
+    toggleModalImportNotes(false, isShowModalImportNotes);
+    showSuccess($i18n.t('app.message_import_notes'));
+    navbarTopRef.value?.closeDrawer();
+  } finally {
+    isImportingNotes.value = false;
   }
-
-  await reloadFolder();
-
-  toggleModalImportNotes(false, isShowModalImportNotes);
-  showSuccess($i18n.t('app.message_import_notes'));
-  navbarTopRef.value?.closeDrawer();
 }
 const modalExportNotesConfirm = ref<any>(null);
 const handleExportNotesConfirm = async (data: any) => {
@@ -2243,17 +2264,18 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
   <ModalAlertSetPassword v-if="isShowModalAlertSetPassword" @close="handleClickCloseModalAlertSetPassword" />
   <ModalSetPassword v-if="isShowModalSetPassword" ref="modalSetPasswordRef" :type="isPasswordExist ? 'change' : 'set'"
     :isLoading="isChangingPassword" @confirm="handleConfirmSetPassword" @close="handleCloseSetPassword" />
-  <ModalConfirmChangeAdapter v-if="isShowModalConfirmChangeAdapter" :adapterName="''"
+  <ModalConfirmChangeAdapter v-if="isShowModalConfirmChangeAdapter" :adapterName="''" :isLoading="isApplyingSyncChange"
     :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" :fromImport="!!pendingImportedSettings"
     :alsoImageSync="importAlsoChangesImageSync" @confirm="handleConfirmChangeAdapterOnline"
     @close="handleClickCloseModalConfirmChangeAdapter" />
-  <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" @confirm="handleConfirmChangeAdapter"
+  <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" :isLoading="isApplyingSyncChange" @confirm="handleConfirmChangeAdapter"
     @close="handleClickCloseModalConfirmE2eeKey" />
   <ModalConfirmImportImageSyncChange v-if="isShowModalConfirmImportImageSyncChange"
     :missingCredentials="importMissingImageSyncCredentials" @confirm="handleConfirmImportImageSyncChange"
     @close="handleCancelImportImageSyncChange" />
   <ModalImportNotes v-if="isShowModalImportNotes" @confirm="handleTriggerImportNotes"
-    @close="handleClickCloseModalImportNotes" />
+    @close="handleClickCloseModalImportNotes" :isLoading="isImportingNotes"
+    :progressCurrent="importNotesProgressCurrent" :progressTotal="importNotesProgressTotal" />
   <ModalExportNotesConfirm v-if="isShowModalExportNotesConfirm" ref="modalExportNotesConfirm"
     @confirmPassword="handleExportNotesConfirm" @confirmIgnorePassword="handleExportNotesIgnorePassword"
     @close="handleClickCloseModalExportNotesConfirm" />
