@@ -24,6 +24,7 @@ import {
   clearPasswordChangeBackup,
   getSettings,
   getAllNotes,
+  buildTagsByNoteId,
   setSettings,
   getActionObject,
   saveActionObject,
@@ -1502,6 +1503,7 @@ const handleExportNotes = async (includeLock: boolean, silent = false) => {
     acc[folder.id] = folder.name;
     return acc;
   }, {});
+  const tagsByNoteId = await buildTagsByNoteId();
 
   const notesFiltered = notes.filter((note: any) => !note.deleteCompletelyAt);
   const notesReformated = [];
@@ -1513,11 +1515,13 @@ const handleExportNotes = async (includeLock: boolean, silent = false) => {
 
     const password = await getPassword();
     const folderName = note.folderId ? foldersObject[note.folderId] : "";
+    const noteTags = tagsByNoteId.get(note.id) || [];
     notesReformated.push({
       folderName: folderName,
       content: note.isLocked ? await decryptData(note.content, password) : note.content,
       createdAt: note.createdAt,
       deletedAt: note.deletedAt,
+      tags: noteTags.map((tag: any) => ({ name: tag.name, color: tag.color })),
     });
   }
 
@@ -1576,6 +1580,32 @@ const handleTriggerImportNotes = async () => {
     return acc;
   }, {});
 
+  const tagsInJson = jsonData.data.flatMap((note: any) => note.tags || []);
+  const tagNameToColor = new Map<string, string | undefined>();
+  for (const tag of tagsInJson) {
+    if (!tag?.name) continue;
+    if (!tagNameToColor.has(tag.name)) tagNameToColor.set(tag.name, tag.color);
+  }
+
+  const localTags = await getTags();
+  const tagNameToId = new Map<string, string>(localTags.map((tag: any) => [tag.name, tag.id]));
+  for (const [tagName, tagColor] of tagNameToColor) {
+    if (!tagNameToId.has(tagName)) {
+      const newTag = await createTag({
+        id: randomUUID(),
+        name: tagName,
+        color: tagColor,
+        lastSync: 0,
+        createdAt: nowUnix(),
+        updatedAt: nowUnix(),
+        deletedAt: null,
+      });
+      setActionObject('tag', newTag);
+      tagNameToId.set(tagName, newTag.id);
+    }
+  }
+  listTagsMenu.value = await loadTags();
+
   let i = 0;
   for (const note of jsonData.data) {
     const folderId = foldersObj[note.folderName];
@@ -1592,6 +1622,15 @@ const handleTriggerImportNotes = async () => {
       deleteCompletelyAt: null,
     });
     setActionObject('note', newNote);
+
+    for (const tag of (note.tags || [])) {
+      if (!tag?.name) continue;
+      const tagId = tagNameToId.get(tag.name);
+      if (!tagId) continue;
+      const createdNoteTag = await addTagToNote(newNote.id, tagId);
+      setActionObject('noteTag', createdNoteTag);
+    }
+
     i++;
   }
 

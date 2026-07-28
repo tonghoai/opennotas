@@ -3,6 +3,7 @@ import {
     getAllNotes,
     getFolders,
     getPassword,
+    buildTagsByNoteId,
 } from '../../services/main';
 
 const route = useRoute();
@@ -37,6 +38,7 @@ const handleExportNotes = async (includeLock: boolean) => {
         acc[folder.id] = folder.name;
         return acc;
     }, {});
+    const tagsByNoteId = await buildTagsByNoteId();
 
     const notesFiltered = notes.filter((note: any) => !note.deleteCompletelyAt);
     const notesReformated = [];
@@ -48,11 +50,13 @@ const handleExportNotes = async (includeLock: boolean) => {
 
         const password = await getPassword();
         const folderName = note.folderId ? foldersObject[note.folderId] : "";
+        const noteTags = tagsByNoteId.get(note.id) || [];
         notesReformated.push({
             folderName: folderName,
             content: note.isLocked ? await decryptData(note.content, password) : note.content,
             createdAt: note.createdAt,
             deletedAt: note.deletedAt,
+            tags: noteTags.map((tag: any) => ({ name: tag.name, color: tag.color })),
         });
     }
 
