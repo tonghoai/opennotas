@@ -2,8 +2,10 @@
 import { Crepe } from "@milkdown/crepe";
 import { editorViewCtx } from "@milkdown/core";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
+import { splitListItemCommand } from "@milkdown/preset-commonmark";
 import { replaceAll, getMarkdown, $prose } from '@milkdown/utils'
 import { TextSelection, Plugin } from '@milkdown/prose/state'
+import type { Node } from '@milkdown/prose/model'
 import * as Diff from 'diff'
 
 const { $i18n } = useNuxtApp();
@@ -377,6 +379,35 @@ onMounted(() => {
       }))
     );
 
+    // Pressing Enter on an empty list item at the end of the document lifts
+    // it out into a new empty paragraph (ProseMirror's built-in
+    // splitListItem behavior) — but @milkdown/plugin-trailing already
+    // guarantees a trailing empty paragraph exists, and only skips adding
+    // one when it's missing, not when a duplicate now exists. That leaves
+    // two empty paragraphs stacked at the end of the doc. Collapse them
+    // back down to one, keeping the earlier one (where the cursor now is).
+    editor.editor.use(
+      $prose(() => new Plugin({
+        appendTransaction(transactions, _oldState, newState) {
+          if (!transactions.some(t => t.docChanged)) return null;
+
+          const { doc } = newState;
+          if (doc.childCount < 2) return null;
+
+          const isEmptyParagraph = (node: Node) =>
+            node.type.name === 'paragraph' && node.content.size === 0;
+
+          const last = doc.child(doc.childCount - 1);
+          const secondLast = doc.child(doc.childCount - 2);
+          if (!isEmptyParagraph(last) || !isEmptyParagraph(secondLast)) return null;
+
+          const from = doc.content.size - last.nodeSize;
+          const to = doc.content.size;
+          return newState.tr.delete(from, to);
+        },
+      }))
+    );
+
     // ProseMirror scrolls the selection into view (with no margin) on every
     // local edit by default, which fights our own eased scroll in
     // ensureCursorBottomMargin and produces a jump-then-smooth double motion.
@@ -385,6 +416,42 @@ onMounted(() => {
       $prose(() => new Plugin({
         props: {
           handleScrollToSelection: () => true,
+        },
+      }))
+    );
+
+    // On real mobile keyboards, Enter is pressed while the view is still
+    // "composing" (IME), so ProseMirror's keydown handler silently skips the
+    // list-item keymap and the browser's native contenteditable split runs
+    // instead — which the list-item NodeView's DOM diffing then misreads as
+    // a duplicated blank line. beforeinput fires deterministically before
+    // that native mutation regardless of composition state, so intercepting
+    // insertParagraph here and running the same splitListItemCommand the
+    // desktop keymap uses avoids the native-mutation/diff race entirely.
+    // On desktop the keydown handler already prevents this event from ever
+    // firing, so this is a no-op there.
+    editor.editor.use(
+      $prose(() => new Plugin({
+        props: {
+          handleDOMEvents: {
+            beforeinput: (view, event) => {
+              if (event.inputType !== 'insertParagraph') return false;
+
+              const { $from } = view.state.selection;
+              let inListItem = false;
+              for (let d = $from.depth; d > 0; d--) {
+                if ($from.node(d).type.name === 'list_item') {
+                  inListItem = true;
+                  break;
+                }
+              }
+              if (!inListItem) return false;
+
+              event.preventDefault();
+              splitListItemCommand.run();
+              return true;
+            },
+          },
         },
       }))
     );
