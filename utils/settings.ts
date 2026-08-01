@@ -58,12 +58,22 @@ async function encryptSensitiveSettings(settings: any, password: string) {
   return { settings: clone, encryptedFields };
 }
 
+// Decrypts each flagged field independently — an older/foreign client can leave a stale
+// `encryptedFields` marker next to a value it wrote in plaintext (it doesn't know the marker
+// exists), which makes that one field undecryptable. Failing that field alone (instead of
+// throwing and losing the whole settings object) keeps every other setting intact.
 async function decryptSensitiveSettings(settings: any, encryptedFields: string[], password: string) {
   const clone = JSON.parse(JSON.stringify(settings));
   for (const path of encryptedFields || []) {
     const [group, field] = path.split('.');
     const value = clone[group]?.[field];
-    if (value) clone[group][field] = await decryptData(value, password);
+    if (!value) continue;
+    try {
+      clone[group][field] = await decryptData(value, password);
+    } catch (err) {
+      console.warn(`Failed to decrypt setting "${path}", dropping it`, err);
+      delete clone[group][field];
+    }
   }
   return clone;
 }

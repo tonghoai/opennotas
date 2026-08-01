@@ -1,7 +1,7 @@
 import localForage from 'localforage';
 
 import NotasRepository from "./storage";
-import { encryptSensitiveSettings, decryptSensitiveSettings } from "~/utils/settings";
+import { encryptSensitiveSettings, decryptSensitiveSettings, stripEncryptedFields } from "~/utils/settings";
 import type {
   FolderCreateType,
   FolderType,
@@ -309,9 +309,20 @@ class LocalForageRepository implements NotasRepository {
     if (!raw.encryptedFields?.length) return raw;
 
     const key = await this.getOrCreateSettingsEncryptionKey();
-    const decrypted = await decryptSensitiveSettings(raw, raw.encryptedFields, key);
-    delete decrypted.encryptedFields;
-    return decrypted;
+    try {
+      const decrypted = await decryptSensitiveSettings(raw, raw.encryptedFields, key);
+      delete decrypted.encryptedFields;
+      return decrypted;
+    } catch (err) {
+      // decryptSensitiveSettings already isolates per-field failures — this only guards
+      // against something unexpected blowing up the whole call, so the rest of settings
+      // (general, sync.adapter, sync.frequency, ...) still loads instead of silently
+      // reverting to defaults.
+      console.warn('Failed to decrypt settings, returning with encrypted fields stripped', err);
+      const stripped = stripEncryptedFields(raw, raw.encryptedFields);
+      delete stripped.encryptedFields;
+      return stripped;
+    }
   }
   async setSettings(data: any): Promise<any> {
     const key = await this.getOrCreateSettingsEncryptionKey();
