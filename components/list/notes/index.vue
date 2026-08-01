@@ -89,7 +89,7 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <ul ref="listRef" class="pb-28 lg:pb-3.5 relative" :style="{ height: totalSize + 'px' }">
+  <ul ref="listRef" class="relative" :style="{ height: totalSize + 'px' }">
     <li v-for="{ row, note } in rows" :key="row.key" :data-index="row.index"
       :ref="(el) => el && virtualizer.measureElement(el as Element)" class="absolute top-0 left-0 w-full"
       :style="{ transform: `translateY(${row.start - virtualizer.options.scrollMargin}px)` }">
@@ -142,6 +142,7 @@ const rows = computed(() => {
       </div>
     </li>
   </ul>
+  <div class="h-28 lg:h-6" aria-hidden="true"></div>
 </template>
 <style lang="scss" scoped>
 .menu-items:hover .more-tools {
