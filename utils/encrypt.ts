@@ -33,7 +33,17 @@ async function decryptData(encryptedDataHex: string, password: string) {
   return textDecoder.decode(decryptedData);
 }
 
+// encryptData's output is always a pure lowercase-hex string of (12-byte IV + ciphertext +
+// 16-byte GCM tag) bytes, hex-encoded — minimum 56 characters, even length, [0-9a-f] only.
+// A value that doesn't match this shape was never produced by encryptData, so it can't be
+// decrypted and shouldn't be treated as ciphertext (e.g. an older client's plaintext value
+// sitting next to a stale "this field is encrypted" marker it doesn't understand).
+function looksLikeCiphertext(value: string): boolean {
+  return typeof value === 'string' && value.length >= 56 && value.length % 2 === 0 && /^[0-9a-f]+$/i.test(value);
+}
+
 export {
   encryptData,
   decryptData,
+  looksLikeCiphertext,
 }

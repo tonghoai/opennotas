@@ -60,14 +60,21 @@ async function encryptSensitiveSettings(settings: any, password: string) {
 
 // Decrypts each flagged field independently — an older/foreign client can leave a stale
 // `encryptedFields` marker next to a value it wrote in plaintext (it doesn't know the marker
-// exists), which makes that one field undecryptable. Failing that field alone (instead of
-// throwing and losing the whole settings object) keeps every other setting intact.
+// exists). Recover that value as-is instead of trying (and failing) to decrypt it: real
+// ciphertext has a distinctive shape (see looksLikeCiphertext), so a value that doesn't match
+// it was never encrypted to begin with. Only genuinely undecryptable ciphertext (wrong/lost
+// key, corruption) falls through to being dropped — that's the one case that can't be
+// recovered client-side, so it must not take down the rest of the settings object either.
 async function decryptSensitiveSettings(settings: any, encryptedFields: string[], password: string) {
   const clone = JSON.parse(JSON.stringify(settings));
   for (const path of encryptedFields || []) {
     const [group, field] = path.split('.');
     const value = clone[group]?.[field];
     if (!value) continue;
+    if (!looksLikeCiphertext(value)) {
+      console.warn(`Setting "${path}" is flagged encrypted but isn't valid ciphertext — treating it as plaintext`);
+      continue;
+    }
     try {
       clone[group][field] = await decryptData(value, password);
     } catch (err) {
