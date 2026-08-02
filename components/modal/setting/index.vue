@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import ChevronRight from '../assets/svg/chevron-right.svg?component';
+import SettingIcon from '../assets/svg/settings.svg?component';
+import SecurityIcon from '../assets/svg/fingerprint.svg?component';
+import SyncIcon from '../assets/svg/cloud.svg?component';
+import ToolIcon from '../assets/svg/tool-case.svg?component';
+import InfoIcon from '../assets/svg/info.svg?component';
+import SettingRow from './setting-row.vue';
+import SettingSelect from './setting-select.vue';
 import S3ProxyAdapter from '~/adapter/s3';
+import { resetSyncedImages } from '~/services/image';
 
 const { setLocale } = useI18n();
 const { $i18n } = useNuxtApp();
@@ -28,30 +35,30 @@ const emit = defineEmits([
   'closeSetting',
 ]);
 
+const tabs = computed(() => [
+  { key: 'general', label: $i18n.t('app.setting_general_title'), icon: SettingIcon },
+  { key: 'security', label: $i18n.t('app.setting_security_title'), icon: SecurityIcon },
+  { key: 'sync', label: $i18n.t('app.setting_sync_title'), icon: SyncIcon },
+  { key: 'tools', label: $i18n.t('app.setting_tools_title'), icon: ToolIcon },
+  { key: 'about', label: $i18n.t('app.setting_about_title'), icon: InfoIcon },
+]);
+
 const tabIndex = ref<number>(0);
-const tabTitle = ref<string>($i18n.t('app.setting_general_title'));
+const tabTitle = computed(() => tabs.value[tabIndex.value]?.label ?? '');
 const handleClickTab = (index: number) => {
   tabIndex.value = index;
-  switch (index) {
-    case 0:
-      tabTitle.value = $i18n.t('app.setting_general_title');
-      break;
-    case 1:
-      tabTitle.value = $i18n.t('app.setting_sync_title');
-      break;
-    case 2:
-      tabTitle.value = $i18n.t('app.setting_tools_title');
-      break;
-    case 3:
-      tabTitle.value = $i18n.t('app.setting_about_title');
-      break;
-  }
 }
 
 const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
+  const hasPendingAdapterChange = isAdapterChanged.value;
   settings.value = newValue;
-  adapterSelect.value = settings.value.sync.adapter;
+  if (!hasPendingAdapterChange) {
+    adapterSelect.value = settings.value.sync.adapter;
+  }
+  // Keep draft in sync when settings are committed externally (e.g., parent reload)
+  draftS3Config.value = buildDraft(newValue?.imageSync);
+  fontFamilyDraft.value = newValue?.general?.fontFamily || '';
 }, { deep: true });
 
 // onMounted(() => {
@@ -94,13 +101,58 @@ defineExpose({
 });
 
 const adapterSelect = ref<string>('');
+
+type S3Config = {
+  s3Endpoint: string;
+  s3AccessKey: string;
+  s3SecretKey: string;
+  s3Bucket: string;
+  workerUrl: string;
+};
+
+const buildDraft = (cfg: any): S3Config => ({
+  s3Endpoint: cfg?.s3Endpoint || '',
+  s3AccessKey: cfg?.s3AccessKey || '',
+  s3SecretKey: cfg?.s3SecretKey || '',
+  s3Bucket: cfg?.s3Bucket || '',
+  workerUrl: cfg?.workerUrl || '',
+});
+
+// Draft S3 config: what the user is currently editing in the form.
+// Only committed to settings.value when user clicks Save.
+const draftS3Config = ref<S3Config>(buildDraft(null));
+
+// Draft font family: only committed to settings.value when user clicks Save.
+const fontFamilyDraft = ref<string>('');
+
 onMounted(() => {
   adapterSelect.value = settings.value.sync.adapter;
+  draftS3Config.value = buildDraft(props.settings?.imageSync);
+  fontFamilyDraft.value = props.settings?.general?.fontFamily || '';
 });
 // change adapter
 const isAdapterChanged = computed(() => adapterSelect.value !== settings.value.sync.adapter);
 const handleSaveAdapter = (e: Event) => {
   emit('saveAdapter', adapterSelect.value);
+}
+const handleCancelAdapterChange = () => {
+  adapterSelect.value = settings.value.sync.adapter;
+}
+
+// font family
+const isFontFamilyDirty = computed(() => (props.settings?.general?.fontFamily || '') !== fontFamilyDraft.value);
+const handleSaveFontFamily = () => {
+  settings.value = {
+    ...settings.value,
+    general: {
+      ...settings.value.general,
+      fontFamily: fontFamilyDraft.value,
+    },
+  };
+  handleSaveSettings();
+}
+const handleCancelFontFamily = () => {
+  fontFamilyDraft.value = props.settings?.general?.fontFamily || '';
 }
 
 // export notes
@@ -122,6 +174,13 @@ const handleClickResetServiceWorker = () => {
     window.location.href = window.location.href;
   });
 }
+const handleClickForceUpdate = async () => {
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+  window.location.reload();
+}
 
 const handleClickCloseSettings = () => {
   emit('closeSetting');
@@ -129,23 +188,51 @@ const handleClickCloseSettings = () => {
 
 // Image sync settings
 const imageSyncTestStatus = ref<'idle' | 'testing' | 'success' | 'failed'>('idle');
+const isShowModalConfirmImageSyncChange = ref(false);
 
-// Check if S3 config is complete
-const isS3ConfigComplete = computed(() => {
-  const cfg = settings.value.imageSync;
-  return cfg?.s3Endpoint && cfg?.s3AccessKey && cfg?.s3SecretKey && cfg?.s3Bucket;
+// Enable Save button when draft differs from last saved state
+const isS3ConfigDirty = computed(() => {
+  const saved = props.settings?.imageSync;
+  const draft = draftS3Config.value;
+  const fields: (keyof S3Config)[] = ['s3Endpoint', 's3Bucket', 's3AccessKey', 's3SecretKey', 'workerUrl'];
+  return fields.some((f) => (saved?.[f] || '') !== (draft[f] || ''));
 });
+
+// True only when storage location fields changed (triggers confirmation + image reset)
+const hasCriticalS3Changed = (): boolean => {
+  const saved = props.settings?.imageSync;
+  const draft = draftS3Config.value;
+  const critical: (keyof S3Config)[] = ['s3Endpoint', 's3Bucket', 's3AccessKey', 's3SecretKey'];
+  return critical.some((f) => (saved?.[f] || '') !== (draft[f] || ''));
+};
+
+// Check if S3 config draft is complete enough to test
+const isS3ConfigComplete = computed(() => {
+  const d = draftS3Config.value;
+  return Boolean(d.s3Endpoint && d.s3AccessKey && d.s3SecretKey && d.s3Bucket);
+});
+
+// Apply draft into settings.value before saving
+const applyDraftToSettings = () => {
+  settings.value = {
+    ...settings.value,
+    imageSync: {
+      ...settings.value.imageSync,
+      ...draftS3Config.value,
+    },
+  };
+};
 
 const handleTestImageSyncConnection = async () => {
   imageSyncTestStatus.value = 'testing';
 
   try {
     const adapter = new S3ProxyAdapter({
-      workerUrl: settings.value.imageSync?.workerUrl || '',
-      s3Endpoint: settings.value.imageSync?.s3Endpoint || '',
-      s3AccessKey: settings.value.imageSync?.s3AccessKey || '',
-      s3SecretKey: settings.value.imageSync?.s3SecretKey || '',
-      s3Bucket: settings.value.imageSync?.s3Bucket || '',
+      workerUrl: draftS3Config.value.workerUrl || '',
+      s3Endpoint: draftS3Config.value.s3Endpoint || '',
+      s3AccessKey: draftS3Config.value.s3AccessKey || '',
+      s3SecretKey: draftS3Config.value.s3SecretKey || '',
+      s3Bucket: draftS3Config.value.s3Bucket || '',
     });
 
     const isConnected = await adapter.checkConnection();
@@ -154,360 +241,290 @@ const handleTestImageSyncConnection = async () => {
     imageSyncTestStatus.value = 'failed';
   }
 
-  // Reset status after 3 seconds
   setTimeout(() => {
     imageSyncTestStatus.value = 'idle';
   }, 3000);
-}
+};
 
 const handleSaveImageSyncSettings = () => {
+  if (hasCriticalS3Changed()) {
+    isShowModalConfirmImageSyncChange.value = true;
+    setTimeout(() => {
+      (document.getElementById('modal-confirm-image-sync-change') as any)?.showModal();
+    }, 100);
+    return;
+  }
+  applyDraftToSettings();
   handleSaveSettings();
-}
+};
+
+const handleConfirmImageSyncChange = async () => {
+  (document.getElementById('modal-confirm-image-sync-change') as any)?.close();
+  isShowModalConfirmImageSyncChange.value = false;
+  applyDraftToSettings();
+  handleSaveSettings();
+  await resetSyncedImages();
+};
+
+const handleCancelImageSyncChange = () => {
+  (document.getElementById('modal-confirm-image-sync-change') as any)?.close();
+  isShowModalConfirmImageSyncChange.value = false;
+  draftS3Config.value = buildDraft(props.settings?.imageSync);
+};
+
+// Sync Configuration (JSON) modal
+const isShowModalSyncConfig = ref(false);
+const handleOpenSyncConfigModal = () => {
+  isShowModalSyncConfig.value = true;
+  setTimeout(() => (document.getElementById('modal-sync-config') as any)?.showModal(), 100);
+};
+const handleConfirmSyncConfig = (value: string) => {
+  settings.value.sync.configuration = value;
+  (document.getElementById('modal-sync-config') as any)?.close();
+  isShowModalSyncConfig.value = false;
+  handleSaveSettings();
+};
+const handleCloseSyncConfigModal = () => {
+  (document.getElementById('modal-sync-config') as any)?.close();
+  isShowModalSyncConfig.value = false;
+};
+
+// Image Sync S3 config modal
+const isShowModalImageSyncConfig = ref(false);
+const handleOpenImageSyncConfigModal = () => {
+  isShowModalImageSyncConfig.value = true;
+  setTimeout(() => (document.getElementById('modal-image-sync-config') as any)?.showModal(), 100);
+};
+const handleCloseImageSyncConfigModal = () => {
+  (document.getElementById('modal-image-sync-config') as any)?.close();
+  isShowModalImageSyncConfig.value = false;
+};
+const handleSaveImageSyncConfigModal = () => {
+  isShowModalImageSyncConfig.value = false;
+  handleSaveImageSyncSettings();
+};
 </script>
 
 <template>
-  <dialog id="modal-settings" class="modal">
-    <div class="modal-box w-full h-[34rem] overflow-hidden p-0 border border-neutral shadow-xl">
-      <!-- <span class="absolute bottom-2 right-4 text-sm underline">{{ runtimeConfig.public.version }}</span> -->
-      <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-          @click="handleClickCloseSettings">✕</button>
-      </form>
-
+  <dialog id="modal-settings" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    <div
+      class="modal-box w-full max-w-3xl h-[38rem] max-h-[85vh] overflow-hidden p-0 rounded-2xl border border-base-content/15 shadow-2xl">
       <div class="flex flex-row h-full">
-        <div class="w-1/3 float-left flex flex-col gap-4 bg-base-300 px-4 py-8">
-          <div class="flex flex-col justify-center px-2">
-            <p class="text-3xl font-bold">Settings</p>
-            <p class="text-normal">Manage your settings</p>
+        <!-- sidebar -->
+        <div class="w-60 shrink-0 flex flex-col gap-1 bg-base-100 border-r border-base-content/15 px-3 py-5 overflow-y-auto">
+          <form method="dialog" class="px-1 pb-3">
+            <button class="btn btn-sm btn-ghost btn-square" @click="handleClickCloseSettings">✕</button>
+          </form>
+
+          <button v-for="(tab, i) in tabs" :key="tab.key" type="button"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg !text-base text-left transition-colors"
+            :class="tabIndex === i ? 'bg-base-200 font-medium' : 'bg-transparent hover:bg-base-200 text-base-content/80'"
+            @click="handleClickTab(i)">
+            <component :is="tab.icon" class="h-5 w-5 shrink-0" />
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <!-- content -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <div id="setting-content" class="flex-1 overflow-auto px-8 py-6">
+            <p class="text-xl font-semibold pb-4 mb-2 border-b border-base-content/15">{{ tabTitle }}</p>
+
+          <!-- general settings -->
+          <div v-if="tabIndex === 0" class="divide-y divide-base-content/10">
+            <SettingRow :label="$t('app.setting_general_language_title')">
+              <SettingSelect v-model="settings.general.lang" @update:modelValue="handleChangeLanguage" :options="[
+                { label: $t('app.setting_general_language_vi'), value: 'vi' },
+                { label: $t('app.setting_general_language_en'), value: 'en' },
+                { label: $t('app.setting_general_language_zhtw'), value: 'zhtw' },
+              ]" />
+            </SettingRow>
+
+            <SettingRow :label="$t('app.setting_general_theme_title')">
+              <SettingSelect v-model="$colorMode.preference" :options="[
+                { label: $t('app.setting_general_theme_system'), value: 'system' },
+                { label: $t('app.setting_general_theme_light'), value: 'light' },
+                { label: $t('app.setting_general_theme_dark'), value: 'dark' },
+              ]" />
+            </SettingRow>
+
+            <SettingRow :label="$t('app.setting_general_default_editor_title')">
+              <SettingSelect v-model="settings.general.defaultEditor" @update:modelValue="handleChangeDefaultEditor"
+                :options="[
+                  { label: $t('app.setting_general_default_editor_tiptap'), value: 'Tiptap' },
+                  { label: $t('app.setting_general_default_editor_codemirror'), value: 'CodeMirror' },
+                  { label: 'Crepe', value: 'Crepe' },
+                ]" />
+            </SettingRow>
+
+            <SettingRow :label="$t('app.setting_general_editor_view_title')">
+              <SettingSelect v-model="settings.general.editorView" @update:modelValue="handleChangeEditorView" :options="[
+                { label: $t('app.setting_general_editor_view_full'), value: 'full' },
+                { label: $t('app.setting_general_editor_view_compact'), value: 'compact' },
+              ]" />
+            </SettingRow>
+
+            <SettingRow :label="$t('app.setting_general_font_title')">
+              <input v-model="fontFamilyDraft" type="text" class="input input-sm input-bordered w-40"
+                autocomplete="off" />
+            </SettingRow>
           </div>
 
-          <div class="flex flex-col justify-center items-center">
-            <ul class="menu rounded-box w-full">
-              <li class="py-0.5" @click="handleClickTab(0)">
-                <a :class="{ 'active': tabIndex == 0 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  {{ $t('app.setting_general_title') }}
-                </a>
-              </li>
-              <li class="py-0.5" @click="handleClickTab(1)">
-                <a :class="{ 'active': tabIndex == 1 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {{ $t('app.setting_sync_title') }}
-                </a>
-              </li>
-              <li class="py-0.5" @click="handleClickTab(2)">
-                <a :class="{ 'active': tabIndex == 2 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  {{ $t('app.setting_tools_title') }}
-                </a>
-              </li>
-              <li class="py-0.5" @click="handleClickTab(3)">
-                <a :class="{ 'active': tabIndex == 3 }">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {{ $t('app.setting_about_title') }}
-                </a>
-              </li>
-            </ul>
+          <!-- security settings -->
+          <div v-if="tabIndex === 1" class="divide-y divide-base-content/10">
+            <SettingRow :label="$t('app.setting_general_security_title')">
+              <button class="btn rounded-md btn-sm font-normal shadow-none border border-base-content/20"
+                @click="handleClickSetPassword">
+                {{ props.isPasswordExist ? $t('app.setting_general_security_change_password') :
+                  $t('app.setting_general_security_set_password') }}
+              </button>
+            </SettingRow>
+          </div>
+
+          <!-- sync settings -->
+          <div v-if="tabIndex === 2" class="space-y-6">
+            <!-- Note Sync -->
+            <div class="divide-y divide-base-content/10">
+              <div class="flex items-center justify-between gap-6 py-4">
+                <div class="min-w-0">
+                  <p class="font-medium">{{ $t('app.setting_sync_adapter_title') }}</p>
+                  <p class="text-xs text-base-content/60 mt-1">
+                    {{ $t('app.setting_sync_adapter_description') }}
+                    <br /><a href="https://docs.opennotas.io/started/setup-sync" target="_blank"
+                      class="underline text-xs hover:text-primary">{{ $t('app.setting_sync_adapter_setup_guide') }}</a>
+                  </p>
+                </div>
+                <div class="shrink-0 flex items-center gap-2">
+                  <SettingSelect v-model="adapterSelect" :options="[
+                    { label: 'LocalForage (Offline)', value: 'LocalForage' },
+                    { label: 'Turso (Online)', value: 'Turso' },
+                  ]" />
+                </div>
+              </div>
+
+              <SettingRow v-if="adapterSelect !== 'LocalForage'" :label="$t('app.setting_sync_sync_frequency_title')">
+                <SettingSelect v-model="settings.sync.frequency" @update:modelValue="handleSaveSettings" :options="[
+                  { label: `5 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '5' },
+                  { label: `10 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '10' },
+                  { label: `15 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '15' },
+                  { label: `30 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '30' },
+                  { label: `60 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '60' },
+                ]" />
+              </SettingRow>
+
+              <SettingRow v-if="adapterSelect !== 'LocalForage'" :label="$t('app.setting_sync_config_title')">
+                <button type="button"
+                  class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                  @click="handleOpenSyncConfigModal">
+                  {{ $t('app.setting_configure_button') }}
+                </button>
+              </SettingRow>
+            </div>
+
+            <!-- Image Sync -->
+            <div class="divide-y divide-base-content/10">
+              <SettingRow :label="$t('app.setting_image_sync_enable')">
+                <input type="checkbox" v-model="settings.imageSync.enabled" class="toggle"
+                  @change="handleSaveSettings" />
+              </SettingRow>
+
+              <div v-if="settings.imageSync?.enabled" class="flex items-center justify-between gap-6 py-4">
+                <div class="min-w-0">
+                  <p class="font-medium">{{ $t('app.setting_image_sync_config_title') }}</p>
+                  <p class="text-xs text-base-content/60 mt-1">
+                    {{ $t('app.setting_image_sync_description') }}
+                    <br /><a href="https://docs.opennotas.io/started/setup-sync/s3-storage" target="_blank"
+                      class="underline text-xs hover:text-primary">{{ $t('app.setting_image_sync_setup_guide') }}</a>
+                  </p>
+                </div>
+                <button type="button"
+                  class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 shrink-0"
+                  @click="handleOpenImageSyncConfigModal">
+                  {{ $t('app.setting_configure_button') }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- tools -->
+          <div v-if="tabIndex === 3" class="space-y-6">
+            <div class="divide-y divide-base-content/10">
+              <SettingRow :label="$t('app.setting_tools_backup_export')">
+                <button type="button"
+                  class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                  @click="handleClickExportNotes">
+                  {{ $t('app.setting_tools_backup_export_button') }}
+                </button>
+              </SettingRow>
+
+              <SettingRow :label="$t('app.setting_tools_backup_import')">
+                <button type="button"
+                  class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                  @click="handleClickImportNotes">
+                  {{ $t('app.setting_tools_backup_import_button') }}
+                </button>
+              </SettingRow>
+            </div>
+
+            <div class="divide-y divide-base-content/10">
+              <SettingRow label="Service Worker">
+                <button class="btn btn-sm btn-outline btn-error" @click="handleClickResetServiceWorker">
+                  {{ $t('app.setting_tools_reset_service_worker_title') }}
+                </button>
+              </SettingRow>
+
+              <SettingRow :label="$t('app.setting_tools_force_update_title')"
+                :description="$t('app.setting_tools_force_update_description')">
+                <button class="btn btn-sm btn-outline btn-error" @click="handleClickForceUpdate">
+                  {{ $t('app.setting_tools_force_update_button') }}
+                </button>
+              </SettingRow>
+            </div>
+          </div>
+
+          <!-- about -->
+          <div v-if="tabIndex === 4" class="h-[calc(100%_-_60px)] flex justify-center items-center">
+            <div class="flex flex-col justify-center items-center">
+              <img :src="'/logo-icon.png'" height="96" width="96" alt="OpenNotas Logo" />
+              <a class="underline" href="https://opennotas.io">
+                <h1 class="font-bold text-3xl">{{ $t('app_name') }}</h1>
+              </a>
+              <p class="mt-4 text-center text-sm">{{ $t('app.slogan') }}</p>
+            </div>
           </div>
         </div>
-        <div class="w-2/3 float-right bg-base-200">
-          <!-- <div class="pt-4">
-            <div role="tablist" class="tabs tabs-boxed">
-              <a role="tab" class="tab transition-all	" :class="{ 'bg-primary text-primary-content': tabIndex == 0 }"
-                @click="handleClickTab(0)">{{ $t('app.setting_general_title') }}</a>
-              <a role="tab" class="tab transition-all	" :class="{ 'bg-primary text-primary-content': tabIndex == 1 }"
-                @click="handleClickTab(1)">{{ $t('app.setting_sync_title') }}</a>
-              <a role="tab" class="tab transition-all	" :class="{ 'bg-primary text-primary-content': tabIndex == 2 }"
-                @click="handleClickTab(2)">{{ $t('app.setting_tools_title') }}</a>
-              <a role="tab" class="tab transition-all	" :class="{ 'bg-primary text-primary-content': tabIndex == 3 }"
-                @click="handleClickTab(3)">{{ $t('app.setting_about_title') }}</a>
-            </div>
-          </div> -->
 
-          <div id="setting-content" class="py-4 px-4 overflow-auto h-full">
-            <div class="px-2 h-full">
-              <p class="text-2xl font-semibold mb-2">{{ tabTitle }}</p>
-              <!-- general settings -->
-              <div class="transition-all pb-6" v-if="tabIndex == 0">
-
-                <label class="form-control w-full pt-2">
-                  <div class="label">
-                    <span class="font-semibold label-text">{{ $t('app.setting_general_language_title') }}</span>
-                  </div>
-                  <select class="select select-bordered" v-model="settings.general.lang" @change="handleChangeLanguage">
-                    <option value="vi">{{ $t('app.setting_general_language_vi') }}</option>
-                    <option value="en">{{ $t('app.setting_general_language_en') }}</option>
-                    <option value="zhtw">{{ $t('app.setting_general_language_zhtw') }}</option>
-                  </select>
-                </label>
-
-                <label class="form-control w-full pt-2">
-                  <div class="label">
-                    <span class="font-semibold label-text">{{ $t('app.setting_general_theme_title') }}</span>
-                  </div>
-                  <select v-model="$colorMode.preference" class="select select-bordered">
-                    <option value="system">{{ $t('app.setting_general_theme_system') }}</option>
-                    <option value="light">{{ $t('app.setting_general_theme_light') }}</option>
-                    <option value="dark">{{ $t('app.setting_general_theme_dark') }}</option>
-                  </select>
-                </label>
-
-                <label class="form-control w-full pt-2">
-                  <div class="label">
-                    <span class="font-semibold label-text">{{ $t('app.setting_general_default_editor_title') }}</span>
-                  </div>
-                  <select class="select select-bordered" v-model="settings.general.defaultEditor"
-                    @change="handleChangeDefaultEditor">
-                    <option value="Tiptap">{{ $t('app.setting_general_default_editor_tiptap') }}</option>
-                    <option value="CodeMirror">{{ $t('app.setting_general_default_editor_codemirror') }}</option>
-                    <option value="Crepe">Crepe</option>
-                  </select>
-                </label>
-
-                <label class="form-control w-full pt-2">
-                  <div class="label">
-                    <span class="font-semibold label-text">{{ $t('app.setting_general_editor_view_title') }}</span>
-                  </div>
-                  <select class="select select-bordered" v-model="settings.general.editorView"
-                    @change="handleChangeEditorView">
-                    <option value="full">{{ $t('app.setting_general_editor_view_full') }}</option>
-                    <option value="compact">{{ $t('app.setting_general_editor_view_compact') }}</option>
-                  </select>
-                </label>
-
-                <label class="form-control w-full pt-2">
-                  <div class="label">
-                    <span class="font-semibold label-text">{{ $t('app.setting_general_font_title') }}</span>
-                  </div>
-                  <input v-model="settings.general.fontFamily" type="text"
-                    class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveSettings"
-                    autocomplete="off" />
-                </label>
-
-                <label class="form-control w-full pt-2">
-                  <div class="label">
-                    <span class="font-semibold label-text">{{ $t('app.setting_general_security_title') }}</span>
-                  </div>
-                  <button class="btn btn-primary" @click="handleClickSetPassword">
-                    {{ props.isPasswordExist ? $t('app.setting_general_security_change_password') :
-                      $t('app.setting_general_security_set_password') }}
-                  </button>
-                </label>
-              </div>
-
-              <!-- sync settings -->
-              <div class="transition-all" v-if="tabIndex == 1">
-                <div class="label pt-4">
-                  <span class="font-semibold label-text">{{ $t('app.setting_sync_adapter_title') }}</span>
-                </div>
-                <div class="grid grid-cols-12 gap-4">
-                  <div class="col-span-8">
-                    <label class="form-control w-full">
-                      <select v-model="adapterSelect" class="select select-bordered">
-                        <option value="LocalForage">LocalForage (Offline)</option>
-                        <option value="Turso">Turso (Online)</option>
-                      </select>
-                    </label>
-
-                    <a href="https://docs.opennotas.io/started/setup-sync" target="_blank"
-                      class="text-xs underline inline-block mt-2">
-                      {{ $t('app.setting_sync_adapter_setup_guide') }}
-                    </a>
-                  </div>
-                  <div class="col-span-4">
-                    <button class="btn btn-primary w-full" :disabled="!isAdapterChanged" @click="handleSaveAdapter">
-                      {{ $t('app.setting_sync_adapter_save') }}
-                    </button>
-                  </div>
-                </div>
-
-                <div v-if="adapterSelect !== 'LocalForage'">
-                  <label class="form-control w-full pt-2">
-                    <div class="label">
-                      <span class="font-semibold label-text">{{ $t('app.setting_sync_sync_frequency_title') }}</span>
-                    </div>
-                    <select v-model="settings.sync.frequency" class="select select-bordered w-64"
-                      @change="handleSaveSettings">
-                      <option value="5">5 {{ $t('app.setting_sync_sync_frequency_unit') }}</option>
-                      <option value="10">10 {{ $t('app.setting_sync_sync_frequency_unit') }}</option>
-                      <option value="15">15 {{ $t('app.setting_sync_sync_frequency_unit') }}</option>
-                      <option value="30">30 {{ $t('app.setting_sync_sync_frequency_unit') }}</option>
-                      <option value="60">60 {{ $t('app.setting_sync_sync_frequency_unit') }}</option>
-                    </select>
-                  </label>
-
-                  <label class="form-control pt-2">
-                    <div class="label">
-                      <span class="font-semibold label-text">{{ $t('app.setting_sync_config_title') }}</span>
-                    </div>
-                    <input v-model="settings.sync.configuration" type="text"
-                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveSettings"
-                      autocomplete="off" />
-                  </label>
-                </div>
-
-                <!-- Image Sync Settings -->
-                <div class="border-t border-neutral mt-6 pt-4"></div>
-
-                <label class="form-control w-full">
-                  <div class="label cursor-pointer justify-start gap-4">
-                    <input type="checkbox" v-model="settings.imageSync.enabled" class="toggle"
-                      @change="handleSaveImageSyncSettings" />
-                    <span class="font-semibold label-text">{{ $t('app.setting_image_sync_enable') }}</span>
-                  </div>
-                </label>
-
-                <a href="https://docs.opennotas.io/started/setup-sync/s3-storage" target="_blank"
-                  class="text-xs underline inline-block mt-2">
-                  {{ $t('app.setting_image_sync_setup_guide') }}
-                </a>
-
-                <div v-if="settings.imageSync?.enabled">
-                  <!-- S3 Configuration -->
-                  <label class="form-control w-full pt-2">
-                    <div class="label">
-                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_endpoint') }}</span>
-                    </div>
-                    <input v-model="settings.imageSync.s3Endpoint" type="text" placeholder="https://s3.amazonaws.com"
-                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
-                      autocomplete="off" />
-                  </label>
-
-                  <label class="form-control w-full pt-2">
-                    <div class="label">
-                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_access_key') }}</span>
-                    </div>
-                    <input v-model="settings.imageSync.s3AccessKey" type="text" placeholder="AKIAIOSFODNN7EXAMPLE"
-                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
-                      autocomplete="off" />
-                  </label>
-
-                  <label class="form-control w-full pt-2">
-                    <div class="label">
-                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_secret_key') }}</span>
-                    </div>
-                    <input v-model="settings.imageSync.s3SecretKey" type="password" placeholder="••••••••"
-                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
-                      autocomplete="off" />
-                  </label>
-
-                  <label class="form-control w-full pt-2">
-                    <div class="label">
-                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_s3_bucket') }}</span>
-                    </div>
-                    <input v-model="settings.imageSync.s3Bucket" type="text" placeholder="my-bucket"
-                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
-                      autocomplete="off" />
-                  </label>
-
-                  <!-- Worker URL (optional) -->
-                  <label class="form-control w-full pt-4">
-                    <div class="label">
-                      <span class="font-semibold label-text">{{ $t('app.setting_image_sync_worker_url') }}</span>
-                      <span class="label-text-alt">{{ $t('app.setting_image_sync_worker_url_optional') }}</span>
-                    </div>
-                    <input v-model="settings.imageSync.workerUrl" type="text"
-                      :placeholder="$t('app.setting_image_sync_worker_url_placeholder')"
-                      class="input input-sm lg:input-md input-bordered w-full" @change="handleSaveImageSyncSettings"
-                      autocomplete="off" />
-                  </label>
-
-                  <label class="form-control w-full pt-4">
-                    <button class="btn btn-primary w-full btn-sm !text-sm"
-                      :class="{ 'btn-success': imageSyncTestStatus === 'success', 'btn-error': imageSyncTestStatus === 'failed' }"
-                      @click="handleTestImageSyncConnection"
-                      :disabled="imageSyncTestStatus === 'testing' || !isS3ConfigComplete">
-                      <span class="text-sm" v-if="imageSyncTestStatus === 'idle'">{{
-                        $t('app.setting_image_sync_test_connection') }}</span>
-                      <span v-else-if="imageSyncTestStatus === 'testing'"
-                        class="text-sm loading loading-spinner loading-sm"></span>
-                      <span v-else-if="imageSyncTestStatus === 'success'" class="text-sm">{{
-                        $t('app.setting_image_sync_connected') }}</span>
-                      <span v-else-if="imageSyncTestStatus === 'failed'" class="text-sm">{{
-                        $t('app.setting_image_sync_failed') }}</span>
-                    </button>
-                  </label>
-
-                  <p class="text-xs text-base-content/60 mt-2">
-                    {{ $t('app.setting_image_sync_hint') }}
-                  </p>
-
-                  <div class="h-4"></div>
-                </div>
-              </div>
-
-              <div class="transition-all" v-if="tabIndex == 2">
-
-                <div class="label pt-4">
-                  <span class="font-semibold label-text">{{ $t('app.setting_tools_backup_title') }}</span>
-                </div>
-
-                <ul class="menu bg-base-100 border rounded-md border-neutral p-0 [&_li>*]:rounded-none">
-                  <li @click="handleClickExportNotes">
-                    <span class="w-full flex flex-row justify-between">
-                      {{ $t('app.setting_tools_backup_export') }}
-                      <ChevronRight />
-                    </span>
-                  </li>
-                  <li @click="handleClickImportNotes">
-                    <span class="w-full flex flex-row justify-between">
-                      {{ $t('app.setting_tools_backup_import') }}
-                      <ChevronRight />
-                    </span>
-                  </li>
-                </ul>
-
-                <label class="form-control w-full pt-2">
-                  <div class="label">
-                    <span class="font-semibold label-text">Service Worker</span>
-                  </div>
-                  <button class="btn btn-error" @click="handleClickResetServiceWorker">
-                    {{ $t('app.setting_tools_reset_service_worker_title') }}
-                  </button>
-                </label>
-              </div>
-
-              <div class="transition-all h-[calc(100%_-_40px)] flex justify-center items-center" v-if="tabIndex == 3">
-                <div class="flex flex-col justify-center items-center">
-                  <img :src="'/logo-icon.png'" height="96" width="96" alt="OpenNotas Logo" />
-                  <a class="underline" href="https://opennotas.io">
-                    <h1 class="font-bold text-3xl">{{ $t('app_name') }}</h1>
-                  </a>
-                  <p class="mt-4 text-center text-sm">{{ $t('app.slogan') }}</p>
-                  <!-- <p class="mt-2">{{ $t('app.version') }}: {{ runtimeConfig.public.version }}</p> -->
-                  <!-- <p class="mt-6"><a href="#" class="underline">https://opennotas.io</a></p> -->
-                </div>
-              </div>
-            </div>
-          </div>
+        <div v-if="(tabIndex === 0 && isFontFamilyDirty) || (tabIndex === 2 && isAdapterChanged)"
+          class="shrink-0 border-t border-base-content/15 px-8 py-4 flex items-center justify-end gap-2">
+          <template v-if="tabIndex === 0">
+            <button class="btn btn-sm" @click="handleCancelFontFamily">
+              {{ $t('app.setting_general_font_cancel') }}
+            </button>
+            <button class="btn btn-sm btn-primary" @click="handleSaveFontFamily">
+              {{ $t('app.setting_general_font_save') }}
+            </button>
+          </template>
+          <template v-if="tabIndex === 2">
+            <button class="btn btn-sm" @click="handleCancelAdapterChange">
+              {{ $t('app.setting_sync_adapter_cancel') }}
+            </button>
+            <button class="btn btn-sm btn-primary" @click="handleSaveAdapter">
+              {{ $t('app.setting_sync_adapter_save') }}
+            </button>
+          </template>
+        </div>
         </div>
       </div>
-
-      <!-- <h3 class="font-bold text-lg">{{ $t('app.setting_title') }}</h3> -->
-
-
     </div>
   </dialog>
-</template>
 
-<style lang="postcss">
-.tab-active {
-  @apply !bg-neutral text-white;
-}
-</style>
+  <ModalConfirmImageSyncChange v-if="isShowModalConfirmImageSyncChange" @confirm="handleConfirmImageSyncChange"
+    @close="handleCancelImageSyncChange" />
+
+  <ModalSyncConfig v-if="isShowModalSyncConfig" :value="settings.sync.configuration" @confirm="handleConfirmSyncConfig"
+    @close="handleCloseSyncConfigModal" />
+
+  <ModalImageSyncConfig v-if="isShowModalImageSyncConfig" :s3Config="draftS3Config" :isDirty="isS3ConfigDirty"
+    :isComplete="isS3ConfigComplete" :testStatus="imageSyncTestStatus" @save="handleSaveImageSyncConfigModal"
+    @test="handleTestImageSyncConnection" @close="handleCloseImageSyncConfigModal" />
+</template>

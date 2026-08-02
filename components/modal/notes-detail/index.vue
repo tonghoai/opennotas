@@ -24,8 +24,8 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-notes-detail" class="modal">
-    <div class="modal-box w-5/6 lg:w-[30rem] lg:max-w-3xl border border-neutral">
+  <dialog id="modal-notes-detail" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    <div class="modal-box w-5/6 lg:w-[30rem] lg:max-w-3xl border border-base-content/15">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
@@ -40,7 +40,8 @@ const handleClickClose = () => {
           <p class="mb-1.5 truncate overflow-hidden opacity-65">{{ $t('app.modal_notes_detail_character_count') }}</p>
         </div>
         <div class="col-span-2 text-right">
-          <p class="mb-1.5 truncate overflow-hidden">{{ noteInfo.lastSync && dayjs.unix(noteInfo.lastSync).format('lll') || 'N/A' }}</p>
+          <p class="mb-1.5 truncate overflow-hidden">{{ noteInfo.lastSync && dayjs.unix(noteInfo.lastSync).format('lll')
+            || 'N/A' }}</p>
           <p class="mb-1.5 truncate overflow-hidden">{{ dayjs.unix(noteInfo.updatedAt).format('lll') }}</p>
           <p class="mb-1.5 truncate overflow-hidden">{{ dayjs.unix(noteInfo.createdAt).format('lll') }}</p>
           <p class="mb-1.5 truncate overflow-hidden">{{ wordsCount }}</p>

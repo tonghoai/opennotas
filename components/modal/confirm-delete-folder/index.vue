@@ -16,8 +16,8 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-confirm-delete-folder" class="modal">
-    <div class="modal-box p-4 w-5/6 lg:w-96 lg:p-6 border border-neutral">
+  <dialog id="modal-confirm-delete-folder" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    <div class="modal-box p-4 w-5/6 lg:w-96 lg:p-6 border border-base-content/15">
       <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
       </form>
@@ -28,10 +28,10 @@ const handleClickClose = () => {
         <div class="modal-action">
           <form method="dialog">
             <!-- if there is a button in form, it will close the modal -->
-            <button class="btn btn-sm lg:btn-md mr-2">
+            <button class="btn btn-sm mr-2">
               {{ $t('app.modal_confirm_delete_folder_cancel') }}
             </button>
-            <button class="btn btn-sm lg:btn-md btn-primary" @click="handleConfirm">
+            <button class="btn btn-sm btn-primary" @click="handleConfirm">
               {{ $t('app.modal_confirm_delete_folder_ok') }}
             </button>
           </form>

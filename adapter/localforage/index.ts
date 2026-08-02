@@ -1,4 +1,4 @@
-import type { FolderType, NoteType } from "~/repositories/storage.type";
+import type { FolderType, NoteType, TagType, NoteTagType } from "~/repositories/storage.type";
 import type NotasAdapter from "../adapter";
 
 class LocalForageAdapter implements NotasAdapter {
@@ -17,6 +17,23 @@ class LocalForageAdapter implements NotasAdapter {
   }
 
   async pushNote(note: any): Promise<any> {
+    return {};
+  }
+
+  // tags
+  async pullTags(lastSync: number): Promise<TagType[]> {
+    return [];
+  }
+
+  async pushTag(tag: any): Promise<any> {
+    return {};
+  }
+
+  async pullNoteTags(lastSync: number): Promise<NoteTagType[]> {
+    return [];
+  }
+
+  async pushNoteTag(noteTag: any): Promise<any> {
     return {};
   }
 

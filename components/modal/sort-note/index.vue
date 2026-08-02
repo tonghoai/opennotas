@@ -12,8 +12,8 @@ const handleClickSort = (type: 'createdAt' | 'updatedAt') => {
 </script>
 
 <template>
-  <dialog id="modal-sort-note" class="modal">
-    <div class="modal-box p-0 w-5/6 border border-neutral">
+  <dialog id="modal-sort-note" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    <div class="modal-box p-0 w-5/6 border border-base-content/15">
       <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
         <li class="w-full text-center" @click="() => handleClickSort('createdAt')">
           <a class="w-full flex items-center justify-center gap-2">
