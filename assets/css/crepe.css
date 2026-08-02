@@ -56,22 +56,24 @@
 }
 
 /* Selection */
-.milkdown .editor p::selection,
-.milkdown .editor h1::selection,
-.milkdown .editor h2::selection,
-.milkdown .editor h3::selection,
-.milkdown .editor h4::selection,
-.milkdown .editor h5::selection,
-.milkdown .editor h6::selection,
-.milkdown .editor strong::selection,
-.milkdown .editor em::selection,
-.milkdown .editor del::selection,
-.milkdown .editor code::selection,
-.milkdown .editor blockquote::selection,
-.milkdown .editor li::selection,
-.milkdown .editor a::selection {
+/* opaque color-mix instead of an alpha background: elements with their own
+   background (e.g. inline code chips) would otherwise show through a
+   transparent overlay differently than plain text, making the highlight
+   look uneven across a single selection.
+   ::selection only applies to the element it directly targets, not to
+   descendants by inheritance, so this needs an explicit descendant
+   selector (actual text always lives inside nested h1/p/strong/etc, not
+   as a direct child of .editor) to outrank markdown.css's generic
+   `.ProseMirror ::selection` rule, which otherwise wins here since
+   Crepe's root also carries the shared `.ProseMirror` class. */
+.milkdown .editor::selection,
+.milkdown .editor *::selection {
   color: oklch(var(--p)) !important;
-  background-color: oklch(var(--p) / 0.2) !important;
+  background-color: color-mix(
+    in oklch,
+    oklch(var(--p)) 20%,
+    oklch(var(--b1)) 80%
+  ) !important;
 }
 
 /* Các thẻ h1, h2, h3, h4, h5, h6 */
@@ -105,6 +107,21 @@
 .milkdown .editor .milkdown-code-block .cm-content {
   margin-bottom: 0 !important;
 }
+/* CodeMirror's own selection overlay (used for whitespace/empty-line spans a
+   native ::selection can't cover) inherits an opaque near-black rule meant
+   for the standalone CodeMirror editor (components/editor/codemirror/index.vue,
+   global/unscoped style) — override it here so it matches the code block's own
+   background instead of solid black. The #crepe-editor id anchor is needed to
+   outrank that rule's equal class-count specificity. */
+#crepe-editor .milkdown .editor .milkdown-code-block .cm-selectionBackground,
+#crepe-editor .milkdown .editor .milkdown-code-block .cm-editor ::selection {
+  background-color: color-mix(
+    in oklch,
+    oklch(var(--p)) 20%,
+    var(--crepe-color-surface) 80%
+  ) !important;
+  color: oklch(var(--p)) !important;
+}
 .milkdown .editor .milkdown-code-block .tools .language-button {
   opacity: 1 !important;
 }
@@ -130,12 +147,12 @@
 }
 .image-sync-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   z-index: 20;
   cursor: pointer;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -164,8 +181,8 @@
   animation: sync-badge-spin 1s linear infinite;
 }
 .image-sync-badge svg {
-  width: 18px;
-  height: 18px;
+  width: 32px;
+  height: 32px;
   color: #f59e0b;
 }
 @keyframes sync-badge-spin {
@@ -177,16 +194,105 @@
   }
 }
 
-/* image */
+/* image upload placeholder — Crepe's default is a flat, borderless bar with no
+   affordance that it's an interactive drop/upload zone. Give it an actual
+   dashed dropzone treatment, a circled icon, a pill-shaped upload button, and
+   a primary-colored confirm button, all via daisyui theme tokens so it stays
+   correct in both light/dark themes without extra rules. */
 .milkdown .milkdown-image-block .image-edit {
+  border-radius: 0.75rem !important;
+  padding: 1rem 1.25rem !important;
+  min-height: 72px !important;
+  background: oklch(var(--b1)) !important;
+  border: 1.5px dashed oklch(var(--p) / 0.2) !important;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s !important;
+}
+.milkdown .milkdown-image-block .image-edit:hover {
+  border-color: oklch(var(--p) / 0.4) !important;
+  background: oklch(var(--b2)) !important;
+}
+.milkdown .milkdown-image-block .image-edit .image-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: oklch(var(--p) / 0.08) !important;
+}
+.milkdown .milkdown-image-block .image-edit .image-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+  color: oklch(var(--p) / 0.6) !important;
+  fill: none !important;
+}
+/* .link-importer defaults to flex:1, stretching the real (invisible) text input far past
+   the visible placeholder content. Constrain it to a reasonable width, and push the empty
+   caret's position (via padding-left, since an empty input's caret always renders at its
+   text-align edge regardless of click position) to land right at the start of the "or
+   paste link" hint text — i.e. right after the upload button — since that hint text is
+   meant to read as a placeholder for typing/pasting a link. */
+.milkdown .milkdown-image-block .image-edit .link-importer {
+  flex: 1 1 auto !important;
+  min-width: 200px !important;
+  max-width: 360px !important;
+}
+.milkdown .milkdown-image-block .image-edit .link-importer .link-input-area {
+  text-align: left !important;
+  padding-left: 0 !important;
+}
+/* The 114px offset above is only wanted while the "or paste link" hint overlay is showing
+   (empty link value) — Crepe removes the .placeholder element entirely once the input has a
+   value, so once real text is typed/pasted it should start right at the input's own left
+   edge (flush with where the upload icon/button sit above it), not still be pushed in by the
+   padding meant for the empty-state caret position — otherwise most of the box is wasted
+   padding and the visible text area looks squeezed. */
+.milkdown
+  .milkdown-image-block
+  .image-edit
+  .link-importer:has(.placeholder)
+  .link-input-area {
+  padding-left: 114px !important;
+}
+.milkdown
+  .milkdown-image-block
+  .image-edit
+  .link-importer
+  .placeholder
+  .uploader {
+  padding: 0.375rem 0.75rem !important;
   border-radius: 0.5rem !important;
-  padding: 0.5rem !important;
+  background: oklch(var(--p) / 0.05) !important;
+  border: 1px solid oklch(var(--p) / 0.15) !important;
+  color: oklch(var(--p)) !important;
+  font-weight: 600 !important;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s !important;
+}
+.milkdown
+  .milkdown-image-block
+  .image-edit
+  .link-importer
+  .placeholder
+  .uploader:hover {
+  background: oklch(var(--p) / 0.1) !important;
+  border-color: oklch(var(--p) / 0.3) !important;
+}
+.milkdown .milkdown-image-block .image-edit .link-importer .placeholder .text {
+  color: oklch(var(--p) / 0.45) !important;
+  font-size: 0.8125rem !important;
 }
 .milkdown .milkdown-image-block .image-edit .confirm {
   border-radius: 0.5rem !important;
+  background: oklch(var(--p)) !important;
+  color: oklch(var(--pc)) !important;
 }
-.milkdown .milkdown-image-block .image-edit {
-  border-radius: 0.75rem !important;
+.milkdown .milkdown-image-block .image-edit .confirm:hover {
+  background: oklch(var(--p) / 0.85) !important;
 }
 .milkdown .milkdown-image-block.selected > .image-wrapper::before {
   border-radius: 0.5rem !important;
@@ -234,53 +340,146 @@
   }
 }
 
-/* Link preview */
+/* Link preview / link edit — matched to .milkdown-toolbar's solid primary
+   pill styling: same background/border/radius/shadow, and translucent
+   primary-content squares for icon buttons instead of the default
+   surface/outline look. */
+.milkdown .milkdown-link-preview .link-preview,
+.milkdown .milkdown-link-edit .link-edit {
+  border: 1px solid var(--neutral) !important;
+  background-color: oklch(var(--p)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
 .milkdown .milkdown-link-preview .link-preview {
   height: auto !important;
   padding: 0.5rem !important;
-  border: 1px solid var(--neutral) !important;
+  width: 255px !important;
 }
 .milkdown .milkdown-link-edit .link-edit {
   height: 42px !important;
   /* width: 250px !important; */
   padding: 0.5rem !important;
-  border: 1px solid var(--neutral) !important;
+}
+.milkdown .milkdown-link-preview .link-preview .link-display {
+  color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-link-edit .link-edit .input-area {
+  color: oklch(var(--pc)) !important;
+  caret-color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-link-edit .link-edit .input-area::placeholder {
+  color: oklch(var(--pc) / 0.5) !important;
+}
+.milkdown .milkdown-link-preview .link-preview .link-icon,
+.milkdown .milkdown-link-preview .link-preview .button,
+.milkdown .milkdown-link-edit .link-edit .button {
+  background-color: oklch(var(--pc) / 0.2) !important;
+  border-radius: 0.375rem !important;
+}
+.milkdown .milkdown-link-preview .link-preview .link-icon:hover,
+.milkdown .milkdown-link-preview .link-preview .button:hover,
+.milkdown .milkdown-link-edit .link-edit .button:hover {
+  background-color: oklch(var(--pc) / 0.3) !important;
+}
+.milkdown .milkdown-link-preview .link-preview .link-icon svg,
+.milkdown .milkdown-link-preview .link-preview .button svg,
+.milkdown .milkdown-link-edit .link-edit .button svg {
+  color: oklch(var(--pc)) !important;
+  fill: oklch(var(--pc)) !important;
 }
 
 /* Toolbar */
+/* restyle Crepe's built-in selection popup to match the custom format
+   toolbar (components/toolbar/form-notes-format/index.vue): solid primary
+   background, rounded-lg, shadow-lg, primary-content colored icons on
+   semi-transparent squares instead of the default surface/outline look */
 .milkdown .milkdown-toolbar {
   border: 1px solid var(--neutral) !important;
+  background-color: oklch(var(--p)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+.milkdown .milkdown-toolbar .divider {
+  background: oklch(var(--pc) / 0.2) !important;
+}
+.milkdown .milkdown-toolbar .toolbar-item {
+  background-color: oklch(var(--pc) / 0.2) !important;
+  border-radius: 0.375rem !important;
+}
+.milkdown .milkdown-toolbar .toolbar-item:hover {
+  background-color: oklch(var(--pc) / 0.3) !important;
+}
+.milkdown .milkdown-toolbar .toolbar-item:active,
+.milkdown .milkdown-toolbar .toolbar-item.active {
+  background-color: oklch(var(--pc) / 0.3) !important;
+}
+.milkdown .milkdown-toolbar .toolbar-item svg,
+.milkdown .milkdown-toolbar .toolbar-item.active svg {
+  color: oklch(var(--pc)) !important;
+  fill: oklch(var(--pc)) !important;
 }
 
-/* Slash menu */
+/* Slash menu — matched to .milkdown-toolbar's solid primary pill styling:
+   same background/border/radius/shadow, and translucent primary-content
+   squares for tab/row highlighting instead of the default surface/outline
+   look. */
 .milkdown .milkdown-slash-menu {
   border: 1px solid var(--neutral) !important;
+  background-color: oklch(var(--p)) !important;
+  color: oklch(var(--pc)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
 }
 .milkdown .milkdown-slash-menu .tab-group,
 .milkdown .milkdown-slash-menu .menu-groups {
   padding: 0.5rem !important;
 }
 .milkdown .milkdown-slash-menu .tab-group {
-  border-bottom: 1px solid var(--neutral) !important;
+  border-bottom: 1px solid oklch(var(--pc) / 0.2) !important;
 }
 .milkdown .milkdown-slash-menu .menu-groups {
   max-height: 260px !important;
 }
 .milkdown .milkdown-slash-menu .menu-groups .menu-group + .menu-group::before {
-  background-color: var(--neutral) !important;
+  background-color: oklch(var(--pc) / 0.2) !important;
 }
-.milkdown .milkdown-slash-menu .tab-group ul li.selected {
-  color: oklch(var(--pc)) !important;
+.milkdown .milkdown-slash-menu .menu-groups .menu-group h6 {
+  color: oklch(var(--pc) / 0.6) !important;
 }
-.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover {
-  color: oklch(var(--pc)) !important;
-}
-.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover svg {
-  fill: oklch(var(--pc)) !important;
+.milkdown .milkdown-slash-menu .tab-group ul li {
+  border-radius: 0.375rem !important;
 }
 .milkdown .milkdown-slash-menu .tab-group ul li:hover {
-  /* color: oklch(var(--pc)) !important; */
-  background-color: initial !important;
+  background-color: oklch(var(--pc) / 0.2) !important;
+}
+.milkdown .milkdown-slash-menu .tab-group ul li.selected {
+  background-color: oklch(var(--pc) / 0.3) !important;
+  color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li {
+  border-radius: 0.375rem !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li svg {
+  color: oklch(var(--pc) / 0.7) !important;
+  fill: oklch(var(--pc) / 0.7) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover {
+  background-color: oklch(var(--pc) / 0.2) !important;
+  color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li.active {
+  background-color: oklch(var(--pc) / 0.3) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover svg {
+  color: oklch(var(--pc)) !important;
+  fill: oklch(var(--pc)) !important;
 }
 
 /* Table */
@@ -324,5 +523,8 @@
   border-bottom-right-radius: 0.5rem !important;
 }
 .ͼ1 .cm-lineNumbers .cm-gutterElement {
-  line-height: 2 !important;
+  /* must match .cm-line's real line-height (font-size * 1.5); a mismatch here
+     leaves the line-number's line box taller than its actual row, so the
+     digit sits off-center and its ::selection highlight overflows the row */
+  line-height: 1.5 !important;
 }

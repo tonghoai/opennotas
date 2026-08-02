@@ -24,6 +24,7 @@ import {
   clearPasswordChangeBackup,
   getSettings,
   getAllNotes,
+  buildTagsByNoteId,
   setSettings,
   getActionObject,
   saveActionObject,
@@ -57,6 +58,10 @@ import {
 import Mutex from "~/utils/mutex";
 import { removeMarkdownEscape } from "~/utils/string";
 import { pushMobileBackState, closeMobileBackState, initMobileBackHandler } from "~/utils/mobile-back";
+import { checkAppVersion } from "~/utils/check-app-version";
+import { resetSyncedImages } from "~/services/image";
+import { usePullToRefresh } from "~/utils/pull-to-refresh";
+import Refresh from "~/assets/svg/refresh.svg?component";
 
 const { setLocale } = useI18n();
 const runtimeConfig = useRuntimeConfig();
@@ -90,8 +95,14 @@ onMounted(async () => {
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === 'visible') {
       idleSync(true);
+      checkAppVersion(runtimeConfig.public.buildId);
     }
   });
+
+  checkAppVersion(runtimeConfig.public.buildId);
+  setInterval(() => {
+    checkAppVersion(runtimeConfig.public.buildId);
+  }, 24 * 60 * 60 * 1000);
 
   // document.addEventListener('gesturestart', function (e) {
   //   e.preventDefault();
@@ -186,6 +197,9 @@ const reloadFolder = async (isFirst: boolean = false, focus = true) => {
   activeFolderId.value = (isFirst && (activeFolder === 'bottombar-trash' || activeFolder === 'bottombar-tags')) ? "" : activeFolder || "";
 
   await reloadNotes(focus, isFirst ? false : activeFolder === 'bottombar-trash');
+
+  // Ensure tags list is loaded after reload (fix tags disappearing after app reload)
+  listTagsMenu.value = await loadTags();
 }
 
 // initedApp using for app ready to use
@@ -195,10 +209,7 @@ watch(() => initedApp.value, (newVal) => {
     // delay 1000ms before sync to avoid sync when app is not ready
     setTimeout(() => {
       if (settings.value.sync?.adapter !== 'LocalForage' && navigator.onLine) {
-        // showInfoSnackbar($i18n.t('app.message_sync_init'));
-        isSyncToast.value = true;
-        syncToastMessage.value = $i18n.t('app.message_sync_init');
-        syncToastClass.value = 'info';
+        showInfo($i18n.t('app.message_sync_init'));
       }
 
       idleSync(true, newVal);
@@ -275,11 +286,17 @@ const handleClickUpdateData = async (forcedLevelIndex?: number) => {
   isSyncAll.value = levelIndex === SYNC_LEVELS.length - 1;
   lastPull.value = level.seconds === 0 ? 0 : nowUnix() - level.seconds;
 
-  await pullPush().catch(() => { });
-  isSyncAll.value = false;
-  isSyncingAll.value = false;
-
-  showInfoSnackbar($i18n.t(level.labelKey));
+  try {
+    await pullPush();
+    showSuccess($i18n.t(level.labelKey));
+  } catch (error) {
+    showError($i18n.t(error instanceof NetworkError
+      ? 'app.message_sync_network_offline_error'
+      : 'app.message_sync_internal_error'));
+  } finally {
+    isSyncAll.value = false;
+    isSyncingAll.value = false;
+  }
 
   syncLevel.value = (levelIndex + 1) % SYNC_LEVELS.length;
 
@@ -295,6 +312,7 @@ const handleClickAddFolder = async () => {
   setActionObject('folder', newFolder);
   await updateLastPull(nowUnix());
   listFoldersMenu.value = await loadFolder();
+  showSuccess($i18n.t('app.message_folder_created'));
   handleClickFolderName(newFolder.id);
 };
 const activeFolderId = ref<string>("");
@@ -302,6 +320,10 @@ const activeFolderName = computed(() => {
   const folder = listFoldersMenu.value.find((folder: any) => folder.id === activeFolderId.value);
   return folder?.name || "";
 });
+// Suppresses the notes list entrance animation while the whole list is being replaced by a
+// folder switch (hundreds of <li> mounting/unmounting at once is the main remaining jank source
+// after the data-layer caching fix) — normal single-note inserts (add note) are unaffected.
+const isSwitchingFolder = ref<boolean>(false);
 const handleClickFolderName = async (folderId: string) => {
   navbarTopRef.value?.resetSearchInput();
   toolbarNotesRef.value?.resetSearchInput();
@@ -309,7 +331,10 @@ const handleClickFolderName = async (folderId: string) => {
   isCollapsePanel.value = false;
   setActiveFolder(folderId);
 
-  reloadNotes();
+  isSwitchingFolder.value = true;
+  await reloadNotes();
+  await nextTick();
+  isSwitchingFolder.value = false;
 };
 const isShowModalMenuFolder = ref<boolean>(false);
 const menuFolderKey = ref<number>(0);
@@ -347,6 +372,7 @@ const handleRenameFolderName = async (data: any) => {
   setActionObject('folder', updatedFolder);
   modalChangeFolderNameRef.value?.reset();
   toggleModalChangeFolderName(false, isShowModalChangeFolderName);
+  showSuccess($i18n.t('app.message_folder_renamed'));
 
   reloadFolder();
 }
@@ -359,6 +385,7 @@ const handleReorderFolderName = async (data: any[]) => {
     }
   }
 
+  showSuccess($i18n.t('app.message_folder_reordered'));
   reloadFolder();
 }
 const folderWillDelete = ref<string>("");
@@ -399,7 +426,10 @@ const handleClickBottombarTrash = async () => {
   isCollapsePanel.value = false;
   setActiveFolder('bottombar-trash');
 
+  isSwitchingFolder.value = true;
   listNotes.value = await loadTrashNotes();
+  await nextTick();
+  isSwitchingFolder.value = false;
 
   if (listNotes.value.find((note: any) => note.id === activeNoteId.value)) {
     formNotes.value = await getNoteDetail(activeNoteId.value);
@@ -468,6 +498,7 @@ const tagFormInitial = computed(() => {
   return { name: tag?.name || '', color: tag?.color || '' };
 });
 const handleClickAddTag = () => {
+  toggleModalMenuSidebar(false, isShowModalMenuSidebar);
   tagIdToEdit.value = '';
   toggleModalTagForm(true, isShowModalTagForm);
 }
@@ -480,30 +511,35 @@ const handleClickCloseModalTagForm = () => {
   toggleModalTagForm(false, isShowModalTagForm);
 }
 const handleConfirmTagForm = async (data: { tagId: string; name: string; color: string }) => {
-  if (!data.tagId) {
-    const newTag = await createTag({
-      id: randomUUID(),
-      name: data.name,
-      color: data.color,
-      lastSync: 0,
-      createdAt: nowUnix(),
-      updatedAt: nowUnix(),
-      deletedAt: null,
-    });
-    setActionObject('tag', newTag);
-    showSuccess($i18n.t('app.message_tag_created'));
-  } else {
-    const updatedTag = await updateTag(data.tagId, {
-      name: data.name,
-      color: data.color,
-      updatedAt: nowUnix(),
-    });
-    setActionObject('tag', updatedTag);
-    showSuccess($i18n.t('app.message_tag_updated'));
+  try {
+    if (!data.tagId) {
+      const newTag = await createTag({
+        id: randomUUID(),
+        name: data.name,
+        color: data.color,
+        lastSync: 0,
+        createdAt: nowUnix(),
+        updatedAt: nowUnix(),
+        deletedAt: null,
+      });
+      setActionObject('tag', newTag);
+      showSuccess($i18n.t('app.message_tag_created'));
+    } else {
+      const updatedTag = await updateTag(data.tagId, {
+        name: data.name,
+        color: data.color,
+        updatedAt: nowUnix(),
+      });
+      setActionObject('tag', updatedTag);
+      showSuccess($i18n.t('app.message_tag_updated'));
+    }
+  } catch (err) {
+    console.error(err);
+    showErrorSnackbar(err instanceof Error ? err.message : String(err));
+  } finally {
+    toggleModalTagForm(false, isShowModalTagForm);
+    listTagsMenu.value = await loadTags();
   }
-
-  toggleModalTagForm(false, isShowModalTagForm);
-  listTagsMenu.value = await loadTags();
 }
 
 const tagWillDelete = ref<string>("");
@@ -539,9 +575,13 @@ const handleConfirmDeleteTag = async (tagId: string) => {
 
 const noteIdForTags = ref<string>('');
 const activeNoteTagIds = ref<string[]>([]);
-const handleClickAddNoteToTag = async (noteId: string) => {
+const handleClickAddNoteToTag = async (payload: any) => {
+  const noteId = typeof payload === 'object' ? payload.noteId : payload;
   noteIdForTags.value = noteId;
   activeNoteTagIds.value = (await getNoteTagsByNote(noteId)).map((noteTag: any) => noteTag.tagId);
+
+  // Ensure tags list is loaded (fix race condition on mobile)
+  listTagsMenu.value = await loadTags();
 
   if (isMobile.value) {
     toggleModalMenuNote(false, isShowModalMenuNote);
@@ -549,8 +589,8 @@ const handleClickAddNoteToTag = async (noteId: string) => {
     return;
   }
 
-  const menuNoteEl = document.getElementById('menu-note');
-  const rect = menuNoteEl?.getBoundingClientRect();
+  hideMenuMoveNote();
+  const rect = payload?.rect;
   if (rect) {
     offsetMenuNoteTags({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
   }
@@ -562,14 +602,18 @@ const handleToggleNoteTag = async (tagId: string) => {
     const updated = await removeTagFromNote(noteIdForTags.value, tagId);
     setActionObject('noteTag', updated);
     activeNoteTagIds.value = activeNoteTagIds.value.filter((id: string) => id !== tagId);
+    showSuccess($i18n.t('app.message_tag_removed_from_note'));
   } else {
     const created = await addTagToNote(noteIdForTags.value, tagId);
     setActionObject('noteTag', created);
     activeNoteTagIds.value = [...activeNoteTagIds.value, tagId];
+    showSuccess($i18n.t('app.message_tag_added_to_note'));
   }
 
   if (isTagsMode.value && activeTagId.value) {
     listNotes.value = await loadNotesForActiveTag();
+  } else {
+    listNotes.value = await loadNotes();
   }
 };
 
@@ -590,9 +634,7 @@ const handleClickRetrySync = async () => {
   syncErrorMessage.value = "";
   syncErrorClass.value = "";
 
-  isSyncToast.value = true;
-  syncToastMessage.value = $i18n.t('app.message_sync_init');
-  syncToastClass.value = 'info';
+  showInfo($i18n.t('app.message_sync_init'));
 
   await new Promise(resolve => setTimeout(resolve, 3000));
 
@@ -609,24 +651,35 @@ const loadActiveNote = async () => {
 const loadTrashNotes = async () => {
   return getDeletedNotes($i18n.t('app.list_note_locked_title'), $i18n.t('app.list_note_locked_content'));
 }
+const loadActiveList = async () => {
+  if (activeFolderId.value === 'bottombar-trash') {
+    return loadTrashNotes();
+  }
+  if (isTagsMode.value && activeTagId.value) {
+    return loadNotesForActiveTag();
+  }
+  return loadNotes();
+}
 
 const listNotes = ref<any[]>([]);
 const handleClickAddNote = async () => {
   const newNote = await createNote(activeFolderId.value);
   setActionObject('note', newNote);
   listNotes.value = await loadNotes();
+  showSuccess($i18n.t('app.message_note_created'));
 
   handleClickNote(newNote.id, true, true);
 };
 const handleClickSearch = async (value: string) => {
   if (!value) {
-    listNotes.value = await loadNotes();
+    listNotes.value = await loadActiveList();
     navbarTopRef.value?.searchLoadingDone();
     toolbarNotesRef.value?.searchLoadingDone();
     return;
   }
 
-  const currentNotes = await loadNotes();
+  const currentNotes = await loadActiveList();
+  await ensureFlexSearchReady();
   const result = flexsearch!.search({
     query: value,
     highlight: {
@@ -639,8 +692,9 @@ const handleClickSearch = async (value: string) => {
   });
   // await reloadNotes(false, activeFolderId.value === 'bottombar-trash');
   // listNotes.value = currentNotes.filter((item: any) => result[0]?.result?.includes(item.id));
-  listNotes.value = result[0]?.result.reduce((acc: any[], item: any) => {
+  listNotes.value = (result[0]?.result || []).reduce((acc: any[], item: any) => {
     const currentNote = currentNotes.find((note: any) => note.id === item.id);
+    if (!currentNote) return acc;
     currentNote.highlight = item.highlight;
     acc.push(currentNote);
 
@@ -654,7 +708,7 @@ const handleClickSearch = async (value: string) => {
   }
 }
 const handleClickCancelSearch = async () => {
-  listNotes.value = await loadNotes();
+  listNotes.value = await loadActiveList();
 }
 const activeNoteId = ref<string>("");
 const activeNoteBaseline = ref<{ noteId: string, content: string }>({ noteId: '', content: '' });
@@ -749,17 +803,20 @@ const handleClickDeleteNoteForever = async (noteId: string) => {
   listNotes.value = await loadTrashNotes();
   formNotes.value = {};
   toggleModalMenuNote(false, isShowModalMenuNote);
+  showWarning($i18n.t('app.message_note_deleted_forever'));
 }
 const handleClickPinNote = async (data: any) => {
   toggleModalMenuNote(false, isShowModalMenuNote);
 
+  const isPinning = data.status != 1;
   const updatedNote = await updateNote(data.noteId, {
-    isPinned: data.status == 1 ? 0 : 1,
+    isPinned: isPinning ? 1 : 0,
     updatedAt: nowUnix(),
   });
   setActionObject('note', updatedNote);
 
   listNotes.value = await loadNotes();
+  showSuccess($i18n.t(isPinning ? 'app.message_note_pinned' : 'app.message_note_unpinned'));
 
   // scroll to top id notes-instance
   const notesInstance = document.getElementById('notes-instance');
@@ -803,6 +860,7 @@ const handleClickLockNote = async (data: any) => {
 
   setActionObject('note', updatedNote);
   listNotes.value = await loadNotes();
+  showSuccess($i18n.t('app.message_note_locked'));
 }
 const modalUnlockNotesRef = ref<any>(null);
 const handleUnlockNote = async (data: any) => {
@@ -974,7 +1032,8 @@ const moveNoteFolders = computed(() => {
   return listFoldersMenu.value.filter((folder: any) => folder.id !== '' && folder.id !== note?.folderId);
 });
 const isShowModalMenuNoteTags = ref<boolean>(false);
-const handleClickMoveNote = (noteId: string) => {
+const handleClickMoveNote = (payload: any) => {
+  const noteId = typeof payload === 'object' ? payload.noteId : payload;
   noteIdToMove.value = noteId;
 
   if (isMobile.value) {
@@ -983,8 +1042,8 @@ const handleClickMoveNote = (noteId: string) => {
     return;
   }
 
-  const menuNoteEl = document.getElementById('menu-note');
-  const rect = menuNoteEl?.getBoundingClientRect();
+  hideMenuNoteTags();
+  const rect = payload?.rect;
   if (rect) {
     offsetMenuMoveNote({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom });
   }
@@ -1214,25 +1273,15 @@ const loadNotesWithContent = async (folderId: string) => {
 }
 const listNotesToSearch = ref<any[]>([]);
 let flexsearch: any | null = null;
-onMounted(() => {
-  setTimeout(async () => {
-    listNotesToSearch.value = await loadNotesWithContent(activeFolderId.value);
-    flexsearch = newFlexSearch();
-
-    listNotesToSearch.value.forEach((note: any) => {
-      addToFlexSearch(flexsearch, toRaw(note));
-    });
-  }, 1000);
-});
-watch(() => activeFolderId.value, async () => {
-  await new Promise(resolve => setTimeout(resolve, 500));
+let flexsearchFolderId: string | null = null;
+const ensureFlexSearchReady = async () => {
+  if (flexsearch && flexsearchFolderId === activeFolderId.value) return;
   listNotesToSearch.value = await loadNotesWithContent(activeFolderId.value);
   flexsearch = newFlexSearch();
 
-  listNotesToSearch.value.forEach((note: any) => {
-    addToFlexSearch(flexsearch, toRaw(note));
-  });
-});
+  await Promise.all(listNotesToSearch.value.map((note: any) => addToFlexSearch(flexsearch, toRaw(note))));
+  flexsearchFolderId = activeFolderId.value;
+};
 
 
 // all logic of settings
@@ -1241,11 +1290,15 @@ const handleChangeDefaultEditor = async () => {
 
   reloadFolder();
 }
-const handleSaveSettings = async (data: any) => {
+const handleSaveSettings = async (data: any, options: { silent?: boolean } = {}) => {
   settings.value = data;
   await setSettings(data);
 
   changeFontFamily(data.general?.fontFamily);
+
+  if (!options.silent) {
+    showSuccess($i18n.t('app.message_settings_saved'));
+  }
 }
 const modalSettingRef = ref<any>(null);
 const modalSetPasswordRef = ref<any>(null);
@@ -1261,6 +1314,7 @@ const handleSetPassword = async (data: any) => {
   isPasswordExist.value = true;
   modalSettingRef.value?.closeSetPasswordModal();
   modalSetPasswordRef.value?.reset();
+  showSuccess($i18n.t('app.message_password_set'));
 }
 const isChangingPassword = ref<boolean>(false);
 const handleBeforeUnloadWarning = (e: BeforeUnloadEvent) => {
@@ -1364,6 +1418,11 @@ const handleCloseSetPassword = () => {
   toggleModalSetPassword(false, isShowModalSetPassword);
 }
 const adapterWillChange = ref<string>("");
+// non-null when the pending adapter-change confirmation was triggered by an Import Settings
+// conflict (rather than the manual adapter dropdown) — holds the full imported settings object
+// so handleConfirmChangeAdapter can apply all of it, not just the adapter name
+const pendingImportedSettings = ref<any>(null);
+const isApplyingSyncChange = ref<boolean>(false);
 const handleSaveAdapter = async (adapterName: string) => {
   adapterWillChange.value = adapterName;
   toggleModalConfirmChangeAdapter(true, isShowModalConfirmChangeAdapter);
@@ -1374,37 +1433,55 @@ const handleChangeAdapter = async () => {
 }
 const isShowModalConfirmChangeAdapter = ref<boolean>(false);
 const handleClickCloseModalConfirmChangeAdapter = () => {
+  pendingImportedSettings.value = null;
   toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
 }
 const handleConfirmChangeAdapter = async (e2eeKey: string) => {
-  // automatically export notes if user change adapter
-  await handleExportNotes(true);
+  isApplyingSyncChange.value = true;
+  try {
+    // automatically export notes if user change adapter
+    await handleExportNotes(true, true);
 
-  settings.value.sync.adapter = adapterWillChange.value;
-  await handleChangeAdapter();
-  await handleSaveSettings(settings.value);
+    if (pendingImportedSettings.value) {
+      settings.value = deepMerge(settings.value, pendingImportedSettings.value);
+    } else {
+      settings.value.sync.adapter = adapterWillChange.value;
+    }
+    await handleChangeAdapter();
+    await handleSaveSettings(settings.value, { silent: true });
 
-  if (e2eeKey) {
-    const keyString = atob(e2eeKey);
-    const key = await importKey(keyString);
-    await saveE2EEKey(key);
-    privateKey.value = key;
+    if (e2eeKey) {
+      const keyString = atob(e2eeKey);
+      const key = await importKey(keyString);
+      await saveE2EEKey(key);
+      privateKey.value = key;
 
-    saveTextFile(e2eeKey, 'opennotas-e2ee-key.txt');
+      saveTextFile(e2eeKey, 'opennotas-e2ee-key.txt');
+    }
+
+    const wasImport = !!pendingImportedSettings.value;
+    pendingImportedSettings.value = null;
+
+    // keep the confirm modal open (spinner) through the full pull/push sync below,
+    // so the user sees a continuous "syncing" indicator instead of the modal
+    // closing right before the actual network sync starts
+    await handleClickUpdateData(SYNC_LEVELS.length - 1);
+
+    toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
+    toggleModalConfirmE2eeKey(false, isShowModalConfirmE2eeKey);
+    showSuccess($i18n.t(wasImport ? 'app.message_import_settings' : 'app.message_setting_sync_adapter_saved'));
+  } finally {
+    isApplyingSyncChange.value = false;
   }
-
-  toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
-  showSuccess($i18n.t('app.message_setting_sync_adapter_saved'));
-
-  // trigger 1 time full sync to pull/push all data with the new adapter
-  handleClickUpdateData(SYNC_LEVELS.length - 1);
 }
 const isShowModalConfirmE2eeKey = ref<boolean>(false);
 const handleClickCloseModalConfirmE2eeKey = () => {
+  pendingImportedSettings.value = null;
   toggleModalConfirmE2eeKey(false, isShowModalConfirmE2eeKey);
 }
 const handleConfirmChangeAdapterOnline = async () => {
-  if (adapterWillChange.value === 'LocalForage') {
+  const targetAdapter = pendingImportedSettings.value?.sync?.adapter ?? adapterWillChange.value;
+  if (targetAdapter === 'LocalForage') {
     toggleModalConfirmChangeAdapter(false, isShowModalConfirmChangeAdapter);
     return handleConfirmChangeAdapter('');
   }
@@ -1428,13 +1505,15 @@ const handleClickExportNotes = async () => {
   return handleExportNotes(false);
 }
 
-const handleExportNotes = async (includeLock: boolean) => {
+const handleExportNotes = async (includeLock: boolean, silent = false) => {
   const notes = await getAllNotes();
   const folders = await getFolders($i18n.t('app.list_folder_all'));
   const foldersObject = folders.reduce((acc: any, folder: any) => {
     acc[folder.id] = folder.name;
     return acc;
   }, {});
+  const tagsByNoteId = await buildTagsByNoteId();
+  const allTags = await getTags();
 
   const notesFiltered = notes.filter((note: any) => !note.deleteCompletelyAt);
   const notesReformated = [];
@@ -1446,16 +1525,20 @@ const handleExportNotes = async (includeLock: boolean) => {
 
     const password = await getPassword();
     const folderName = note.folderId ? foldersObject[note.folderId] : "";
+    const noteTags = tagsByNoteId.get(note.id) || [];
     notesReformated.push({
       folderName: folderName,
       content: note.isLocked ? await decryptData(note.content, password) : note.content,
       createdAt: note.createdAt,
       deletedAt: note.deletedAt,
+      tags: noteTags.map((tag: any) => ({ name: tag.name, color: tag.color })),
     });
   }
 
   const dataExport = {
     data: notesReformated,
+    folders: folders.filter((folder: any) => folder.id).map((folder: any) => folder.name),
+    tags: allTags.map((tag: any) => ({ name: tag.name, color: tag.color })),
     metadata: {
       version: runtimeConfig.public.version,
       exportedAt: new Date().toISOString(),
@@ -1463,10 +1546,17 @@ const handleExportNotes = async (includeLock: boolean) => {
   };
   const data = JSON.stringify(dataExport, null, 2);
   saveJsonFile(data, 'opennotas-export-notes.json');
+
+  if (!silent) {
+    showSuccess($i18n.t('app.message_export_notes_success'));
+  }
 }
 const navbarTopRef = ref<any>(null);
 const toolbarNotesRef = ref<any>(null);
 const isShowModalImportNotes = ref<boolean>(false);
+const isImportingNotes = ref<boolean>(false);
+const importNotesProgressCurrent = ref<number>(0);
+const importNotesProgressTotal = ref<number>(0);
 const handleClickCloseModalImportNotes = () => {
   toggleModalImportNotes(false, isShowModalImportNotes);
 }
@@ -1474,61 +1564,105 @@ const handleClickImportNotes = () => {
   toggleModalImportNotes(true, isShowModalImportNotes);
 }
 const handleTriggerImportNotes = async () => {
-  const jsonData: any = await getImportData();
+  isImportingNotes.value = true;
+  importNotesProgressCurrent.value = 0;
+  importNotesProgressTotal.value = 0;
+  try {
+    const jsonData: any = await getImportData();
+    importNotesProgressTotal.value = jsonData.data.length;
 
-  const foldersInJson = jsonData.data.map((note: any) => note.folderName);
-  const foldersInJsonUnique = [...new Set(foldersInJson)];
-  const localFoldersName = listFoldersMenu.value.map((folder: any) => folder.name);
-  for (const folderName of foldersInJsonUnique) {
-    if (!folderName) {
-      continue;
+    const foldersInJson = jsonData.data.map((note: any) => note.folderName);
+    const foldersInJsonUnique = [...new Set([...foldersInJson, ...(jsonData.folders || [])])];
+    const localFoldersName = listFoldersMenu.value.map((folder: any) => folder.name);
+    for (const folderName of foldersInJsonUnique) {
+      if (!folderName) {
+        continue;
+      }
+
+      if (!localFoldersName.includes(folderName)) {
+        const newFolder = await createFolder({
+          id: randomUUID(),
+          name: folderName,
+          lastSync: 0,
+          createdAt: nowUnix(),
+          updatedAt: nowUnix(),
+          deletedAt: null,
+        });
+        setActionObject('folder', newFolder);
+      }
+    }
+    await reloadFolder();
+    const foldersObj = listFoldersMenu.value.reduce((acc: any, folder: any) => {
+      if (folder.id) {
+        acc[folder.name] = folder.id;
+      }
+
+      return acc;
+    }, {});
+
+    const tagsInJson = [...(jsonData.tags || []), ...jsonData.data.flatMap((note: any) => note.tags || [])];
+    const tagNameToColor = new Map<string, string | undefined>();
+    for (const tag of tagsInJson) {
+      if (!tag?.name) continue;
+      if (!tagNameToColor.has(tag.name)) tagNameToColor.set(tag.name, tag.color);
     }
 
-    if (!localFoldersName.includes(folderName)) {
-      const newFolder = await createFolder({
+    const localTags = await getTags();
+    const tagNameToId = new Map<string, string>(localTags.map((tag: any) => [tag.name, tag.id]));
+    for (const [tagName, tagColor] of tagNameToColor) {
+      if (!tagNameToId.has(tagName)) {
+        const newTag = await createTag({
+          id: randomUUID(),
+          name: tagName,
+          color: tagColor,
+          lastSync: 0,
+          createdAt: nowUnix(),
+          updatedAt: nowUnix(),
+          deletedAt: null,
+        });
+        setActionObject('tag', newTag);
+        tagNameToId.set(tagName, newTag.id);
+      }
+    }
+    listTagsMenu.value = await loadTags();
+
+    let i = 0;
+    for (const note of jsonData.data) {
+      const folderId = foldersObj[note.folderName];
+      const newNote = await createNote(folderId, {
         id: randomUUID(),
-        name: folderName,
+        folderId: folderId || "",
+        content: note.content,
+        isLocked: false,
+        isPinned: false,
         lastSync: 0,
         createdAt: nowUnix(),
         updatedAt: nowUnix(),
-        deletedAt: null,
+        deletedAt: note.deletedAt,
+        deleteCompletelyAt: null,
       });
-      setActionObject('folder', newFolder);
+      setActionObject('note', newNote);
+
+      for (const tag of (note.tags || [])) {
+        if (!tag?.name) continue;
+        const tagId = tagNameToId.get(tag.name);
+        if (!tagId) continue;
+        const createdNoteTag = await addTagToNote(newNote.id, tagId);
+        setActionObject('noteTag', createdNoteTag);
+      }
+
+      i++;
+      importNotesProgressCurrent.value = i;
     }
+
+    await reloadFolder();
+
+    toggleModalImportNotes(false, isShowModalImportNotes);
+    showSuccess($i18n.t('app.message_import_notes'));
+    navbarTopRef.value?.closeDrawer();
+  } finally {
+    isImportingNotes.value = false;
   }
-  await reloadFolder();
-  const foldersObj = listFoldersMenu.value.reduce((acc: any, folder: any) => {
-    if (folder.id) {
-      acc[folder.name] = folder.id;
-    }
-
-    return acc;
-  }, {});
-
-  let i = 0;
-  for (const note of jsonData.data) {
-    const folderId = foldersObj[note.folderName];
-    const newNote = await createNote(folderId, {
-      id: randomUUID(),
-      folderId: folderId || "",
-      content: note.content,
-      isLocked: false,
-      isPinned: false,
-      lastSync: 0,
-      createdAt: nowUnix(),
-      updatedAt: nowUnix(),
-      deletedAt: note.deletedAt,
-      deleteCompletelyAt: null,
-    });
-    setActionObject('note', newNote);
-    i++;
-  }
-
-  await reloadFolder();
-
-  toggleModalImportNotes(false, isShowModalImportNotes);
-  showSuccess($i18n.t('app.message_import_notes'));
-  navbarTopRef.value?.closeDrawer();
 }
 const modalExportNotesConfirm = ref<any>(null);
 const handleExportNotesConfirm = async (data: any) => {
@@ -1545,6 +1679,153 @@ const handleExportNotesConfirm = async (data: any) => {
 const handleExportNotesIgnorePassword = async () => {
   return handleExportNotes(false);
 }
+
+const isShowModalExportSettingsConfirm = ref<boolean>(false);
+const modalExportSettingsConfirm = ref<any>(null);
+const isShowModalImportSettings = ref<boolean>(false);
+
+const handleExportSettings = async (includeSensitive: boolean) => {
+  let exportedSettings: any;
+  let encryptedFields: string[] = [];
+  if (includeSensitive) {
+    const password = await getPassword();
+    const encrypted = await encryptSensitiveSettings(settings.value, password);
+    exportedSettings = encrypted.settings;
+    encryptedFields = encrypted.encryptedFields;
+  } else {
+    exportedSettings = sanitizeSettingsForExport(settings.value);
+  }
+  const dataExport = {
+    settings: exportedSettings,
+    encryptedFields,
+    metadata: {
+      version: runtimeConfig.public.version,
+      exportedAt: new Date().toISOString(),
+    }
+  };
+  saveJsonFile(JSON.stringify(dataExport, null, 2), 'opennotas-export-settings.json');
+  showSuccess($i18n.t('app.message_export_settings_success'));
+}
+const handleClickExportSettings = async () => {
+  // if password exist, need to input password to export sensitive connection settings
+  // else, only export settings without connection secrets
+  const password = await getPassword();
+  if (password) {
+    toggleModalExportSettingsConfirm(true, isShowModalExportSettingsConfirm);
+    return;
+  }
+
+  return handleExportSettings(false);
+}
+const handleClickCloseModalExportSettingsConfirm = () => {
+  toggleModalExportSettingsConfirm(false, isShowModalExportSettingsConfirm);
+}
+const handleExportSettingsConfirm = async (data: any) => {
+  const password = await getPassword();
+  const newHashPassword = await hashPassword(data.password);
+  if (password !== newHashPassword) {
+    modalExportSettingsConfirm.value?.showFailedPassword();
+    return;
+  }
+
+  toggleModalExportSettingsConfirm(false, isShowModalExportSettingsConfirm);
+  return handleExportSettings(true);
+}
+const handleExportSettingsIgnorePassword = () => {
+  return handleExportSettings(false);
+}
+
+const handleClickImportSettings = () => {
+  toggleModalImportSettings(true, isShowModalImportSettings);
+}
+const handleClickCloseModalImportSettings = () => {
+  toggleModalImportSettings(false, isShowModalImportSettings);
+}
+const isValidTursoConfig = (configStr: string) => {
+  try {
+    const cfg = JSON.parse(configStr || '{}');
+    return !!cfg.url;
+  } catch {
+    return false;
+  }
+}
+// Warn whenever the imported file touches sync/imageSync at all, regardless of whether the
+// values actually differ from what's currently configured — predictable over clever.
+const detectSyncConflict = (imported: any) => {
+  return !!imported?.sync;
+}
+const detectImageSyncConflict = (imported: any) => {
+  return !!imported?.imageSync;
+}
+
+const isShowModalConfirmImportImageSyncChange = ref<boolean>(false);
+const handleConfirmImportImageSyncChange = async () => {
+  const merged = deepMerge(settings.value, pendingImportedSettings.value);
+  settings.value = merged;
+  await setSettings(merged);
+  changeFontFamily(merged.general?.fontFamily);
+  pendingImportedSettings.value = null;
+  toggleModalConfirmImportImageSyncChange(false, isShowModalConfirmImportImageSyncChange);
+  showSuccess($i18n.t('app.message_import_settings'));
+  await resetSyncedImages();
+}
+const handleCancelImportImageSyncChange = async () => {
+  // drop only the imageSync portion of the import; the rest (general/sync) still applies
+  const { imageSync, ...rest } = pendingImportedSettings.value;
+  const merged = deepMerge(settings.value, rest);
+  settings.value = merged;
+  await setSettings(merged);
+  changeFontFamily(merged.general?.fontFamily);
+  pendingImportedSettings.value = null;
+  toggleModalConfirmImportImageSyncChange(false, isShowModalConfirmImportImageSyncChange);
+}
+
+const handleConfirmImportSettings = async (importedSettings: any) => {
+  toggleModalImportSettings(false, isShowModalImportSettings);
+
+  // if the import would end up pointing at Turso with no usable connection config,
+  // skip the sync portion rather than saving the app into a broken sync state
+  const prospectiveAdapter = importedSettings.sync?.adapter ?? settings.value.sync.adapter;
+  const prospectiveConfig = importedSettings.sync?.configuration ?? settings.value.sync.configuration;
+  if (prospectiveAdapter === 'Turso' && !isValidTursoConfig(prospectiveConfig)) {
+    delete importedSettings.sync;
+    showError($i18n.t('app.message_import_settings_sync_skipped_invalid_config'));
+  }
+
+  const syncConflict = detectSyncConflict(importedSettings);
+  const imageSyncConflict = detectImageSyncConflict(importedSettings);
+
+  if (syncConflict) {
+    pendingImportedSettings.value = importedSettings;
+    adapterWillChange.value = importedSettings.sync?.adapter ?? settings.value.sync.adapter;
+    toggleModalConfirmChangeAdapter(true, isShowModalConfirmChangeAdapter);
+    return;
+  }
+
+  if (imageSyncConflict) {
+    pendingImportedSettings.value = importedSettings;
+    toggleModalConfirmImportImageSyncChange(true, isShowModalConfirmImportImageSyncChange);
+    return;
+  }
+
+  const merged = deepMerge(settings.value, importedSettings);
+  settings.value = merged;
+  await setSettings(merged);
+  changeFontFamily(merged.general?.fontFamily);
+  showSuccess($i18n.t('app.message_import_settings'));
+}
+
+const importAlsoChangesImageSync = computed(() => {
+  return !!pendingImportedSettings.value && detectImageSyncConflict(pendingImportedSettings.value);
+});
+const importMissingImageSyncCredentials = computed(() => {
+  const img = pendingImportedSettings.value?.imageSync;
+  if (!img) return false;
+  const locationChanged = ('s3Endpoint' in img && img.s3Endpoint !== settings.value.imageSync.s3Endpoint) ||
+    ('s3Bucket' in img && img.s3Bucket !== settings.value.imageSync.s3Bucket);
+  const hasNewCredentials = ('s3AccessKey' in img) || ('s3SecretKey' in img);
+  return locationChanged && !hasNewCredentials;
+});
 
 
 // when screen resize, if from desktop to mobile or mobile to desktop
@@ -1641,6 +1922,28 @@ watch(() => settings.value.sync.frequency, (newVal) => {
     }, +newVal * 1000);
   }
 });
+
+// pull-to-refresh on the mobile notes list — mirrors the sidebar "Sync data"
+// action (handleClickUpdateData, rotating sync level). The indicator's icon
+// spins while isSyncingAll is true, just like the desktop sidebar sync icon.
+const ptrIndicatorRef = ref<HTMLElement | null>(null);
+const ptrIconRef = ref<HTMLElement | null>(null);
+watch(() => isSyncingAll.value, (value) => {
+  if (value) {
+    ptrIconRef.value?.classList.add('spin');
+  } else {
+    ptrIconRef.value?.classList.remove('spin');
+  }
+});
+usePullToRefresh({
+  target: () => document.getElementById('notes-instance'),
+  indicator: () => ptrIndicatorRef.value,
+  iconEl: () => ptrIconRef.value,
+  onRefresh: async () => { await handleClickUpdateData(); },
+  isRefreshing: () => isSyncingAll.value || isSyncing.value,
+  enabled: () => isMobile.value,
+});
+
 // by default, if actionObject has data, it will be sync continuously
 // so when user do nothing, idleKey will auto increase to trigger auto sync
 const idleKey = ref<number>(0);
@@ -1662,25 +1965,14 @@ const idleSync = async (immediate = false, initedApp = false) => {
     isSyncing.value = true;
     await pullPush()
       .then(() => {
-        if (immediate && initedApp && settings.value?.sync.adapter !== 'LocalForage') {
-          // showInfoSnackbar($i18n.t('app.message_sync_success'));
-          isSyncToast.value = true;
-          syncToastMessage.value = $i18n.t('app.message_sync_success');
-          syncToastClass.value = 'success';
-          setTimeout(() => {
-            isSyncToast.value = false;
-          }, 3000);
+        if (
+          (immediate && initedApp && settings.value?.sync.adapter !== 'LocalForage') ||
+          isSyncError.value
+        ) {
+          showSuccess($i18n.t('app.message_sync_success'));
         }
 
         // reset message
-        if (isSyncError.value) {
-          isSyncToast.value = true;
-          syncToastMessage.value = $i18n.t('app.message_sync_success');
-          syncToastClass.value = 'success';
-          setTimeout(() => {
-            isSyncToast.value = false;
-          }, 3000);
-        }
         isSyncError.value = false;
         syncErrorMessage.value = "";
         syncErrorClass.value = "";
@@ -1690,14 +1982,17 @@ const idleSync = async (immediate = false, initedApp = false) => {
           isSyncError.value = true;
           syncErrorMessage.value = $i18n.t('app.message_sync_network_offline_error');
           syncErrorClass.value = 'warning';
+          showWarning(syncErrorMessage.value);
         } else if (err instanceof SyncError) {
           isSyncError.value = true;
           syncErrorMessage.value = $i18n.t('app.message_sync_internal_error');
           syncErrorClass.value = 'error';
+          showError(syncErrorMessage.value);
         } else {
           isSyncError.value = true;
           syncErrorMessage.value = $i18n.t('app.message_sync_internal_error');
           syncErrorClass.value = 'error';
+          showError(syncErrorMessage.value);
         }
       });
     isSyncing.value = false;
@@ -1748,10 +2043,6 @@ watch(() => lastPull.value, async (newVal: number) => {
 const isSyncError = ref<boolean>(false);
 const syncErrorMessage = ref<string>("");
 const syncErrorClass = ref<string>("");
-
-const isSyncToast = ref<boolean>(false);
-const syncToastMessage = ref<string>("");
-const syncToastClass = ref<string>("");
 
 const changeThemeColor = () => {
   const metaThemeColor = document.querySelector("meta[name=theme-color]");
@@ -1820,6 +2111,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
         @clickAddFolder="handleClickAddFolder" @clickSwitchEditor="handleClickSwitchEditor" @clickUndo="handleClickUndo"
         @clickRedo="handleClickRedo" @clickSearch="handleClickSearch" @clickCancelSearch="handleClickCancelSearch"
         @clickSetPassword="handleClickSetPassword" @clickImportNotes="handleClickImportNotes"
+        @clickExportSettings="handleClickExportSettings" @triggerImportSettings="handleClickImportSettings"
         @clickMenuSidebar="handleClickMenuSidebar" @clickFormatToolbar="handleClickFormatToolbar"
         @clickPlainText="handleClickPlainText" />
     </div>
@@ -1878,14 +2170,22 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
-      <div id="notes-instance" class="overflow-auto" style="height: calc(100vh - 55px)">
+      <div id="notes-instance" class="overflow-auto relative"
+        style="height: calc(100vh - 55px); overscroll-behavior-y: contain;">
+        <!-- Pull-to-refresh indicator (mobile only) -->
+        <div ref="ptrIndicatorRef"
+          class="absolute left-1/2 -ml-7 w-12 h-12 flex items-center justify-center rounded-full bg-neutral text-neutral-content border border-neutral-content/10 shadow-md pointer-events-none opacity-0 z-1"
+          style="transform: translateY(-160%);">
+          <span ref="ptrIconRef" class="block">
+            <Refresh class="w-6 h-6" />
+          </span>
+        </div>
         <ToolbarNotesSecondBar :sortType="sortType" :isSyncError="isSyncError" :syncErrorClass="syncErrorClass"
-          :syncErrorMessage="syncErrorMessage" :isSyncToast="isSyncToast" :syncToastClass="syncToastClass"
-          :syncToastMessage="syncToastMessage" @clickSort="handleClickSort" @clickRetrySync="handleClickRetrySync" />
+          :syncErrorMessage="syncErrorMessage" @clickSort="handleClickSort" @clickRetrySync="handleClickRetrySync" />
 
         <ListNotes :key="listNotesKey" :listNotes="listNotes" :activeNoteId="activeNoteId"
-          :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" @clickNote="handleClickNote"
-          @rightClickNote="handleRightClickNote" />
+          :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" :animateEntrance="!isSwitchingFolder"
+          @clickNote="handleClickNote" @rightClickNote="handleRightClickNote" />
       </div>
     </div>
 
@@ -1904,7 +2204,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
       <div id="form-editors"
-        class="cursor-text overflow-auto bg-base-100 h-[calc(100vh_-_64px)] lg:h-[calc(100vh_-_80px)]"
+        class="cursor-text overflow-auto bg-base-100 h-[calc(100vh_-_64px_-_28px)] lg:h-[calc(100vh_-_80px_-_28px)]"
         :class="{ 'overflow-x-hidden': isMobile }">
         <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
           :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
@@ -1914,6 +2214,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
           @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleClickCloseModalInsertImage"
           @alertMessage="handleAlertMessage" />
       </div>
+      <ToolbarFormNotesStatus v-if="!formNotes.isLocked" :noteId="formNotes.id" :formNotes="formNotes"
+        :actionObjectKeys="actionObjectKeys" :idPulled="idPulled" />
     </div>
   </div>
 
@@ -1926,8 +2228,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     <MenuNote :key="menuNoteKey" :noteId="activeNoteId" :formNotes="formNotes" @deleteNote="handleClickDeleteNote"
       @pinNote="handleClickPinNote" @lockNote="handleClickLockNote" @copyNote="handleCopyToClipboard"
       @restoreNote="handleClickRestoreNote" @deleteNoteForever="handleClickDeleteNoteForever"
-      @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory"
-      @clickMove="handleClickMoveNote" @clickAddToTag="handleClickAddNoteToTag" />
+      @clickInfo="handleClickFormNotesInfo" @clickHistory="handleClickFormNotesHistory" @clickMove="handleClickMoveNote"
+      @clickAddToTag="handleClickAddNoteToTag" />
   </div>
   <div id="menu-move-note" class="hidden absolute">
     <MenuMoveNote :listFolders="moveNoteFolders" @selectFolder="handleSelectMoveFolder" />
@@ -1957,20 +2259,31 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     @changeDefaultEditor="handleChangeDefaultEditor" @clickExportNotes="handleClickExportNotes"
     @triggerImportNotes="handleTriggerImportNotes" @saveSettings="handleSaveSettings" @saveAdapter="handleSaveAdapter"
     @clickSetPassword="handleClickSetPassword" @closeSetPassword="handleCloseSetPassword"
-    @clickImportNotes="handleClickImportNotes" @closeSetting="handleClickCloseSettings" />
+    @clickImportNotes="handleClickImportNotes" @clickExportSettings="handleClickExportSettings"
+    @triggerImportSettings="handleClickImportSettings" @closeSetting="handleClickCloseSettings" />
   <ModalAlertSetPassword v-if="isShowModalAlertSetPassword" @close="handleClickCloseModalAlertSetPassword" />
   <ModalSetPassword v-if="isShowModalSetPassword" ref="modalSetPasswordRef" :type="isPasswordExist ? 'change' : 'set'"
     :isLoading="isChangingPassword" @confirm="handleConfirmSetPassword" @close="handleCloseSetPassword" />
-  <ModalConfirmChangeAdapter v-if="isShowModalConfirmChangeAdapter" :adapterName="''"
-    :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" @confirm="handleConfirmChangeAdapterOnline"
+  <ModalConfirmChangeAdapter v-if="isShowModalConfirmChangeAdapter" :adapterName="''" :isLoading="isApplyingSyncChange"
+    :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" :fromImport="!!pendingImportedSettings"
+    :alsoImageSync="importAlsoChangesImageSync" @confirm="handleConfirmChangeAdapterOnline"
     @close="handleClickCloseModalConfirmChangeAdapter" />
-  <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" @confirm="handleConfirmChangeAdapter"
+  <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" :isLoading="isApplyingSyncChange" @confirm="handleConfirmChangeAdapter"
     @close="handleClickCloseModalConfirmE2eeKey" />
+  <ModalConfirmImportImageSyncChange v-if="isShowModalConfirmImportImageSyncChange"
+    :missingCredentials="importMissingImageSyncCredentials" @confirm="handleConfirmImportImageSyncChange"
+    @close="handleCancelImportImageSyncChange" />
   <ModalImportNotes v-if="isShowModalImportNotes" @confirm="handleTriggerImportNotes"
-    @close="handleClickCloseModalImportNotes" />
+    @close="handleClickCloseModalImportNotes" :isLoading="isImportingNotes"
+    :progressCurrent="importNotesProgressCurrent" :progressTotal="importNotesProgressTotal" />
   <ModalExportNotesConfirm v-if="isShowModalExportNotesConfirm" ref="modalExportNotesConfirm"
     @confirmPassword="handleExportNotesConfirm" @confirmIgnorePassword="handleExportNotesIgnorePassword"
     @close="handleClickCloseModalExportNotesConfirm" />
+  <ModalImportSettings v-if="isShowModalImportSettings" @confirm="handleConfirmImportSettings"
+    @close="handleClickCloseModalImportSettings" />
+  <ModalExportSettingsConfirm v-if="isShowModalExportSettingsConfirm" ref="modalExportSettingsConfirm"
+    @confirmPassword="handleExportSettingsConfirm" @confirmIgnorePassword="handleExportSettingsIgnorePassword"
+    @close="handleClickCloseModalExportSettingsConfirm" />
   <ModalUnlockNotes v-if="isShowModalUnlockNotes" ref="modalUnlockNotesRef" :noteId="activeNoteId"
     :formNotes="formNotes" @confirmPassword="handleUnlockNote" @close="handleClickCloseModalUnlockNotes" />
   <ModalChangeFolderName v-if="isShowModalChangeFolderName" ref="modalChangeFolderNameRef" :folderId="activeFolderId"

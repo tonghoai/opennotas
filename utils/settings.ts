@@ -26,4 +26,81 @@ function getDefaultSettings() {
   }
 }
 
-export { getDefaultSettings, DEFAULT_IMAGE_PROXY_URL };
+function sanitizeSettingsForExport(settings: any) {
+  const clone = JSON.parse(JSON.stringify(settings));
+  if (clone.sync) delete clone.sync.configuration;
+  if (clone.imageSync) {
+    delete clone.imageSync.s3AccessKey;
+    delete clone.imageSync.s3SecretKey;
+  }
+  return clone;
+}
+
+// Settings fields that hold secrets (S3 credentials, sync connection strings). When an export
+// includes them, they're individually AES-encrypted rather than shipped as plaintext in the
+// downloaded JSON file — encryptedFields records which ones so import can reverse it.
+const SENSITIVE_SETTINGS_FIELDS: [string, string][] = [
+  ['sync', 'configuration'],
+  ['imageSync', 's3AccessKey'],
+  ['imageSync', 's3SecretKey'],
+];
+
+async function encryptSensitiveSettings(settings: any, password: string) {
+  const clone = JSON.parse(JSON.stringify(settings));
+  const encryptedFields: string[] = [];
+  for (const [group, field] of SENSITIVE_SETTINGS_FIELDS) {
+    const value = clone[group]?.[field];
+    if (value) {
+      clone[group][field] = await encryptData(value, password);
+      encryptedFields.push(`${group}.${field}`);
+    }
+  }
+  return { settings: clone, encryptedFields };
+}
+
+// Decrypts each flagged field independently — an older/foreign client can leave a stale
+// `encryptedFields` marker next to a value it wrote in plaintext (it doesn't know the marker
+// exists). Recover that value as-is instead of trying (and failing) to decrypt it: real
+// ciphertext has a distinctive shape (see looksLikeCiphertext), so a value that doesn't match
+// it was never encrypted to begin with. Only genuinely undecryptable ciphertext (wrong/lost
+// key, corruption) falls through to being dropped — that's the one case that can't be
+// recovered client-side, so it must not take down the rest of the settings object either.
+async function decryptSensitiveSettings(settings: any, encryptedFields: string[], password: string) {
+  const clone = JSON.parse(JSON.stringify(settings));
+  for (const path of encryptedFields || []) {
+    const [group, field] = path.split('.');
+    const value = clone[group]?.[field];
+    if (!value) continue;
+    if (!looksLikeCiphertext(value)) {
+      console.warn(`Setting "${path}" is flagged encrypted but isn't valid ciphertext — treating it as plaintext`);
+      continue;
+    }
+    try {
+      clone[group][field] = await decryptData(value, password);
+    } catch (err) {
+      console.warn(`Failed to decrypt setting "${path}", dropping it`, err);
+      delete clone[group][field];
+    }
+  }
+  return clone;
+}
+
+// Drops sensitive fields that can't be decrypted (no local password to unlock them with)
+// instead of importing them as raw ciphertext.
+function stripEncryptedFields(settings: any, encryptedFields: string[]) {
+  const clone = JSON.parse(JSON.stringify(settings));
+  for (const path of encryptedFields || []) {
+    const [group, field] = path.split('.');
+    if (clone[group]) delete clone[group][field];
+  }
+  return clone;
+}
+
+export {
+  getDefaultSettings,
+  DEFAULT_IMAGE_PROXY_URL,
+  sanitizeSettingsForExport,
+  encryptSensitiveSettings,
+  decryptSensitiveSettings,
+  stripEncryptedFields,
+};

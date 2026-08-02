@@ -13,7 +13,7 @@ function newFlexSearch() {
 }
 
 function addToFlexSearch(index: any, data: any) {
-  index.addAsync(data);
+  return index.addAsync(data);
 }
 
 export {

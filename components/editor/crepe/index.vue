@@ -2,8 +2,10 @@
 import { Crepe } from "@milkdown/crepe";
 import { editorViewCtx } from "@milkdown/core";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
+import { splitListItemCommand } from "@milkdown/preset-commonmark";
 import { replaceAll, getMarkdown, $prose } from '@milkdown/utils'
 import { TextSelection, Plugin } from '@milkdown/prose/state'
+import type { Node } from '@milkdown/prose/model'
 import * as Diff from 'diff'
 
 const { $i18n } = useNuxtApp();
@@ -18,9 +20,12 @@ import {
   parseImageUrl,
   getImageMeta,
 } from '~/services/image';
-import { syncImages } from '~/utils/image-sync';
+import { syncImages, isImageSyncing } from '~/utils/image-sync';
+import { ensureCursorBottomMargin } from '~/utils/editor-scroll';
 import cloudUploadSvgRaw from '~/assets/svg/cloud-upload.svg?raw';
 import alertSquareSvgRaw from '~/assets/svg/alert-square-rounded.svg?raw';
+import photoUpSvgRaw from '~/assets/svg/photo-up.svg?raw';
+import subtitlesSvgRaw from '~/assets/svg/subtitles.svg?raw';
 
 const props = defineProps([
   'value',
@@ -49,6 +54,8 @@ let refreshInterval: ReturnType<typeof setInterval> | null = null;
 let isRefreshingBadges = false;
 let imagePasteHandler: ((e: Event) => void) | null = null;
 let imageResizeHandler: ((e: PointerEvent) => void) | null = null;
+let imageEditMouseDownHandler: ((e: MouseEvent) => void) | null = null;
+let imageEditClickSwallowHandler: ((e: MouseEvent) => void) | null = null;
 let isReplacingAll = false;
 
 const toolbarPos = ref<{ x: number; y: number } | null>(null);
@@ -74,6 +81,15 @@ const handleImageUpload = async (file: File): Promise<string> => {
   }
 };
 
+const ALLOWED_IMAGE_SRC_SCHEMES = ['http:', 'https:', 'data:', 'blob:'];
+const isAllowedImageSrc = (src: string): boolean => {
+  try {
+    return ALLOWED_IMAGE_SRC_SCHEMES.includes(new URL(src, window.location.href).protocol);
+  } catch {
+    return false;
+  }
+};
+
 const handleProxyDomURL = async (src: string): Promise<string> => {
   if (isOpenNotasImageUrl(src)) {
     try {
@@ -88,7 +104,7 @@ const handleProxyDomURL = async (src: string): Promise<string> => {
       return src;
     }
   }
-  return src;
+  return isAllowedImageSrc(src) ? src : '';
 };
 
 const createBadgeSvg = (type: 'upload' | 'warning' | 'spinner'): string => {
@@ -217,6 +233,24 @@ const startRefreshInterval = () => {
   refreshInterval = setInterval(refreshSyncBadges, 10_000);
 };
 
+// syncImages() also runs from the app's general background sync (utils/sync.ts, via
+// pullPush/idleSync) — not just from handleManualSync's own badge click. Watching the
+// shared isImageSyncing flag lets badges show the loading spinner for that path too,
+// instead of sitting static on the upload icon for the whole background sync.
+watch(isImageSyncing, (syncing) => {
+  if (syncing) {
+    imageBadgeMap.forEach((badge) => {
+      if (!badge.classList.contains('image-sync-badge--syncing')) {
+        badge.className = 'image-sync-badge image-sync-badge--syncing';
+        badge.innerHTML = createBadgeSvg('spinner');
+        badge.title = $i18n.t('app.image_sync_badge_syncing');
+      }
+    });
+  } else {
+    refreshSyncBadges();
+  }
+});
+
 const stopRefreshInterval = () => {
   if (refreshInterval) {
     clearInterval(refreshInterval);
@@ -271,6 +305,15 @@ onMounted(() => {
       [Crepe.Feature.Latex]: false,
     },
     featureConfigs: {
+      [Crepe.Feature.Cursor]: {
+        // prosemirror-virtual-cursor races with the list-item NodeView's own
+        // requestAnimationFrame-deferred selection fix on every Enter inside a
+        // list, suspected to cause duplicated lines on real mobile
+        // soft-keyboard input (not reproducible via synthetic keydown
+        // testing). Keep the feature enabled (still get the drag/drop
+        // indicator) but disable just the virtual caret.
+        virtual: false,
+      },
       [Crepe.Feature.BlockEdit]: {
         textGroup: {
           label: 'Text Blocks',
@@ -296,8 +339,8 @@ onMounted(() => {
       [Crepe.Feature.ImageBlock]: {
         onUpload: handleImageUpload,
         proxyDomURL: handleProxyDomURL,
-        blockCaptionIcon: '💬',
-        blockImageIcon: '🖼️',
+        blockImageIcon: photoUpSvgRaw,
+        blockCaptionIcon: subtitlesSvgRaw,
       },
     },
     defaultValue: props.value,
@@ -332,6 +375,83 @@ onMounted(() => {
             }
           });
           return changed ? tr : null;
+        },
+      }))
+    );
+
+    // Pressing Enter on an empty list item at the end of the document lifts
+    // it out into a new empty paragraph (ProseMirror's built-in
+    // splitListItem behavior) — but @milkdown/plugin-trailing already
+    // guarantees a trailing empty paragraph exists, and only skips adding
+    // one when it's missing, not when a duplicate now exists. That leaves
+    // two empty paragraphs stacked at the end of the doc. Collapse them
+    // back down to one, keeping the earlier one (where the cursor now is).
+    editor.editor.use(
+      $prose(() => new Plugin({
+        appendTransaction(transactions, _oldState, newState) {
+          if (!transactions.some(t => t.docChanged)) return null;
+
+          const { doc } = newState;
+          if (doc.childCount < 2) return null;
+
+          const isEmptyParagraph = (node: Node) =>
+            node.type.name === 'paragraph' && node.content.size === 0;
+
+          const last = doc.child(doc.childCount - 1);
+          const secondLast = doc.child(doc.childCount - 2);
+          if (!isEmptyParagraph(last) || !isEmptyParagraph(secondLast)) return null;
+
+          const from = doc.content.size - last.nodeSize;
+          const to = doc.content.size;
+          return newState.tr.delete(from, to);
+        },
+      }))
+    );
+
+    // ProseMirror scrolls the selection into view (with no margin) on every
+    // local edit by default, which fights our own eased scroll in
+    // ensureCursorBottomMargin and produces a jump-then-smooth double motion.
+    // Suppressing it here makes our animation the only one that runs.
+    editor.editor.use(
+      $prose(() => new Plugin({
+        props: {
+          handleScrollToSelection: () => true,
+        },
+      }))
+    );
+
+    // On real mobile keyboards, Enter is pressed while the view is still
+    // "composing" (IME), so ProseMirror's keydown handler silently skips the
+    // list-item keymap and the browser's native contenteditable split runs
+    // instead — which the list-item NodeView's DOM diffing then misreads as
+    // a duplicated blank line. beforeinput fires deterministically before
+    // that native mutation regardless of composition state, so intercepting
+    // insertParagraph here and running the same splitListItemCommand the
+    // desktop keymap uses avoids the native-mutation/diff race entirely.
+    // On desktop the keydown handler already prevents this event from ever
+    // firing, so this is a no-op there.
+    editor.editor.use(
+      $prose(() => new Plugin({
+        props: {
+          handleDOMEvents: {
+            beforeinput: (view, event) => {
+              if (event.inputType !== 'insertParagraph') return false;
+
+              const { $from } = view.state.selection;
+              let inListItem = false;
+              for (let d = $from.depth; d > 0; d--) {
+                if ($from.node(d).type.name === 'list_item') {
+                  inListItem = true;
+                  break;
+                }
+              }
+              if (!inListItem) return false;
+
+              event.preventDefault();
+              splitListItemCommand.run();
+              return true;
+            },
+          },
         },
       }))
     );
@@ -382,6 +502,74 @@ onMounted(() => {
 
     document.querySelector('#crepe-editor')
       ?.addEventListener('paste', imagePasteHandler, true);
+
+    // Milkdown's image-block NodeView only claims (stopEvent) clicks landing directly on a
+    // real <input> — a click anywhere else in the empty-state placeholder (the upload
+    // label, the "or paste link" text, the surrounding empty space) is left unclaimed.
+    // ProseMirror sets its NodeSelection (flashing the "selected" overlay) on MOUSEDOWN,
+    // before any 'click' handler ever runs — intercepting only 'click' (as an earlier
+    // version of this did) is always too late: the overlay has already flashed on by the
+    // time 'click' fires. Intercept at 'mousedown' instead, in the capture phase, so
+    // ProseMirror never sees the event at all: open the file picker directly on the
+    // upload label, and just focus the link input for everything else in the placeholder.
+    imageEditMouseDownHandler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Bail out for a mousedown landing directly on a real <input> — Milkdown's own
+      // NodeView already stopEvent's these correctly. This also guards against
+      // re-entrancy: the input?.click() call below dispatches a real, bubbling click
+      // event (not 'mousedown', so it can't loop back into this same listener).
+      if (target instanceof HTMLInputElement) return;
+      // Let the Confirm button (shown once the link input has a value) work natively too —
+      // it isn't part of the empty-state placeholder this handler exists to fix, and
+      // intercepting it here would eat the click Milkdown needs to actually insert the image.
+      if (target.closest('.confirm')) return;
+
+      const editEl = target.closest<HTMLElement>(
+        '.milkdown-image-block .image-edit, .milkdown-image-inline .empty-image-inline'
+      );
+      if (!editEl) return;
+
+      const uploader = target.closest<HTMLLabelElement>('.uploader');
+      if (uploader) {
+        e.preventDefault();
+        e.stopPropagation();
+        const inputId = uploader.getAttribute('for');
+        const input = inputId ? document.getElementById(inputId) as HTMLInputElement | null : null;
+        input?.click();
+        return;
+      }
+
+      const linkInput = editEl.querySelector<HTMLInputElement>('.link-input-area');
+      if (linkInput) {
+        e.preventDefault();
+        e.stopPropagation();
+        linkInput.focus();
+      }
+    };
+    document.querySelector('#crepe-editor')
+      ?.addEventListener('mousedown', imageEditMouseDownHandler, true);
+    // The mousedown handler above already did the real work (focus the link input, or open
+    // the file picker) and stopped the mousedown from reaching ProseMirror. The 'click' that
+    // naturally follows the same physical click still reaches ProseMirror separately, and
+    // its own click handling steals focus back to the editor root — so it also needs
+    // blocking. This must NOT re-run the branch logic above though: for a real click on the
+    // upload label (as opposed to the synthetic one our own input.click() call dispatches,
+    // whose target is the input and already gets skipped by the HTMLInputElement guard), the
+    // target is still the label, so re-running that branch would call input.click() a SECOND
+    // time and open the file picker twice. Just swallow the event instead.
+    imageEditClickSwallowHandler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target instanceof HTMLInputElement) return;
+      if (target.closest('.confirm')) return;
+      const editEl = target.closest<HTMLElement>(
+        '.milkdown-image-block .image-edit, .milkdown-image-inline .empty-image-inline'
+      );
+      if (!editEl) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    document.querySelector('#crepe-editor')
+      ?.addEventListener('click', imageEditClickSwallowHandler, true);
 
     // Dampen image resize speed — Milkdown uses absolute 1:1 position, we use delta × damping
     const RESIZE_DAMPING = 0.4;
@@ -454,10 +642,18 @@ onMounted(() => {
     isLoading.value = false;
 
     editor.on((listener) => {
-      listener.updated(() => {
+      listener.updated((ctx) => {
         if (silent.value) return;
 
         emit('changeContent', editor.getMarkdown());
+
+        const view = ctx.get(editorViewCtx);
+        if (view) ensureCursorBottomMargin(() => view.coordsAtPos(view.state.selection.head));
+      });
+
+      listener.selectionUpdated((ctx) => {
+        const view = ctx.get(editorViewCtx);
+        if (view) ensureCursorBottomMargin(() => view.coordsAtPos(view.state.selection.head));
       });
     });
   }, 250);
@@ -506,6 +702,13 @@ onUnmounted(() => {
     document.querySelector('#crepe-editor')
       ?.removeEventListener('pointerdown', imageResizeHandler as EventListener, true);
     imageResizeHandler = null;
+  }
+  if (imageEditMouseDownHandler || imageEditClickSwallowHandler) {
+    const editorEl = document.querySelector('#crepe-editor');
+    if (imageEditMouseDownHandler) editorEl?.removeEventListener('mousedown', imageEditMouseDownHandler, true);
+    if (imageEditClickSwallowHandler) editorEl?.removeEventListener('click', imageEditClickSwallowHandler, true);
+    imageEditMouseDownHandler = null;
+    imageEditClickSwallowHandler = null;
   }
   editor.destroy();
 });
@@ -677,7 +880,7 @@ defineExpose({
   </div>
 
   <div v-show="!isLoading" id="crepe-editor"
-    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_-_160px)] animate-fade-right animate-duration-100"
+    class="w-full mx-auto outline-none px-2 lg:px-8 pt-6 pb-40 min-h-[calc(100vh_-_160px)] animate-fade-right animate-duration-100"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }">
 
   </div>

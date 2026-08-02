@@ -8,6 +8,7 @@ import Info from '~/assets/svg/info.svg?component';
 import History from '~/assets/svg/history.svg?component';
 import FileMove from '~/assets/svg/file-arrow-right.svg?component';
 import Tag from '~/assets/svg/tag.svg?component';
+import ChevronRight from '~/assets/svg/chevron-right.svg?component';
 
 const props = defineProps([
   'noteId',
@@ -39,11 +40,13 @@ const handleClickInfo = () => {
 const handleClickHistory = () => {
   emit('clickHistory', props.noteId);
 };
-const handleClickMove = () => {
-  emit('clickMove', props.noteId);
+const handleClickMove = (e: MouseEvent) => {
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  emit('clickMove', { noteId: props.noteId, rect });
 };
-const handleClickAddToTag = () => {
-  emit('clickAddToTag', props.noteId);
+const handleClickAddToTag = (e: MouseEvent) => {
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  emit('clickAddToTag', { noteId: props.noteId, rect });
 };
 const handleClickLockNote = (status: number) => {
   emit('lockNote', { noteId: props.noteId, status });
@@ -83,7 +86,7 @@ const handleClickDeleteNoteForever = () => {
     </ul> -->
 
     <ul v-if="!formNotes.deletedAt"
-      class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
+      class="menu bg-base-100 rounded-box w-48 border border-neutral animate-fade-down animate-duration-100">
       <li class="" @click="handleClickPinNote(props.formNotes.isPinned)">
         <a class="flex flex-row items-center gap-3">
           <PinV2 class="w-4 h-4 shrink-0" />
@@ -99,17 +102,23 @@ const handleClickDeleteNoteForever = () => {
         </a>
       </li>
 
-      <li class="" @click.stop="handleClickMove">
-        <a class="flex flex-row items-center gap-3">
-          <FileMove class="w-4 h-4 shrink-0" />
-          <span class="flex items-center justify-center">{{ $t('app.menu_note_move') }}</span>
+      <li class="" @click.stop="handleClickMove($event)">
+        <a class="flex flex-row items-center justify-between gap-3">
+          <span class="flex flex-row items-center gap-3">
+            <FileMove class="w-4 h-4 shrink-0" />
+            <span class="flex items-center justify-center">{{ $t('app.menu_note_move') }}</span>
+          </span>
+          <ChevronRight class="w-3.5 h-3.5 shrink-0" />
         </a>
       </li>
 
-      <li class="" @click.stop="handleClickAddToTag">
-        <a class="flex flex-row items-center gap-3">
-          <Tag class="w-4 h-4 shrink-0" />
-          <span class="flex items-center justify-center">{{ $t('app.menu_note_add_to_tag') }}</span>
+      <li class="" @click.stop="handleClickAddToTag($event)">
+        <a class="flex flex-row items-center justify-between gap-3">
+          <span class="flex flex-row items-center gap-3">
+            <Tag class="w-4 h-4 shrink-0" />
+            <span class="flex items-center justify-center">{{ $t('app.menu_note_add_to_tag') }}</span>
+          </span>
+          <ChevronRight class="w-3.5 h-3.5 shrink-0" />
         </a>
       </li>
 

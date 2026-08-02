@@ -13,7 +13,8 @@ const handleClickFolder = (folderId: string) => {
 </script>
 
 <template>
-  <ul class="menu bg-base-100 rounded-box w-48 border border-neutral animate-fade-down animate-duration-100 max-h-72 flex-nowrap overflow-y-auto">
+  <ul
+    class="menu bg-base-100 rounded-box w-48 border border-neutral animate-fade-down animate-duration-100 max-h-72 flex-nowrap overflow-x-hidden overflow-y-auto">
     <li v-if="!props.listFolders.length" class="menu-title">
       <span>{{ $t('app.modal_move_note_empty') }}</span>
     </li>

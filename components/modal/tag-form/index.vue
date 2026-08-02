@@ -57,6 +57,10 @@ const handleConfirmTagForm = (e: Event) => {
     return;
   }
 
+  // Prevent <form method="dialog"> from closing the dialog automatically,
+  // so the parent can control closing (ensures it works on mobile too)
+  e.preventDefault();
+
   emit('confirm', {
     tagId: props.tagId,
     name: newTagName.value,

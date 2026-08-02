@@ -1,6 +1,7 @@
 import localForage from 'localforage';
 
 import NotasRepository from "./storage";
+import { encryptSensitiveSettings, decryptSensitiveSettings, stripEncryptedFields } from "~/utils/settings";
 import type {
   FolderCreateType,
   FolderType,
@@ -17,6 +18,14 @@ import type {
 } from "./storage.type";
 
 class LocalForageRepository implements NotasRepository {
+  // in-memory cache for full-table reads — any new code path that writes to the
+  // notes/folders/tags/noteTags localForage keys directly (bypassing the create*/update*/delete*
+  // methods below) must also invalidate the matching cache field here.
+  private notesCache: NoteType[] | null = null;
+  private foldersCache: FolderType[] | null = null;
+  private tagsCache: TagType[] | null = null;
+  private noteTagsCache: NoteTagType[] | null = null;
+
   // common
   async get(key: string): Promise<any> {
     return await localForage.getItem(key);
@@ -27,8 +36,10 @@ class LocalForageRepository implements NotasRepository {
 
   // logic
   async getAllFolders(): Promise<FolderType[]> {
+    if (this.foldersCache) return [...this.foldersCache];
     const folders = JSON.parse(await localForage.getItem('folders') || '[]');
-    return folders as FolderType[];
+    this.foldersCache = folders;
+    return [...folders] as FolderType[];
   }
   async getFolders(): Promise<FolderType[]> {
     const folders = await this.getAllFolders();
@@ -46,14 +57,26 @@ class LocalForageRepository implements NotasRepository {
     const newFolder = [data, ...folders];
     await localForage.setItem('folders', JSON.stringify(newFolder));
     await localForage.setItem(`folders-${data.id}`, JSON.stringify(data));
+    this.foldersCache = null;
     return data as FolderType;
   }
   async updateFolder(folderId: string, data: FolderUpdateType): Promise<FolderType> {
     const folders = await this.getAllFolders();
     const folderIndex = folders.findIndex((folder: any) => folder.id === folderId);
+    if (folderIndex < 0) {
+      // folder not found in array — fetch individually and prepend
+      const existing = await this.getFolderDetail(folderId);
+      const merged = { ...existing, ...data } as FolderType;
+      folders.unshift(merged);
+      await localForage.setItem('folders', JSON.stringify(folders));
+      await localForage.setItem(`folders-${folderId}`, JSON.stringify(merged));
+      this.foldersCache = null;
+      return merged;
+    }
     folders[folderIndex] = { ...folders[folderIndex], ...data };
     await localForage.setItem('folders', JSON.stringify(folders));
     await localForage.setItem(`folders-${folderId}`, JSON.stringify(folders[folderIndex]));
+    this.foldersCache = null;
     return folders[folderIndex] as FolderType;
   }
   async deleteFolder(folderId: string): Promise<boolean> {
@@ -61,6 +84,7 @@ class LocalForageRepository implements NotasRepository {
     const newFolders = folders.filter((folder: any) => folder.id !== folderId);
     await localForage.setItem('folders', JSON.stringify(newFolders));
     // await localForage.removeItem(`folders-${folderId}`);
+    this.foldersCache = null;
     return true;
   }
   async getActiveFolder(): Promise<string | null> {
@@ -72,8 +96,10 @@ class LocalForageRepository implements NotasRepository {
   }
 
   async getAllNotes(): Promise<NoteType[]> {
+    if (this.notesCache) return [...this.notesCache];
     const notes = JSON.parse(await localForage.getItem(`notes`) || '[]');
-    return notes as NoteType[];
+    this.notesCache = notes;
+    return [...notes] as NoteType[];
   }
   async getNotes(folderId: string): Promise<NoteType[]> {
     const notes = await this.getAllNotes()
@@ -99,14 +125,26 @@ class LocalForageRepository implements NotasRepository {
     const newNote = [data, ...notes];
     await localForage.setItem('notes', JSON.stringify(newNote));
     await localForage.setItem(`notes-${data.id}`, JSON.stringify(data));
+    this.notesCache = null;
     return data as NoteType;
   }
   async updateNote(noteId: string, data: NoteUpdateType): Promise<NoteType> {
     const notes = JSON.parse(await localForage.getItem(`notes`) || '[]');
     const noteIndex = notes.findIndex((note: any) => note.id === noteId);
+    if (noteIndex < 0) {
+      // note not found in array — fetch individually and prepend
+      const existing = await this.getNoteDetail(noteId);
+      const merged = { ...existing, ...data } as NoteType;
+      notes.unshift(merged);
+      await localForage.setItem('notes', JSON.stringify(notes));
+      await localForage.setItem(`notes-${noteId}`, JSON.stringify(merged));
+      this.notesCache = null;
+      return merged;
+    }
     notes[noteIndex] = { ...notes[noteIndex], ...data };
     await localForage.setItem('notes', JSON.stringify(notes));
     await localForage.setItem(`notes-${noteId}`, JSON.stringify(notes[noteIndex]));
+    this.notesCache = null;
     return notes[noteIndex];
   }
   async deleteNote(noteId: string): Promise<boolean> {
@@ -114,6 +152,7 @@ class LocalForageRepository implements NotasRepository {
     const newNotes = notes.filter((note: any) => note.id !== noteId);
     await localForage.setItem('notes', JSON.stringify(newNotes));
     // await localForage.removeItem(`notes-${noteId}`);
+    this.notesCache = null;
     return true;
   }
   async getNoteHistory(noteId: string): Promise<any[]> {
@@ -168,8 +207,10 @@ class LocalForageRepository implements NotasRepository {
 
   // tags
   async getAllTags(): Promise<TagType[]> {
+    if (this.tagsCache) return [...this.tagsCache];
     const tags = JSON.parse(await localForage.getItem('tags') || '[]');
-    return tags as TagType[];
+    this.tagsCache = tags;
+    return [...tags] as TagType[];
   }
   async getTags(): Promise<TagType[]> {
     const tags = await this.getAllTags();
@@ -183,21 +224,35 @@ class LocalForageRepository implements NotasRepository {
     const newTags = [data, ...tags];
     await localForage.setItem('tags', JSON.stringify(newTags));
     await localForage.setItem(`tags-${data.id}`, JSON.stringify(data));
+    this.tagsCache = null;
     return data as TagType;
   }
   async updateTag(tagId: string, data: TagUpdateType): Promise<TagType> {
     const tags = await this.getAllTags();
     const tagIndex = tags.findIndex((tag: any) => tag.id === tagId);
+    if (tagIndex < 0) {
+      // tag not found in array — fetch from individual key and prepend
+      const existing = await this.getTagDetail(tagId);
+      const merged = { ...existing, ...data } as TagType;
+      tags.unshift(merged);
+      await localForage.setItem('tags', JSON.stringify(tags));
+      await localForage.setItem(`tags-${tagId}`, JSON.stringify(merged));
+      this.tagsCache = null;
+      return merged;
+    }
     tags[tagIndex] = { ...tags[tagIndex], ...data };
     await localForage.setItem('tags', JSON.stringify(tags));
     await localForage.setItem(`tags-${tagId}`, JSON.stringify(tags[tagIndex]));
+    this.tagsCache = null;
     return tags[tagIndex] as TagType;
   }
 
   // note tags (map note <-> tag)
   async getAllNoteTags(): Promise<NoteTagType[]> {
+    if (this.noteTagsCache) return [...this.noteTagsCache];
     const noteTags = JSON.parse(await localForage.getItem('noteTags') || '[]');
-    return noteTags as NoteTagType[];
+    this.noteTagsCache = noteTags;
+    return [...noteTags] as NoteTagType[];
   }
   async getNoteTagsByNote(noteId: string): Promise<NoteTagType[]> {
     const noteTags = await this.getAllNoteTags();
@@ -212,23 +267,67 @@ class LocalForageRepository implements NotasRepository {
     const newNoteTags = [data, ...noteTags];
     await localForage.setItem('noteTags', JSON.stringify(newNoteTags));
     await localForage.setItem(`noteTags-${data.id}`, JSON.stringify(data));
+    this.noteTagsCache = null;
     return data as NoteTagType;
   }
   async updateNoteTag(noteTagId: string, data: Partial<NoteTagType>): Promise<NoteTagType> {
     const noteTags = await this.getAllNoteTags();
     const noteTagIndex = noteTags.findIndex((noteTag: any) => noteTag.id === noteTagId);
+    if (noteTagIndex < 0) {
+      // noteTag not found in array — fetch from individual key and prepend
+      const existing = JSON.parse(await localForage.getItem(`noteTags-${noteTagId}`) || '{}') as NoteTagType;
+      const merged = { ...existing, ...data } as NoteTagType;
+      noteTags.unshift(merged);
+      await localForage.setItem('noteTags', JSON.stringify(noteTags));
+      await localForage.setItem(`noteTags-${noteTagId}`, JSON.stringify(merged));
+      this.noteTagsCache = null;
+      return merged;
+    }
     noteTags[noteTagIndex] = { ...noteTags[noteTagIndex], ...data };
     await localForage.setItem('noteTags', JSON.stringify(noteTags));
     await localForage.setItem(`noteTags-${noteTagId}`, JSON.stringify(noteTags[noteTagIndex]));
+    this.noteTagsCache = null;
     return noteTags[noteTagIndex] as NoteTagType;
   }
 
   // password | settings
+  // Random, device-local key (never exported or synced) used only to keep secrets like S3/sync
+  // credentials out of plaintext in IndexedDB. Deliberately independent of the note-lock
+  // password so it isn't invalidated by a password change and also protects users who haven't
+  // set one — see getSettings/setSettings below.
+  private async getOrCreateSettingsEncryptionKey(): Promise<string> {
+    const existing = await localForage.getItem('settingsEncryptionKey') as string | null;
+    if (existing) return existing;
+
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const key = Array.prototype.map.call(bytes, (x: number) => ('00' + x.toString(16)).slice(-2)).join('');
+    await localForage.setItem('settingsEncryptionKey', key);
+    return key;
+  }
   async getSettings(): Promise<any> {
-    return JSON.parse(await localForage.getItem('settings') || '{}');
+    const raw = JSON.parse(await localForage.getItem('settings') || '{}');
+    if (!raw.encryptedFields?.length) return raw;
+
+    const key = await this.getOrCreateSettingsEncryptionKey();
+    try {
+      const decrypted = await decryptSensitiveSettings(raw, raw.encryptedFields, key);
+      delete decrypted.encryptedFields;
+      return decrypted;
+    } catch (err) {
+      // decryptSensitiveSettings already isolates per-field failures — this only guards
+      // against something unexpected blowing up the whole call, so the rest of settings
+      // (general, sync.adapter, sync.frequency, ...) still loads instead of silently
+      // reverting to defaults.
+      console.warn('Failed to decrypt settings, returning with encrypted fields stripped', err);
+      const stripped = stripEncryptedFields(raw, raw.encryptedFields);
+      delete stripped.encryptedFields;
+      return stripped;
+    }
   }
   async setSettings(data: any): Promise<any> {
-    await localForage.setItem('settings', JSON.stringify(data));
+    const key = await this.getOrCreateSettingsEncryptionKey();
+    const { settings: encrypted, encryptedFields } = await encryptSensitiveSettings(data, key);
+    await localForage.setItem('settings', JSON.stringify({ ...encrypted, encryptedFields }));
     return data;
   }
   async checkPasswordExist(): Promise<boolean> {
@@ -304,6 +403,10 @@ class LocalForageRepository implements NotasRepository {
   // dangerus
   async cleanData(): Promise<boolean> {
     await localForage.clear();
+    this.notesCache = null;
+    this.foldersCache = null;
+    this.tagsCache = null;
+    this.noteTagsCache = null;
     return true;
   }
 }

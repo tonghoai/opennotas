@@ -111,6 +111,18 @@ function toggleModalImportNotes(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-import-notes", isOpen, state);
 }
 
+function toggleModalExportSettingsConfirm(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-export-settings-confirm", isOpen, state);
+}
+
+function toggleModalImportSettings(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-import-settings", isOpen, state);
+}
+
+function toggleModalConfirmImportImageSyncChange(isOpen: boolean, state: Ref<boolean>) {
+  _toggleModal("modal-confirm-import-image-sync-change", isOpen, state);
+}
+
 function toggleModalSettings(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-settings", isOpen, state);
 }
@@ -153,6 +165,9 @@ export {
   toggleModalConfirmE2eeKey,
   toggleModalExportNotesConfirm,
   toggleModalImportNotes,
+  toggleModalExportSettingsConfirm,
+  toggleModalImportSettings,
+  toggleModalConfirmImportImageSyncChange,
   toggleModalSettings,
   toggleModalSetPassword,
   toggleModalInsertLink,

@@ -371,7 +371,18 @@ const insertParaBelowCodeBlock = () => {
 
 const openLink = () => {
   const link = editor.getAttributes('link');
-  window.open(link?.href, '_blank');
+  const href = link?.href;
+  if (!href) return;
+
+  let url: URL;
+  try {
+    url = new URL(href, window.location.href);
+  } catch {
+    return;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  window.open(url.href, '_blank', 'noopener,noreferrer');
 }
 
 </script>

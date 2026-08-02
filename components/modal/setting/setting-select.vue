@@ -17,10 +17,10 @@ const handleSelect = (value: string) => {
 </script>
 
 <template>
-  <div class="dropdown dropdown-end">
-    <div tabindex="0" role="button" class="flex items-center gap-1 cursor-pointer select-none">
-      <span>{{ selectedLabel }}</span>
-      <ChevronRight class="h-3.5 w-3.5 rotate-90 text-base-content/50" />
+  <div class="dropdown dropdown-end min-w-0 max-w-full">
+    <div tabindex="0" role="button" class="flex items-center gap-1 cursor-pointer select-none min-w-0">
+      <span class="truncate">{{ selectedLabel }}</span>
+      <ChevronRight class="h-3.5 w-3.5 rotate-90 text-base-content/50 shrink-0" />
     </div>
     <ul tabindex="0"
       class="dropdown-content menu bg-base-100 rounded-xl z-30 w-52 p-1.5 shadow-lg border border-base-300 mt-2">

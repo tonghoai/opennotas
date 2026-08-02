@@ -6,6 +6,12 @@ import {
   getSyncStats,
 } from '~/services/image';
 
+// Shared with components/editor/crepe/index.vue so the per-image sync badges can show a
+// loading state while syncImages() is actively uploading — not just when the user manually
+// clicks a badge (handleManualSync already tracks that locally), but also for the automatic
+// background sync path (utils/sync.ts calling this same function during pullPush/idleSync).
+export const isImageSyncing = ref(false);
+
 function isS3ConfigValid(settings: any): boolean {
   const cfg = settings?.imageSync;
   return !!(
@@ -55,16 +61,21 @@ async function syncImages(settings: any): Promise<{
   let synced = 0;
   let failed = 0;
 
-  for (const image of pendingImages) {
-    try {
-      const remoteUrl = await adapter.uploadImage(image);
-      await markAsSynced(image.id, remoteUrl);
-      synced++;
-    } catch (error) {
-      console.error(`Failed to sync image ${image.id}:`, error);
-      await markAsFailed(image.id);
-      failed++;
+  isImageSyncing.value = true;
+  try {
+    for (const image of pendingImages) {
+      try {
+        const remoteUrl = await adapter.uploadImage(image);
+        await markAsSynced(image.id, remoteUrl);
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync image ${image.id}:`, error);
+        await markAsFailed(image.id);
+        failed++;
+      }
     }
+  } finally {
+    isImageSyncing.value = false;
   }
 
   return {

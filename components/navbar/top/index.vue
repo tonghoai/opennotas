@@ -3,6 +3,7 @@ import { defineProps, onMounted } from 'vue';
 
 import S3ProxyAdapter from '~/adapter/s3';
 import { resetSyncedImages } from '~/services/image';
+import { hasNewVersion } from '~/utils/check-app-version';
 import { toggleModalMenuEditor } from '~/utils/modal';
 import { useMobileBackToggle } from '~/utils/mobile-back';
 import SettingRow from '../../modal/setting/setting-row.vue';
@@ -66,6 +67,8 @@ const emit = defineEmits([
   'clickMenuSidebar',
   'clickFormatToolbar',
   'clickPlainText',
+  'clickExportSettings',
+  'triggerImportSettings',
 ]);
 
 const { $i18n } = useNuxtApp();
@@ -215,6 +218,11 @@ const handleClickSetPassword = () => {
   emit('clickSetPassword');
 }
 const adapterSelect = ref<string>('');
+// Explicit intent flag: only true once the user actually touches the adapter
+// dropdown. See components/modal/setting/index.vue for the full race-condition
+// explanation this guards against (async settings load racing the drawer mount
+// on mobile, which mounts eagerly at page load rather than on-demand).
+const userEditedAdapter = ref(false);
 
 type S3Config = {
   s3Endpoint: string;
@@ -244,9 +252,11 @@ onMounted(() => {
 const isAdapterChanged = computed(() => adapterSelect.value !== settings.value.sync.adapter);
 const handleSaveAdapter = (e: Event) => {
   emit('saveAdapter', adapterSelect.value);
+  userEditedAdapter.value = false;
 }
 const handleCancelAdapterChange = () => {
   adapterSelect.value = settings.value.sync.adapter;
+  userEditedAdapter.value = false;
 }
 
 const handleChangeLanguage = () => {
@@ -261,6 +271,15 @@ const handleClickExportNotes = () => {
 // import notes
 const handleClickImportNotes = () => {
   emit('clickImportNotes', true);
+}
+
+// export settings
+const handleClickExportSettings = () => {
+  emit('clickExportSettings');
+}
+// import settings
+const handleClickImportSettings = () => {
+  emit('triggerImportSettings');
 }
 
 const handleClickAddFolder = () => {
@@ -401,9 +420,8 @@ const handleSaveImageSyncConfigModal = () => {
 
 const settings = ref<any>(props.settings);
 watch(() => props.settings, (newValue) => {
-  const hasPendingAdapterChange = isAdapterChanged.value;
   settings.value = newValue;
-  if (!hasPendingAdapterChange) {
+  if (!userEditedAdapter.value) {
     adapterSelect.value = settings.value.sync.adapter;
   }
   draftS3Config.value = buildDraft(newValue?.imageSync);
@@ -456,23 +474,27 @@ defineExpose({
           </div>
 
           <div v-if="isShowSearchInput"
-            class="p-2 flex items-center h-12 w-full animate-fade-down animate-duration-200">
-            <div class="relative flex-1 mr-2">
-              <input ref="searchInputRef" type="text" class="input input-sm input-bordered text-base-content w-full"
-                placeholder="" autocomplete="off" name="hidden" v-model="searchInput" />
-              <span v-if="isShowSearchLoading"
-                class="loading loading-spinner loading-sm absolute right-1.5 top-1.5"></span>
-            </div>
+            class="p-2 flex items-center h-12 w-full gap-2 animate-fade-down animate-duration-200">
+            <label class="input input-sm flex-1 flex items-center gap-2 rounded-full border-none bg-base-200">
+              <Search class="w-4 h-4 opacity-50 flex-none" />
+              <input ref="searchInputRef" type="text" class="grow bg-transparent"
+                :placeholder="$t('app.toolbar_note_search_placeholder')" autocomplete="off" name="hidden"
+                v-model="searchInput" />
+              <span v-if="isShowSearchLoading" class="loading loading-spinner loading-xs flex-none"></span>
+            </label>
 
-            <button class="flex-none btn bg-primary text-primary-content btn-sm" @click="handleToggleSearch">
-              <!-- {{ $t('app.toolbar_note_search_cancel') }} -->
-              <X />
+            <button class="flex-none btn btn-ghost btn-circle btn-sm" @click="handleToggleSearch">
+              <X class="w-4 h-4" />
             </button>
           </div>
 
           <div v-if="!isShowSearchInput" class="flex">
             <Search class="press mr-4 cursor-pointer opacity-80" @click="handleToggleSearch" />
-            <Setting class="press cursor-pointer opacity-80" @click="handleClickSetting" />
+            <span class="relative inline-block">
+              <Setting class="press cursor-pointer opacity-80" @click="handleClickSetting" />
+              <span v-if="hasNewVersion"
+                class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-base-100"></span>
+            </span>
           </div>
         </div>
       </div>
@@ -535,12 +557,10 @@ defineExpose({
             </div>
 
             <div class="tabs tabs-bordered w-full">
-              <a class="tab flex-1" :class="{ 'tab-active': !isTagsTabActive }"
-                @click="handleClickFoldersTab">
+              <a class="tab flex-1" :class="{ 'tab-active': !isTagsTabActive }" @click="handleClickFoldersTab">
                 {{ $t('app.tab_folders') }}
               </a>
-              <a class="tab flex-1" :class="{ 'tab-active': isTagsTabActive }"
-                @click="handleClickTagsTab">
+              <a class="tab flex-1" :class="{ 'tab-active': isTagsTabActive }" @click="handleClickTagsTab">
                 {{ $t('app.tab_tags') }}
               </a>
             </div>
@@ -590,6 +610,7 @@ defineExpose({
                 <SettingSelect v-model="settings.general.lang" @update:modelValue="handleChangeLanguage" :options="[
                   { label: $t('app.setting_general_language_vi'), value: 'vi' },
                   { label: $t('app.setting_general_language_en'), value: 'en' },
+                  { label: $t('app.setting_general_language_ru'), value: 'ru' },
                   { label: $t('app.setting_general_language_zhtw'), value: 'zhtw' },
                 ]" />
               </SettingRow>
@@ -620,8 +641,9 @@ defineExpose({
               </SettingRow>
 
               <SettingRow :label="$t('app.setting_general_font_title')">
-                <input v-model="settings.general.fontFamily" type="text" class="input input-sm input-bordered w-40"
-                  @change="handleSaveSettings" autocomplete="off" />
+                <input v-model="settings.general.fontFamily" type="text"
+                  class="input input-sm input-bordered w-full min-w-0" @change="handleSaveSettings"
+                  autocomplete="off" />
               </SettingRow>
             </div>
           </div>
@@ -633,7 +655,8 @@ defineExpose({
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_security_title') }}</h2>
             <div class="">
               <SettingRow :label="$t('app.setting_general_security_title')">
-                <button class="btn rounded-md btn-sm font-normal shadow-none border border-base-content/20"
+                <button
+                  class="btn rounded-md btn-sm font-normal shadow-none border border-base-content/20 truncate max-w-full"
                   @click="handleClickSetPassword">
                   {{ props.isPasswordExist ? $t('app.setting_general_security_change_password') :
                     $t('app.setting_general_security_set_password') }}
@@ -651,18 +674,19 @@ defineExpose({
             <div class="space-y-6">
               <!-- Note Sync -->
               <div class="">
-                <div class="flex items-center justify-between gap-6 py-4">
+                <div class="grid grid-cols-[3fr_2fr] items-center gap-3 py-4">
                   <div class="min-w-0">
                     <p class="font-medium">{{ $t('app.setting_sync_adapter_title') }}</p>
                     <p class="text-xs text-base-content/60 mt-1">
                       {{ $t('app.setting_sync_adapter_description') }}
                       <br /><a href="https://docs.opennotas.io/started/setup-sync" target="_blank"
-                        class="underline text-xs hover:text-primary">{{ $t('app.setting_sync_adapter_setup_guide')
+                        rel="noopener noreferrer" class="underline text-xs hover:text-primary">{{
+                          $t('app.setting_sync_adapter_setup_guide')
                         }}</a>
                     </p>
                   </div>
-                  <div class="shrink-0 flex items-center gap-2">
-                    <SettingSelect v-model="adapterSelect" :options="[
+                  <div class="min-w-0 flex justify-end items-center gap-2">
+                    <SettingSelect v-model="adapterSelect" @update:modelValue="userEditedAdapter = true" :options="[
                       { label: 'LocalForage (Offline)', value: 'LocalForage' },
                       { label: 'Turso (Online)', value: 'Turso' },
                     ]" />
@@ -695,20 +719,23 @@ defineExpose({
                     @change="handleSaveSettings" />
                 </SettingRow>
 
-                <div v-if="settings.imageSync?.enabled" class="flex items-center justify-between gap-6 py-4">
+                <div v-if="settings.imageSync?.enabled" class="grid grid-cols-[3fr_2fr] items-center gap-3 py-4">
                   <div class="min-w-0">
                     <p class="font-medium">{{ $t('app.setting_image_sync_config_title') }}</p>
                     <p class="text-xs text-base-content/60 mt-1">
                       {{ $t('app.setting_image_sync_description') }}
                       <br /><a href="https://docs.opennotas.io/started/setup-sync/s3-storage" target="_blank"
-                        class="underline text-xs hover:text-primary">{{ $t('app.setting_image_sync_setup_guide') }}</a>
+                        rel="noopener noreferrer" class="underline text-xs hover:text-primary">{{
+                          $t('app.setting_image_sync_setup_guide') }}</a>
                     </p>
                   </div>
-                  <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 shrink-0"
-                    @click="handleOpenImageSyncConfigModal">
-                    {{ $t('app.setting_configure_button') }}
-                  </button>
+                  <div class="min-w-0 flex justify-end">
+                    <button type="button"
+                      class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                      @click="handleOpenImageSyncConfigModal">
+                      {{ $t('app.setting_configure_button') }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -724,7 +751,7 @@ defineExpose({
               <div class="">
                 <SettingRow :label="$t('app.setting_tools_backup_export')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
                     @click="handleClickExportNotes">
                     {{ $t('app.setting_tools_backup_export_button') }}
                   </button>
@@ -732,25 +759,48 @@ defineExpose({
 
                 <SettingRow :label="$t('app.setting_tools_backup_import')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
                     @click="handleClickImportNotes">
                     {{ $t('app.setting_tools_backup_import_button') }}
+                  </button>
+                </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_settings_export')"
+                  :description="$t('app.setting_tools_settings_export_description')">
+                  <button type="button"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    @click="handleClickExportSettings">
+                    {{ $t('app.setting_tools_settings_export_button') }}
+                  </button>
+                </SettingRow>
+
+                <SettingRow :label="$t('app.setting_tools_settings_import')">
+                  <button type="button"
+                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    @click="handleClickImportSettings">
+                    {{ $t('app.setting_tools_settings_import_button') }}
                   </button>
                 </SettingRow>
               </div>
 
               <div class="">
                 <SettingRow label="Service Worker">
-                  <button class="btn btn-sm btn-outline btn-error" @click="handleClickResetServiceWorker">
+                  <button class="btn btn-sm btn-outline btn-error truncate max-w-full"
+                    @click="handleClickResetServiceWorker">
                     {{ $t('app.setting_tools_reset_service_worker_title') }}
                   </button>
                 </SettingRow>
 
                 <SettingRow :label="$t('app.setting_tools_force_update_title')"
                   :description="$t('app.setting_tools_force_update_description')">
-                  <button class="btn btn-sm btn-outline btn-error" @click="handleClickForceUpdate">
-                    {{ $t('app.setting_tools_force_update_button') }}
-                  </button>
+                  <div class="relative inline-block max-w-full">
+                    <span v-if="hasNewVersion"
+                      class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-base-100"></span>
+                    <button class="btn btn-sm btn-outline btn-error truncate max-w-full"
+                      @click="handleClickForceUpdate">
+                      {{ $t('app.setting_tools_force_update_button') }}
+                    </button>
+                  </div>
                 </SettingRow>
               </div>
             </div>
