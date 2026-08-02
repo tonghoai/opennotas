@@ -340,17 +340,55 @@
   }
 }
 
-/* Link preview */
+/* Link preview / link edit — matched to .milkdown-toolbar's solid primary
+   pill styling: same background/border/radius/shadow, and translucent
+   primary-content squares for icon buttons instead of the default
+   surface/outline look. */
+.milkdown .milkdown-link-preview .link-preview,
+.milkdown .milkdown-link-edit .link-edit {
+  border: 1px solid var(--neutral) !important;
+  background-color: oklch(var(--p)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
 .milkdown .milkdown-link-preview .link-preview {
   height: auto !important;
   padding: 0.5rem !important;
-  border: 1px solid var(--neutral) !important;
+  width: 255px !important;
 }
 .milkdown .milkdown-link-edit .link-edit {
   height: 42px !important;
   /* width: 250px !important; */
   padding: 0.5rem !important;
-  border: 1px solid var(--neutral) !important;
+}
+.milkdown .milkdown-link-preview .link-preview .link-display {
+  color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-link-edit .link-edit .input-area {
+  color: oklch(var(--pc)) !important;
+  caret-color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-link-edit .link-edit .input-area::placeholder {
+  color: oklch(var(--pc) / 0.5) !important;
+}
+.milkdown .milkdown-link-preview .link-preview .link-icon,
+.milkdown .milkdown-link-preview .link-preview .button,
+.milkdown .milkdown-link-edit .link-edit .button {
+  background-color: oklch(var(--pc) / 0.2) !important;
+  border-radius: 0.375rem !important;
+}
+.milkdown .milkdown-link-preview .link-preview .link-icon:hover,
+.milkdown .milkdown-link-preview .link-preview .button:hover,
+.milkdown .milkdown-link-edit .link-edit .button:hover {
+  background-color: oklch(var(--pc) / 0.3) !important;
+}
+.milkdown .milkdown-link-preview .link-preview .link-icon svg,
+.milkdown .milkdown-link-preview .link-preview .button svg,
+.milkdown .milkdown-link-edit .link-edit .button svg {
+  color: oklch(var(--pc)) !important;
+  fill: oklch(var(--pc)) !important;
 }
 
 /* Toolbar */
@@ -386,35 +424,62 @@
   fill: oklch(var(--pc)) !important;
 }
 
-/* Slash menu */
+/* Slash menu — matched to .milkdown-toolbar's solid primary pill styling:
+   same background/border/radius/shadow, and translucent primary-content
+   squares for tab/row highlighting instead of the default surface/outline
+   look. */
 .milkdown .milkdown-slash-menu {
   border: 1px solid var(--neutral) !important;
+  background-color: oklch(var(--p)) !important;
+  color: oklch(var(--pc)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
 }
 .milkdown .milkdown-slash-menu .tab-group,
 .milkdown .milkdown-slash-menu .menu-groups {
   padding: 0.5rem !important;
 }
 .milkdown .milkdown-slash-menu .tab-group {
-  border-bottom: 1px solid var(--neutral) !important;
+  border-bottom: 1px solid oklch(var(--pc) / 0.2) !important;
 }
 .milkdown .milkdown-slash-menu .menu-groups {
   max-height: 260px !important;
 }
 .milkdown .milkdown-slash-menu .menu-groups .menu-group + .menu-group::before {
-  background-color: var(--neutral) !important;
+  background-color: oklch(var(--pc) / 0.2) !important;
 }
-.milkdown .milkdown-slash-menu .tab-group ul li.selected {
-  color: oklch(var(--pc)) !important;
+.milkdown .milkdown-slash-menu .menu-groups .menu-group h6 {
+  color: oklch(var(--pc) / 0.6) !important;
 }
-.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover {
-  color: oklch(var(--pc)) !important;
-}
-.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover svg {
-  fill: oklch(var(--pc)) !important;
+.milkdown .milkdown-slash-menu .tab-group ul li {
+  border-radius: 0.375rem !important;
 }
 .milkdown .milkdown-slash-menu .tab-group ul li:hover {
-  /* color: oklch(var(--pc)) !important; */
-  background-color: initial !important;
+  background-color: oklch(var(--pc) / 0.2) !important;
+}
+.milkdown .milkdown-slash-menu .tab-group ul li.selected {
+  background-color: oklch(var(--pc) / 0.3) !important;
+  color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li {
+  border-radius: 0.375rem !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li svg {
+  color: oklch(var(--pc) / 0.7) !important;
+  fill: oklch(var(--pc) / 0.7) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover {
+  background-color: oklch(var(--pc) / 0.2) !important;
+  color: oklch(var(--pc)) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li.active {
+  background-color: oklch(var(--pc) / 0.3) !important;
+}
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li.hover svg {
+  color: oklch(var(--pc)) !important;
+  fill: oklch(var(--pc)) !important;
 }
 
 /* Table */
