@@ -7,7 +7,8 @@ const handleClickNewNote = () => emit('clickNewNote');
 
 <template>
   <div class="fixed bottom-6 right-6">
-    <button class="press btn btn btn-primary btn-circle shadow-xl" @click="handleClickNewNote">
+    <button class="press btn btn btn-primary btn-circle shadow-xl" data-ga-event="note_create"
+      @click="handleClickNewNote">
       <Plus />
     </button>
   </div>

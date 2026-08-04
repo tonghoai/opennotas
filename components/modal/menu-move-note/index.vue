@@ -16,12 +16,13 @@ const handleClickFolder = (folderId: string) => {
       <div class="bg-base-100 shadow-sm rounded">
         <div class="text-center text-xs opacity-60 pt-3 pb-1">{{ $t('app.modal_move_note_title') }}</div>
 
-        <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1 max-h-[60vh] overflow-y-auto">
+        <ul
+          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1 max-h-[60vh] overflow-y-auto">
           <li v-if="!props.listFolders.length" class="w-full text-center py-2 opacity-60">
             {{ $t('app.modal_move_note_empty') }}
           </li>
 
-          <li v-for="folder in props.listFolders" :key="folder.id" class="w-full text-center"
+          <li v-for="folder in props.listFolders" :key="folder.id" class="w-full text-center" data-ga-event="note_move"
             @click="handleClickFolder(folder.id)">
             <a class="w-full block text-center truncate">{{ folder.name }}</a>
           </li>

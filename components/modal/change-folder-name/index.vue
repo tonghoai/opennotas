@@ -60,7 +60,7 @@ const handleClickClose = () => {
             <span class="font-semibold label-text">{{ $t('app.modal_change_folder_name_input_title') }}</span>
           </div>
           <input v-model="newFolderName" type="text" class="input input-sm lg:input-md input-bordered w-full"
-            @keydown.enter="handleConfirmNewFolderName" autocomplete="off" autofocus />
+            data-ga-event="folder_rename" @keydown.enter="handleConfirmNewFolderName" autocomplete="off" autofocus />
         </label>
 
         <div class="modal-action">

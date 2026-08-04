@@ -34,7 +34,7 @@ watch(() => props.isSyncing, (value) => {
     <p class="text-md font-semibold text-base-content mr-4">OpenNotas</p>
 
     <button class="btn btn-sm bg-primary text-primary-content flex items-center gap-1 hover:bg-primary/90"
-      @click="handleClickAddFolder">
+      data-ga-event="folder_create" @click="handleClickAddFolder">
       <Plus />
       {{ $t('app.toolbar_folder_add') }}
     </button>

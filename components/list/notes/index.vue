@@ -101,7 +101,8 @@ const rows = computed(() => {
         <div class="w-full lg:p-2 flex justify-between">
           <div class="w-11/12 p-2.5 hover:cursor-pointer lg:bg-base-200 lg:rounded-l-xl"
             :class="{ 'lg:bg-primary lg:text-primary-content lg:rounded-l-xl': activeNoteId === note.id }"
-            @click="handleClickNote(note.id)" @contextmenu="handleRightClickNote($event, note.id)">
+            data-ga-event="note_select" @click="handleClickNote(note.id)"
+            @contextmenu="handleRightClickNote($event, note.id)">
             <div class="w-full font-semibold mb-2 select-none truncate overflow-hidden transition-all"
               :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
               {{ note.title?.trim() || $t('app.list_note_no_title') }}

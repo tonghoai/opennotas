@@ -98,7 +98,8 @@ const handleClickClose = () => {
             <span class="font-semibold label-text">{{ $t('app.modal_tag_form_input_name') }}</span>
           </div>
           <input v-model="newTagName" type="text" class="input input-sm lg:input-md input-bordered w-full"
-            @keydown.enter="handleConfirmTagForm" autocomplete="off" autofocus />
+            :data-ga-event="isEditMode ? 'tag_edit' : 'tag_create'" @keydown.enter="handleConfirmTagForm"
+            autocomplete="off" autofocus />
         </label>
 
         <div class="mt-4">
@@ -125,8 +126,9 @@ const handleClickClose = () => {
           <form method="dialog">
             <!-- if there is a button in form, it will close the modal -->
             <button class="btn btn-sm mr-2">{{ $t('app.modal_tag_form_cancel') }}</button>
-            <button class="btn btn-sm btn-primary" :disabled="!isValidate" @click="handleConfirmTagForm">{{
-              $t('app.modal_tag_form_ok') }}</button>
+            <button class="btn btn-sm btn-primary" :disabled="!isValidate"
+              :data-ga-event="isEditMode ? 'tag_edit' : 'tag_create'" @click="handleConfirmTagForm">{{
+                $t('app.modal_tag_form_ok') }}</button>
           </form>
         </div>
       </div>

@@ -19,7 +19,8 @@ const handleClickFolder = (folderId: string) => {
       <span>{{ $t('app.modal_move_note_empty') }}</span>
     </li>
 
-    <li v-for="folder in props.listFolders" :key="folder.id" @click="handleClickFolder(folder.id)">
+    <li v-for="folder in props.listFolders" :key="folder.id" data-ga-event="note_move"
+      @click="handleClickFolder(folder.id)">
       <a class="flex flex-row items-center gap-3">
         <Folder class="w-4 h-4 shrink-0" />
         <span class="flex items-center justify-center truncate">{{ folder.name }}</span>

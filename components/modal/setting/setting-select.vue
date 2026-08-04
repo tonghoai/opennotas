@@ -4,6 +4,7 @@ import ChevronRight from '../assets/svg/chevron-right.svg?component';
 const props = defineProps<{
   modelValue: string;
   options: { label: string; value: string }[];
+  gaEvent?: string;
 }>();
 
 const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>();
@@ -25,7 +26,8 @@ const handleSelect = (value: string) => {
     <ul tabindex="0"
       class="dropdown-content menu bg-base-100 rounded-xl z-30 w-52 p-1.5 shadow-lg border border-base-300 mt-2">
       <li v-for="opt in options" :key="opt.value">
-        <a class="flex items-center justify-between rounded-lg py-2" @click="handleSelect(opt.value)">
+        <a class="flex items-center justify-between rounded-lg py-2" :data-ga-event="gaEvent" :data-ga-value="opt.value"
+          @click="handleSelect(opt.value)">
           {{ opt.label }}
           <span v-if="opt.value === modelValue" class="text-base-content">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
