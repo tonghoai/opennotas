@@ -272,7 +272,7 @@ const _scrollTo = (elm: Element) => {
               <span class="hidden lg:block text-xs text-base-content/40">·</span>
 
               <a href="/app" target="_blank" rel="noopener noreferrer"
-                class="install-btn btn btn-sm btn-outline rounded-md px-5 hidden lg:flex bg-base-100">
+                class="btn btn-sm btn-outline rounded-md px-5 hidden lg:flex bg-base-100">
                 <Globe />
                 {{ $t('landing.try_web_version') }}
               </a>
