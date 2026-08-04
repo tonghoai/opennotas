@@ -53,9 +53,11 @@ export default defineNuxtConfig({
             // 'unsafe-inline' is required because Nuxt hydrates via an inline <script> whose
             // content differs per render (no static nonce/hash possible from a <meta> tag), and
             // 'unsafe-eval' because Vite's dev HMR runtime relies on it. script-src is still
-            // origin-restricted to self + the pinned cdnjs libraries below, which is what
-            // actually stops an XSS payload from pulling in an arbitrary third-party script.
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com",
+            // origin-restricted to self + the pinned cdnjs libraries below, plus Google Tag
+            // Manager (loaded from utils/gtag.ts in production) and Cloudflare Web Analytics'
+            // beacon (auto-injected at the edge), which is what actually stops an XSS payload
+            // from pulling in an arbitrary third-party script.
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://www.googletagmanager.com https://static.cloudflareinsights.com",
             // Tailwind/inline :style bindings throughout the app rely on inline styles; there's
             // no practical way to hash/nonce every one of them.
             // The app lets users pick a Google Font, loaded dynamically as a <link> stylesheet
