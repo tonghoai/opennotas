@@ -56,12 +56,13 @@ const handleClickDeleteNoteForever = () => {
         <!-- case active notes -->
         <ul v-if="!formNotes.deletedAt"
           class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
-          <li class="w-full text-center" @click="handleClickPinNote(props.formNotes.isPinned)">
+          <li class="w-full text-center" data-ga-event="note_pin_toggle"
+            @click="handleClickPinNote(props.formNotes.isPinned)">
             <a class="w-full block text-center">{{ props.formNotes.isPinned ? $t('app.modal_menu_note_unpin') :
               $t('app.modal_menu_note_pin') }}</a>
           </li>
 
-          <li class="w-full text-center" @click="handleClickCopyNote">
+          <li class="w-full text-center" data-ga-event="note_copy" @click="handleClickCopyNote">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
           </li>
 
@@ -77,20 +78,21 @@ const handleClickDeleteNoteForever = () => {
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_info') }}</a>
           </li>
 
-          <li class="w-full text-center" @click="handleClickHistory">
+          <li class="w-full text-center" data-ga-event="note_history_view" @click="handleClickHistory">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_history') }}</a>
           </li>
 
           <li></li>
 
-          <li class="w-full text-center" @click="handleClickLockNote(props.formNotes.isLocked)">
+          <li class="w-full text-center" data-ga-event="note_lock_toggle"
+            @click="handleClickLockNote(props.formNotes.isLocked)">
             <a class="w-full block text-center">{{ props.formNotes.isLocked ? $t('app.modal_menu_note_unlock') :
               $t('app.modal_menu_note_lock') }}</a>
           </li>
 
           <li></li>
 
-          <li class="text-rose-500 w-full" @click="handleClickDeleteNote">
+          <li class="text-rose-500 w-full" data-ga-event="note_delete" @click="handleClickDeleteNote">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_delete') }}</a>
           </li>
         </ul>
@@ -124,11 +126,11 @@ const handleClickDeleteNoteForever = () => {
         <!-- case deleted notes -->
         <ul v-if="formNotes.deletedAt"
           class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
-          <li class="w-full text-center" @click="handleClickRestoreNote">
+          <li class="w-full text-center" data-ga-event="note_restore" @click="handleClickRestoreNote">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_restore') }}</a>
           </li>
 
-          <li class="w-full text-center" @click="handleClickCopyNote">
+          <li class="w-full text-center" data-ga-event="note_copy" @click="handleClickCopyNote">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
           </li>
 
@@ -138,7 +140,7 @@ const handleClickDeleteNoteForever = () => {
 
           <li></li>
 
-          <li class="text-rose-500 w-full" @click="handleClickDeleteNoteForever">
+          <li class="text-rose-500 w-full" data-ga-event="note_delete_forever" @click="handleClickDeleteNoteForever">
             <a class="w-full block text-center">{{ $t('app.modal_menu_note_delete_forever') }}</a>
           </li>
         </ul>

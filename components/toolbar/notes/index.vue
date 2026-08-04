@@ -52,7 +52,7 @@ defineExpose({
     </label>
 
     <button v-if="!props.hideAddButton" class="btn btn-sm bg-primary text-primary-content flex items-center gap-1 hover:bg-primary/90"
-      @click="handleClickAddNote">
+      data-ga-event="note_create" @click="handleClickAddNote">
       <Plus />
       {{ $t('app.toolbar_note_add') }}
     </button>

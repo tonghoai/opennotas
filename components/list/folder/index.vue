@@ -59,10 +59,11 @@ const onEnd = () => {
           <div class="flex flex-row justify-between rounded-xl w-full active:!bg-neutral active:!text-neutral-content"
             :class="{ 'bg-primary text-primary-content hover:bg-primary': activeFolderId === folder.id, 'bg-warning text-warning-content': futureIndex && (futureIndex === folder.id), 'fade-warning-animation': onMoveFolder && (onMoveFolder === folder.id) }"
             :id="'folder-' + folder.id">
-            <div class="flex items-center gap-4 w-5/6">
+            <div class="flex items-center gap-4 w-5/6" data-ga-event="folder_select">
               <div class="w-6 h-6">
                 <div class="avatar placeholder">
-                  <div class="bg-primary text-neutral-content w-6 h-6 rounded-full" :class="{ 'bg-primary-content text-primary': activeFolderId === folder.id }">
+                  <div class="bg-primary text-neutral-content w-6 h-6 rounded-full"
+                    :class="{ 'bg-primary-content text-primary': activeFolderId === folder.id }">
                     <span class="text-sm font-semibold">{{ folder.name.charAt(0) }}</span>
                   </div>
                 </div>
@@ -72,7 +73,8 @@ const onEnd = () => {
                 {{ folder.name }}
               </span>
             </div>
-            <div v-if="!isCollapseFolder" class="more-tools" @click.stop="handleRightClickFolderName($event, folder.id)">
+            <div v-if="!isCollapseFolder" class="more-tools"
+              @click.stop="handleRightClickFolderName($event, folder.id)">
               <MoreHorizontal class="press w-3 h-3 opacity-80" />
             </div>
           </div>

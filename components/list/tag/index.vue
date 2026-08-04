@@ -25,8 +25,7 @@ const handleRightClickTagName = (e: any, tagId: string) => {
 
 <template>
   <ul class="menu block w-full p-2 transition-all h-[calc(100vh_-_254px)] overflow-auto lg:h-full lg:overflow-auto">
-    <li v-if="!props.listTags.length" class="menu-items w-full py-0.5 cursor-pointer"
-      @click="emit('clickAddTag')">
+    <li v-if="!props.listTags.length" class="menu-items w-full py-0.5 cursor-pointer" @click="emit('clickAddTag')">
       <div class="flex flex-row justify-between rounded-xl w-full">
         <div class="flex items-center gap-4 w-5/6">
           <span
@@ -40,11 +39,12 @@ const handleRightClickTagName = (e: any, tagId: string) => {
       </div>
     </li>
 
-    <li v-for="tag in props.listTags" :key="tag.id" class="menu-items w-full py-0.5 animate-fade-right animate-duration-100"
+    <li v-for="tag in props.listTags" :key="tag.id"
+      class="menu-items w-full py-0.5 animate-fade-right animate-duration-100"
       @contextmenu="handleRightClickTagName($event, tag.id)" @click="handleClickTagName($event, tag.id)">
       <div class="flex flex-row justify-between rounded-xl w-full active:!bg-neutral active:!text-neutral-content"
         :class="{ 'bg-primary text-primary-content hover:bg-primary': activeTagId === tag.id }" :id="'tag-' + tag.id">
-        <div class="flex items-center gap-4 w-5/6">
+        <div class="flex items-center gap-4 w-5/6" data-ga-event="tag_select">
           <span class="w-6 h-6 rounded-full shrink-0" :style="{ backgroundColor: tag.color || '#94a3b8' }"></span>
           <span v-if="!isCollapseFolder" class="truncate overflow-hidden tag-name"
             :class="{ 'text-warning-sync': props.actionObjectKeys?.includes(tag.id) }" :tagId="tag.id">

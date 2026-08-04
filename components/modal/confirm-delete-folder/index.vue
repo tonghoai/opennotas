@@ -31,7 +31,7 @@ const handleClickClose = () => {
             <button class="btn btn-sm mr-2">
               {{ $t('app.modal_confirm_delete_folder_cancel') }}
             </button>
-            <button class="btn btn-sm btn-primary" @click="handleConfirm">
+            <button class="btn btn-sm btn-primary" data-ga-event="folder_delete" @click="handleConfirm">
               {{ $t('app.modal_confirm_delete_folder_ok') }}
             </button>
           </form>

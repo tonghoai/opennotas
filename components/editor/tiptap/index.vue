@@ -501,7 +501,7 @@ const openLink = () => {
       </div>
     </bubble-menu>
 
-    <div class="relative h-full animate-fade-right animate-duration-100">
+    <div id="tiptap-editor" class="relative h-full animate-fade-right animate-duration-100">
       <editor-content :editor="editor" />
 
       <div v-if="props.isShowFormatToolbar" class="sticky bottom-16 left-0 w-fit max-w-screen-md mx-auto">

@@ -23,7 +23,7 @@ const handleToggle = (tagId: string) => {
             {{ $t('app.menu_note_tags_empty') }}
           </li>
 
-          <li v-for="tag in props.listTags" :key="tag.id" class="w-full" @click.stop="handleToggle(tag.id)">
+          <li v-for="tag in props.listTags" :key="tag.id" class="w-full" data-ga-event="note_tag_toggle" @click.stop="handleToggle(tag.id)">
             <a class="w-full flex flex-row items-center justify-start gap-3">
               <input type="checkbox" class="checkbox checkbox-sm" :checked="props.noteTagIds.includes(tag.id)"
                 @click.stop="handleToggle(tag.id)" />

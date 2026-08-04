@@ -353,16 +353,17 @@ const handleSaveImageSyncConfigModal = () => {
             <!-- general settings -->
             <div v-if="tabIndex === 0" class="divide-y divide-base-content/10">
               <SettingRow :label="$t('app.setting_general_language_title')">
-                <SettingSelect v-model="settings.general.lang" @update:modelValue="handleChangeLanguage" :options="[
-                  { label: $t('app.setting_general_language_vi'), value: 'vi' },
-                  { label: $t('app.setting_general_language_en'), value: 'en' },
-                  { label: $t('app.setting_general_language_ru'), value: 'ru' },
-                  { label: $t('app.setting_general_language_zhtw'), value: 'zhtw' },
-                ]" />
+                <SettingSelect v-model="settings.general.lang" gaEvent="settings_language_change"
+                  @update:modelValue="handleChangeLanguage" :options="[
+                    { label: $t('app.setting_general_language_vi'), value: 'vi' },
+                    { label: $t('app.setting_general_language_en'), value: 'en' },
+                    { label: $t('app.setting_general_language_ru'), value: 'ru' },
+                    { label: $t('app.setting_general_language_zhtw'), value: 'zhtw' },
+                  ]" />
               </SettingRow>
 
               <SettingRow :label="$t('app.setting_general_theme_title')">
-                <SettingSelect v-model="$colorMode.preference" :options="[
+                <SettingSelect v-model="$colorMode.preference" gaEvent="settings_theme_change" :options="[
                   { label: $t('app.setting_general_theme_system'), value: 'system' },
                   { label: $t('app.setting_general_theme_light'), value: 'light' },
                   { label: $t('app.setting_general_theme_dark'), value: 'dark' },
@@ -370,8 +371,8 @@ const handleSaveImageSyncConfigModal = () => {
               </SettingRow>
 
               <SettingRow :label="$t('app.setting_general_default_editor_title')">
-                <SettingSelect v-model="settings.general.defaultEditor" @update:modelValue="handleChangeDefaultEditor"
-                  :options="[
+                <SettingSelect v-model="settings.general.defaultEditor" gaEvent="settings_editor_change"
+                  @update:modelValue="handleChangeDefaultEditor" :options="[
                     { label: $t('app.setting_general_default_editor_tiptap'), value: 'Tiptap' },
                     { label: $t('app.setting_general_default_editor_codemirror'), value: 'CodeMirror' },
                     { label: 'Crepe', value: 'Crepe' },
@@ -379,8 +380,8 @@ const handleSaveImageSyncConfigModal = () => {
               </SettingRow>
 
               <SettingRow :label="$t('app.setting_general_editor_view_title')">
-                <SettingSelect v-model="settings.general.editorView" @update:modelValue="handleChangeEditorView"
-                  :options="[
+                <SettingSelect v-model="settings.general.editorView" gaEvent="settings_editor_view_change"
+                  @update:modelValue="handleChangeEditorView" :options="[
                     { label: $t('app.setting_general_editor_view_full'), value: 'full' },
                     { label: $t('app.setting_general_editor_view_compact'), value: 'compact' },
                   ]" />
@@ -396,7 +397,7 @@ const handleSaveImageSyncConfigModal = () => {
             <div v-if="tabIndex === 1" class="divide-y divide-base-content/10">
               <SettingRow :label="$t('app.setting_general_security_title')">
                 <button class="btn rounded-md btn-sm font-normal shadow-none border border-base-content/20"
-                  @click="handleClickSetPassword">
+                  data-ga-event="settings_password_open" @click="handleClickSetPassword">
                   {{ props.isPasswordExist ? $t('app.setting_general_security_change_password') :
                     $t('app.setting_general_security_set_password') }}
                 </button>
@@ -427,19 +428,20 @@ const handleSaveImageSyncConfigModal = () => {
                 </div>
 
                 <SettingRow v-if="adapterSelect !== 'LocalForage'" :label="$t('app.setting_sync_sync_frequency_title')">
-                  <SettingSelect v-model="settings.sync.frequency" @update:modelValue="handleSaveSettings" :options="[
-                    { label: `5 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '5' },
-                    { label: `10 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '10' },
-                    { label: `15 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '15' },
-                    { label: `30 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '30' },
-                    { label: `60 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '60' },
-                  ]" />
+                  <SettingSelect v-model="settings.sync.frequency" gaEvent="settings_sync_frequency_change"
+                    @update:modelValue="handleSaveSettings" :options="[
+                      { label: `5 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '5' },
+                      { label: `10 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '10' },
+                      { label: `15 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '15' },
+                      { label: `30 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '30' },
+                      { label: `60 ${$t('app.setting_sync_sync_frequency_unit')}`, value: '60' },
+                    ]" />
                 </SettingRow>
 
                 <SettingRow v-if="adapterSelect !== 'LocalForage'" :label="$t('app.setting_sync_config_title')">
                   <button type="button"
                     class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
-                    @click="handleOpenSyncConfigModal">
+                    data-ga-event="settings_sync_config_save" @click="handleOpenSyncConfigModal">
                     {{ $t('app.setting_configure_button') }}
                   </button>
                 </SettingRow>
@@ -449,7 +451,7 @@ const handleSaveImageSyncConfigModal = () => {
               <div class="divide-y divide-base-content/10">
                 <SettingRow :label="$t('app.setting_image_sync_enable')">
                   <input type="checkbox" v-model="settings.imageSync.enabled" class="toggle"
-                    @change="handleSaveSettings" />
+                    data-ga-event="settings_image_sync_toggle" @change="handleSaveSettings" />
                 </SettingRow>
 
                 <div v-if="settings.imageSync?.enabled" class="flex items-center justify-between gap-6 py-4">
@@ -464,7 +466,7 @@ const handleSaveImageSyncConfigModal = () => {
                   </div>
                   <button type="button"
                     class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 shrink-0"
-                    @click="handleOpenImageSyncConfigModal">
+                    data-ga-event="settings_image_sync_save" @click="handleOpenImageSyncConfigModal">
                     {{ $t('app.setting_configure_button') }}
                   </button>
                 </div>
@@ -477,7 +479,7 @@ const handleSaveImageSyncConfigModal = () => {
                 <SettingRow :label="$t('app.setting_tools_backup_export')">
                   <button type="button"
                     class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
-                    @click="handleClickExportNotes">
+                    data-ga-event="settings_export_notes" @click="handleClickExportNotes">
                     {{ $t('app.setting_tools_backup_export_button') }}
                   </button>
                 </SettingRow>
@@ -485,7 +487,7 @@ const handleSaveImageSyncConfigModal = () => {
                 <SettingRow :label="$t('app.setting_tools_backup_import')">
                   <button type="button"
                     class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
-                    @click="handleClickImportNotes">
+                    data-ga-event="settings_import_notes" @click="handleClickImportNotes">
                     {{ $t('app.setting_tools_backup_import_button') }}
                   </button>
                 </SettingRow>
@@ -494,7 +496,7 @@ const handleSaveImageSyncConfigModal = () => {
                   :description="$t('app.setting_tools_settings_export_description')">
                   <button type="button"
                     class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
-                    @click="handleClickExportSettings">
+                    data-ga-event="settings_export_settings" @click="handleClickExportSettings">
                     {{ $t('app.setting_tools_settings_export_button') }}
                   </button>
                 </SettingRow>
@@ -502,7 +504,7 @@ const handleSaveImageSyncConfigModal = () => {
                 <SettingRow :label="$t('app.setting_tools_settings_import')">
                   <button type="button"
                     class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
-                    @click="handleClickImportSettings">
+                    data-ga-event="settings_import_settings" @click="handleClickImportSettings">
                     {{ $t('app.setting_tools_settings_import_button') }}
                   </button>
                 </SettingRow>
@@ -546,7 +548,7 @@ const handleSaveImageSyncConfigModal = () => {
               <button class="btn btn-sm" @click="handleCancelFontFamily">
                 {{ $t('app.setting_general_font_cancel') }}
               </button>
-              <button class="btn btn-sm btn-primary" @click="handleSaveFontFamily">
+              <button class="btn btn-sm btn-primary" data-ga-event="settings_font_save" @click="handleSaveFontFamily">
                 {{ $t('app.setting_general_font_save') }}
               </button>
             </template>
@@ -554,7 +556,7 @@ const handleSaveImageSyncConfigModal = () => {
               <button class="btn btn-sm" @click="handleCancelAdapterChange">
                 {{ $t('app.setting_sync_adapter_cancel') }}
               </button>
-              <button class="btn btn-sm btn-primary" @click="handleSaveAdapter">
+              <button class="btn btn-sm btn-primary" data-ga-event="settings_adapter_save" @click="handleSaveAdapter">
                 {{ $t('app.setting_sync_adapter_save') }}
               </button>
             </template>

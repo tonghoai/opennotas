@@ -12,12 +12,13 @@ const handleToggle = (tagId: string) => {
 </script>
 
 <template>
-  <ul class="menu bg-base-100 rounded-box w-56 border border-neutral animate-fade-down animate-duration-100 max-h-72 flex-nowrap overflow-y-auto">
+  <ul
+    class="menu bg-base-100 rounded-box w-56 border border-neutral animate-fade-down animate-duration-100 max-h-72 flex-nowrap overflow-y-auto">
     <li v-if="!props.listTags.length" class="menu-title">
       <span>{{ $t('app.menu_note_tags_empty') }}</span>
     </li>
 
-    <li v-for="tag in props.listTags" :key="tag.id" @click.stop="handleToggle(tag.id)">
+    <li v-for="tag in props.listTags" :key="tag.id" data-ga-event="note_tag_toggle" @click.stop="handleToggle(tag.id)">
       <a class="flex flex-row items-center gap-3">
         <input type="checkbox" class="checkbox checkbox-sm" :checked="props.noteTagIds.includes(tag.id)"
           @click.stop="handleToggle(tag.id)" />

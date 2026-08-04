@@ -87,7 +87,7 @@ const handleClickDeleteNoteForever = () => {
 
     <ul v-if="!formNotes.deletedAt"
       class="menu bg-base-100 rounded-box w-48 border border-neutral animate-fade-down animate-duration-100">
-      <li class="" @click="handleClickPinNote(props.formNotes.isPinned)">
+      <li class="" data-ga-event="note_pin_toggle" @click="handleClickPinNote(props.formNotes.isPinned)">
         <a class="flex flex-row items-center gap-3">
           <PinV2 class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ props.formNotes.isPinned ? $t('app.menu_note_unpin') :
@@ -95,7 +95,7 @@ const handleClickDeleteNoteForever = () => {
         </a>
       </li>
 
-      <li class="" @click="handleClickCopyNote">
+      <li class="" data-ga-event="note_copy" @click="handleClickCopyNote">
         <a class="flex flex-row items-center gap-3">
           <Copy class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
@@ -129,7 +129,7 @@ const handleClickDeleteNoteForever = () => {
         </a>
       </li>
 
-      <li class="" @click="handleClickHistory">
+      <li class="" data-ga-event="note_history_view" @click="handleClickHistory">
         <a class="flex flex-row items-center gap-3">
           <History class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_history') }}</span>
@@ -138,7 +138,7 @@ const handleClickDeleteNoteForever = () => {
 
       <li></li>
 
-      <li class="" @click="handleClickLockNote(props.formNotes.isLocked)">
+      <li class="" data-ga-event="note_lock_toggle" @click="handleClickLockNote(props.formNotes.isLocked)">
         <a class="flex flex-row items-center gap-3">
           <CircleKey class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ props.formNotes.isLocked ? $t('app.menu_note_unlock') :
@@ -148,7 +148,7 @@ const handleClickDeleteNoteForever = () => {
 
       <li></li>
 
-      <li class="text-rose-500" @click="handleClickDeleteNote">
+      <li class="text-rose-500" data-ga-event="note_delete" @click="handleClickDeleteNote">
         <a class="flex flex-row items-center gap-3">
           <Trash class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_delete') }}</span>
@@ -159,14 +159,14 @@ const handleClickDeleteNoteForever = () => {
     <!-- case deleted notes -->
     <ul v-if="formNotes.deletedAt"
       class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
-      <li class="" @click="handleClickRestoreNote">
+      <li class="" data-ga-event="note_restore" @click="handleClickRestoreNote">
         <a class="flex flex-row items-center gap-3">
           <Restore class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_restore') }}</span>
         </a>
       </li>
 
-      <li class="" @click="handleClickCopyNote">
+      <li class="" data-ga-event="note_copy" @click="handleClickCopyNote">
         <a class="flex flex-row items-center gap-3">
           <Copy class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
@@ -182,7 +182,7 @@ const handleClickDeleteNoteForever = () => {
 
       <li></li>
 
-      <li class="text-rose-500" @click="handleClickDeleteNoteForever">
+      <li class="text-rose-500" data-ga-event="note_delete_forever" @click="handleClickDeleteNoteForever">
         <a class="flex flex-row items-center gap-3">
           <Trash class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_delete_forever') }}</span>
