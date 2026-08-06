@@ -7,6 +7,8 @@ import { replaceAll, getMarkdown, $prose } from '@milkdown/utils'
 import { TextSelection, Plugin } from '@milkdown/prose/state'
 import type { Node } from '@milkdown/prose/model'
 import * as Diff from 'diff'
+import { createSearchPlugin, setSearchState, stepMatch, clearSearchState } from '~/utils/editor-search'
+import type { SearchCounts } from '~/utils/editor-search'
 
 const { $i18n } = useNuxtApp();
 
@@ -456,6 +458,9 @@ onMounted(() => {
       }))
     );
 
+    // in-note search
+    editor.editor.use($prose(() => createSearchPlugin()));
+
     await editor.create();
 
     // Intercept image paste before ProseMirror (capture phase runs first)
@@ -687,6 +692,15 @@ const focusState = () => {
   });
 }
 
+const search = (query: string): SearchCounts =>
+  editor.editor.action((ctx) => setSearchState(ctx.get(editorViewCtx), query));
+const findNext = (): SearchCounts =>
+  editor.editor.action((ctx) => stepMatch(ctx.get(editorViewCtx), 1));
+const findPrev = (): SearchCounts =>
+  editor.editor.action((ctx) => stepMatch(ctx.get(editorViewCtx), -1));
+const clearSearch = (): void =>
+  editor.editor.action((ctx) => clearSearchState(ctx.get(editorViewCtx)));
+
 onUnmounted(() => {
   domObserver?.disconnect();
   linkEditObserver?.disconnect();
@@ -869,6 +883,10 @@ defineExpose({
   redo,
   slientUpdateValue,
   focusState,
+  search,
+  findNext,
+  findPrev,
+  clearSearch,
 });
 </script>
 

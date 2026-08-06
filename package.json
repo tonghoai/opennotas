@@ -15,10 +15,10 @@
     "major": "npm version major"
   },
   "dependencies": {
-    "@codemirror/basic-setup": "^0.20.0",
     "@codemirror/commands": "^6.8.1",
     "@codemirror/lang-html": "^6.4.9",
     "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/search": "^6.5.7",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.36.6",
     "@libsql/client": "^0.5.6",
@@ -26,6 +26,7 @@
     "@nuxtjs/i18n": "^8.5.6",
     "@nuxtjs/tailwindcss": "^6.13.2",
     "@tanstack/vue-virtual": "^3.13.34",
+    "@tiptap/core": "^2.11.7",
     "@tiptap/extension-code-block": "^2.11.7",
     "@tiptap/extension-hard-break": "^2.11.7",
     "@tiptap/extension-image": "^2.11.7",

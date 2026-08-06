@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, toRaw } from 'vue';
+import { onBeforeUnmount, onMounted, ref, toRaw } from 'vue';
 const { $i18n } = useNuxtApp();
 const { locale } = useI18n();
 
@@ -1191,6 +1191,26 @@ watch(() => activeFolderId.value, () => {
   isShowFormatToolbar.value = false;
 });
 
+const handleClickSearchInNote = () => {
+  formNotesRef.value?.toggleSearch();
+}
+// Ctrl/Cmd+F opens (or refocuses) in-note search instead of the browser's native find,
+// but only while a note is actually open and unlocked — otherwise it's a no-op so the
+// shortcut doesn't hijack the landing/list-only views.
+const handleGlobalKeydown = (e: KeyboardEvent) => {
+  if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f')) return;
+  if (!formNotes.value?.id || formNotes.value.isLocked) return;
+
+  e.preventDefault();
+  formNotesRef.value?.openSearch();
+}
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown);
+});
+
 const editorName = ref<string>(settings.value.general.defaultEditor);
 watch(() => settings.value.general.defaultEditor, (newValue) => {
   editorName.value = newValue;
@@ -2113,7 +2133,7 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
         @clickSetPassword="handleClickSetPassword" @clickImportNotes="handleClickImportNotes"
         @clickExportSettings="handleClickExportSettings" @triggerImportSettings="handleClickImportSettings"
         @clickMenuSidebar="handleClickMenuSidebar" @clickFormatToolbar="handleClickFormatToolbar"
-        @clickPlainText="handleClickPlainText" />
+        @clickPlainText="handleClickPlainText" @clickSearchInNote="handleClickSearchInNote" />
     </div>
 
     <!-- cols personal -->
@@ -2199,7 +2219,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
           @lockNote="handleClickLockNote" @deleteNote="handleClickDeleteNote" @copyToClipboard="handleCopyToClipboard"
           @clickInfo="handleClickFormNotesInfo" @clickResize="handleClickResizeApp"
           @clickSwitchEditor="handleClickSwitchEditor" @clickCollapsePanel="handleClickCollapsePanel"
-          @clickFormatToolbar="handleClickFormatToolbar" @clickPlainText="handleClickPlainText" />
+          @clickFormatToolbar="handleClickFormatToolbar" @clickPlainText="handleClickPlainText"
+          @clickSearchInNote="handleClickSearchInNote" />
       </div>
       <!-- <hr class="hidden lg:block border-base-300"> -->
 
@@ -2268,8 +2289,8 @@ watch(() => settings.value.general.fontFamily, (newVal) => {
     :isShowModalConfirmChangeAdapter="isShowModalConfirmChangeAdapter" :fromImport="!!pendingImportedSettings"
     :alsoImageSync="importAlsoChangesImageSync" @confirm="handleConfirmChangeAdapterOnline"
     @close="handleClickCloseModalConfirmChangeAdapter" />
-  <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" :isLoading="isApplyingSyncChange" @confirm="handleConfirmChangeAdapter"
-    @close="handleClickCloseModalConfirmE2eeKey" />
+  <ModalConfirmE2eeKey v-if="isShowModalConfirmE2eeKey" :isLoading="isApplyingSyncChange"
+    @confirm="handleConfirmChangeAdapter" @close="handleClickCloseModalConfirmE2eeKey" />
   <ModalConfirmImportImageSyncChange v-if="isShowModalConfirmImportImageSyncChange"
     :missingCredentials="importMissingImageSyncCredentials" @confirm="handleConfirmImportImageSyncChange"
     @close="handleCancelImportImageSyncChange" />

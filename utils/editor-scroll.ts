@@ -43,4 +43,33 @@ function ensureCursorBottomMargin(getCoords: () => { top: number; bottom: number
   requestAnimationFrame(step);
 }
 
-export { ensureCursorBottomMargin };
+const SCROLL_MATCH_MARGIN = 20;
+
+function scrollFormEditorsIntoView(rect: { top: number; bottom: number }): void {
+  const container = document.getElementById('form-editors');
+  if (!container) return;
+
+  const containerRect = container.getBoundingClientRect();
+  const matchTop = rect.top - containerRect.top + container.scrollTop;
+  const matchBottom = rect.bottom - containerRect.top + container.scrollTop;
+  const visibleTop = container.scrollTop;
+  const visibleBottom = container.scrollTop + container.clientHeight;
+
+  let targetScrollTop: number | null = null;
+  if (matchTop < visibleTop + SCROLL_MATCH_MARGIN) {
+    // Match is above the visible area — scroll it just below the top edge.
+    targetScrollTop = Math.max(0, matchTop - SCROLL_MATCH_MARGIN);
+  } else if (matchBottom > visibleBottom - SCROLL_MATCH_MARGIN) {
+    // Match is below the visible area — scroll it just above the bottom edge.
+    targetScrollTop = Math.min(
+      container.scrollHeight - container.clientHeight,
+      matchBottom - container.clientHeight + SCROLL_MATCH_MARGIN
+    );
+  }
+
+  if (targetScrollTop !== null) {
+    container.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+  }
+}
+
+export { ensureCursorBottomMargin, scrollFormEditorsIntoView };

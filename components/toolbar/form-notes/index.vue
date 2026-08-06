@@ -4,6 +4,7 @@ import Menu from '../assets/svg/menu-vertical.svg?component';
 import PanelLeft from '../assets/svg/panel-left.svg?component';
 import Type from '../assets/svg/type.svg?component';
 import ToolCase from '../assets/svg/tool-case.svg?component';
+import Search from '~/assets/svg/search.svg?component';
 import Copy from '~/assets/svg/copy.svg?component';
 import Article from '~/assets/svg/article.svg?component';
 
@@ -22,6 +23,7 @@ const emit = defineEmits([
   'clickSwitchEditor',
   'clickPlainText',
   'handleClickPlainText',
+  'clickSearchInNote',
 ]);
 
 const handleClickInfo = () => {
@@ -42,6 +44,9 @@ const handleClickChangeEditor = () => {
 const handleClickPlainText = () => {
   emit('clickPlainText', props.noteId);
 }
+const handleClickSearchInNote = () => {
+  emit('clickSearchInNote', props.noteId);
+}
 </script>
 
 <template>
@@ -58,6 +63,10 @@ const handleClickPlainText = () => {
 
       <div v-if="props.noteId" class="p-2 rounded-full bg-base-300" @click="handleClickPlainText">
         <Type class="press cursor-pointer" />
+      </div>
+
+      <div v-if="props.noteId" class="p-2 rounded-full bg-base-300" @click="handleClickSearchInNote">
+        <Search class="press cursor-pointer" />
       </div>
 
       <div v-if="props.noteId" class="p-2 rounded-full bg-base-300" @click="handleClickInfo">

@@ -248,8 +248,9 @@
   color: oklch(var(--pc));
   --tw-shadow: 0 0 #0000;
   --tw-shadow-colored: 0 0 #0000;
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow);
 }
 
 .ProseMirror pre code::selection {
@@ -624,8 +625,9 @@
   background-color: rgba(0, 0, 0, 0.3);
   --tw-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow);
 }
 
 :is(.dark .ProseMirror table .grip-column.selected) {
@@ -690,8 +692,9 @@
   background-color: rgba(0, 0, 0, 0.3);
   --tw-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  box-shadow:
+    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow);
 }
 
 :is(.dark .ProseMirror table .grip-row.selected) {
@@ -864,8 +867,8 @@
 }
 
 :is(
-    .dark .ProseMirror [data-type="horizontalRule"].ProseMirror-selectednode hr
-  ) {
+  .dark .ProseMirror [data-type="horizontalRule"].ProseMirror-selectednode hr
+) {
   border-top-color: hsla(0, 0%, 100%, 0.3);
 }
 
@@ -877,12 +880,12 @@
 }
 
 :is(
-    .dark
-      .ProseMirror
-      [data-type="horizontalRule"]:hover:not(
-        .ProseMirror [data-type="horizontalRule"].ProseMirror-selectednode
-      )
-  ) {
+  .dark
+    .ProseMirror
+    [data-type="horizontalRule"]:hover:not(
+      .ProseMirror [data-type="horizontalRule"].ProseMirror-selectednode
+    )
+) {
   background-color: hsla(0, 0%, 100%, 0.1);
 }
 
@@ -1021,6 +1024,19 @@
   font-style: inherit;
   font-size: inherit;
   font-weight: inherit;
+}
+
+/* in-note search (Tiptap/Crepe decorations) */
+.search-match,
+::highlight(search-match) {
+  background-color: oklch(var(--wa) / 35%);
+  border-radius: 2px;
+}
+
+.search-match-active,
+::highlight(search-match-active) {
+  background-color: oklch(var(--wa) / 70%);
+  box-shadow: 0 0 0 1px oklch(var(--wa));
 }
 
 .ProseMirror hr {

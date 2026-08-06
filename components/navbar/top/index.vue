@@ -69,6 +69,7 @@ const emit = defineEmits([
   'clickPlainText',
   'clickExportSettings',
   'triggerImportSettings',
+  'clickSearchInNote',
 ]);
 
 const { $i18n } = useNuxtApp();
@@ -194,6 +195,9 @@ const handleClickFormatToolbar = () => {
 }
 const handleClickPlainText = () => {
   emit('clickPlainText', props.formNotes.id);
+}
+const handleClickSearchInNote = () => {
+  emit('clickSearchInNote', props.formNotes.id);
 }
 
 const isModalMenuEditorOpen = ref<boolean>(false);
@@ -475,7 +479,7 @@ defineExpose({
 
           <div v-if="isShowSearchInput"
             class="p-2 flex items-center h-12 w-full gap-2 animate-fade-down animate-duration-200">
-            <label class="input input-sm flex-1 flex items-center gap-2 rounded-full border-none bg-base-200">
+            <label class="input input-sm flex-1 flex items-center gap-2 rounded-lg border-none bg-base-200">
               <Search class="w-4 h-4 opacity-50 flex-none" />
               <input ref="searchInputRef" type="text" class="grow bg-transparent"
                 :placeholder="$t('app.toolbar_note_search_placeholder')" autocomplete="off" name="hidden"
@@ -517,6 +521,7 @@ defineExpose({
           <ToolCase v-if="['Tiptap', 'Crepe'].includes(props.editorName)" class="press mr-4 cursor-pointer opacity-80"
             @click="handleClickFormatToolbar" />
           <Type class="press mr-4 cursor-pointer opacity-80" @click="handleClickPlainText" />
+          <Search class="press mr-4 cursor-pointer opacity-80" @click="handleClickSearchInNote" />
           <Undo class="press mr-4 cursor-pointer opacity-80" @click="handleClickUndo" />
           <Redo class="press mr-4 cursor-pointer opacity-80" @click="handleClickRedo" />
           <div class="lg:hidden mr-2" @click="handleOpenMenuEditorModal">

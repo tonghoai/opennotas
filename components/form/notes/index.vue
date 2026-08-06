@@ -104,6 +104,45 @@ const slientUpdateValue = (value: string) => {
   editorRef.value?.slientUpdateValue(value);
 }
 
+// in-note search
+const isSearchOpen = ref<boolean>(false);
+const searchQuery = ref<string>('');
+const matchInfo = ref<{ current: number; total: number }>({ current: 0, total: 0 });
+const formNotesSearchRef = ref<any>(null);
+let searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+watch(searchQuery, (value) => {
+  if (searchDebounce) clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    matchInfo.value = editorRef.value?.search(value) ?? { current: 0, total: 0 };
+  }, 150);
+});
+
+const handleSearchNext = () => {
+  matchInfo.value = editorRef.value?.findNext() ?? { current: 0, total: 0 };
+}
+const handleSearchPrev = () => {
+  matchInfo.value = editorRef.value?.findPrev() ?? { current: 0, total: 0 };
+}
+const closeSearch = () => {
+  if (!isSearchOpen.value) return;
+  isSearchOpen.value = false;
+  searchQuery.value = '';
+  matchInfo.value = { current: 0, total: 0 };
+  editorRef.value?.clearSearch();
+}
+const openSearch = () => {
+  if (isSearchOpen.value) {
+    formNotesSearchRef.value?.focusInput();
+    return;
+  }
+  isSearchOpen.value = true;
+}
+const toggleSearch = () => {
+  isSearchOpen.value ? closeSearch() : openSearch();
+}
+watch(() => [props.editorName, props.id], closeSearch);
+
 defineExpose({
   focusPassword,
   focus,
@@ -116,6 +155,9 @@ defineExpose({
   handleInsertImage,
   slientUpdateValue,
   focusState,
+  openSearch,
+  closeSearch,
+  toggleSearch,
 })
 </script>
 
@@ -123,6 +165,11 @@ defineExpose({
   <div class="flex justify-center bg-svg h-full transition-all" v-if="!id"></div>
 
   <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="handleClickMarkdownBody">
+    <ToolbarFormNotesSearch v-if="isSearchOpen" ref="formNotesSearchRef" v-model="searchQuery"
+      :matchCurrent="matchInfo.current" :matchTotal="matchInfo.total"
+      class="sticky top-0 z-[60] animate-fade-down animate-duration-200 shadow-sm" @next="handleSearchNext"
+      @prev="handleSearchPrev" @close="closeSearch" @click.stop />
+
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :key="editorTiptapKey" :isShowFormatToolbar="props.isShowFormatToolbar"
       @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"

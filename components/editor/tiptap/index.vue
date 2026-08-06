@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { BubbleMenu, Editor, EditorContent } from '@tiptap/vue-3'
+import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import { Image as TipTapImage } from "@tiptap/extension-image";
@@ -12,6 +13,8 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import CodeBlock from '@tiptap/extension-code-block';
 import Link from '@tiptap/extension-link';
+import { createSearchPlugin, setSearchState, stepMatch, clearSearchState } from '~/utils/editor-search';
+import type { SearchCounts } from '~/utils/editor-search';
 
 const { $i18n } = useNuxtApp();
 
@@ -33,6 +36,14 @@ const emit = defineEmits([
 const CustomImage = TipTapImage.configure({
   HTMLAttributes: {
     onError: "this.onerror=null;this.src='/img/no-picture-available.jpg';",
+  },
+});
+
+// in-note search
+const NoteSearch = Extension.create({
+  name: 'noteSearch',
+  addProseMirrorPlugins() {
+    return [createSearchPlugin()];
   },
 });
 
@@ -76,6 +87,7 @@ onMounted(() => {
       Link.configure({
         openOnClick: false,
       }),
+      NoteSearch,
     ],
     editorProps: {
       attributes: {
@@ -173,6 +185,11 @@ const redo = () => {
 const focusState = () => {
 }
 
+const search = (query: string): SearchCounts => setSearchState(editor.view, query);
+const findNext = (): SearchCounts => stepMatch(editor.view, 1);
+const findPrev = (): SearchCounts => stepMatch(editor.view, -1);
+const clearSearch = (): void => clearSearchState(editor.view);
+
 onUnmounted(() => {
   editor.destroy();
 });
@@ -195,6 +212,10 @@ defineExpose({
   handleInsertImage,
   slientUpdateValue,
   focusState,
+  search,
+  findNext,
+  findPrev,
+  clearSearch,
 });
 
 const CustomTaskItem = TaskItem.extend({
