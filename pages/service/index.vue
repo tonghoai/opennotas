@@ -6,7 +6,7 @@ onMounted(() => {
 
 <template>
     <div class="landing max-w-screen-lg mx-auto">
-        <div id="home" class="navbar bg-base-100">
+        <div id="home" class="ui-navbar bg-card">
             <div class="flex-1">
                 <img :src="'/logo-icon.png'" width="72" height="72" alt="OpenNotas Logo">
             </div>
@@ -14,7 +14,7 @@ onMounted(() => {
 
         <!-- Terms of Use -->
         <div id="terms">
-            <h2 class="mb-5 mt-5 text-3xl font-bold text-base-content">
+            <h2 class="mb-5 mt-5 text-3xl font-bold text-foreground">
                 TERMS OF SERVICE
                 <a class="text-3xl underline" href="#terms">#</a>
             </h2>
@@ -150,7 +150,7 @@ onMounted(() => {
 
         <!-- Privacy Policy -->
         <div class="mt-10" id="privacy-policy">
-            <h2 class="mb-5 mt-5 text-3xl font-bold text-base-content">
+            <h2 class="mb-5 mt-5 text-3xl font-bold text-foreground">
                 PRIVACY POLICY
                 <a class="text-3xl underline" href="#privacy-policy">#</a>
             </h2>
@@ -276,7 +276,7 @@ onMounted(() => {
         <div class="mt-10" id="cookie-policy">
             <h2 class="mb-5 mt
 
--5 text-3xl font-bold text-base-content">
+-5 text-3xl font-bold text-foreground">
                 COOKIE POLICY
                 <a class="text-3xl underline" href="#cookie-policy">#</a>
             </h2>
