@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import { closeDialogAnimated } from '~/utils/dialog-motion';
+import { Pin } from '~/utils/icons';
+import { Copy } from '~/utils/icons';
+import { FileMove } from '~/utils/icons';
+import { Tag } from '~/utils/icons';
+import { Info } from '~/utils/icons';
+import { History } from '~/utils/icons';
+import { Lock } from '~/utils/icons';
+import { Restore } from '~/utils/icons';
+import { Trash } from '~/utils/icons';
 const props = defineProps([
   'noteId',
   'formNotes',
@@ -47,125 +57,121 @@ const handleClickRestoreNote = () => {
 const handleClickDeleteNoteForever = () => {
   emit('deleteNoteForever', props.noteId);
 };
+
+const handleCancel = () => {
+  closeDialogAnimated(document.getElementById('modal-menu-note') as HTMLDialogElement | null);
+};
 </script>
 
 <template>
-  <dialog id="modal-menu-note" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box p-0 w-5/6 border border-base-content/15">
-      <div class="bg-base-100 shadow-sm rounded">
-        <!-- case active notes -->
-        <ul v-if="!formNotes.deletedAt"
-          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
-          <li class="w-full text-center" data-ga-event="note_pin_toggle"
-            @click="handleClickPinNote(props.formNotes.isPinned)">
-            <a class="w-full block text-center">{{ props.formNotes.isPinned ? $t('app.modal_menu_note_unpin') :
-              $t('app.modal_menu_note_pin') }}</a>
-          </li>
-
-          <li class="w-full text-center" data-ga-event="note_copy" @click="handleClickCopyNote">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
-          </li>
-
-          <li class="w-full text-center" @click="handleClickMove">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_move') }}</a>
-          </li>
-
-          <li class="w-full text-center" @click="handleClickAddToTag">
-            <a class="w-full block text-center">{{ $t('app.menu_note_add_to_tag') }}</a>
-          </li>
-
-          <li class="w-full text-center" @click="handleClickInfo">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_info') }}</a>
-          </li>
-
-          <li class="w-full text-center" data-ga-event="note_history_view" @click="handleClickHistory">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_history') }}</a>
-          </li>
-
-          <li></li>
-
-          <li class="w-full text-center" data-ga-event="note_lock_toggle"
-            @click="handleClickLockNote(props.formNotes.isLocked)">
-            <a class="w-full block text-center">{{ props.formNotes.isLocked ? $t('app.modal_menu_note_unlock') :
-              $t('app.modal_menu_note_lock') }}</a>
-          </li>
-
-          <li></li>
-
-          <li class="text-rose-500 w-full" data-ga-event="note_delete" @click="handleClickDeleteNote">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_delete') }}</a>
-          </li>
-        </ul>
-        <!-- <ul v-if="!formNotes.deletedAt" class="p-1">
-          <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer"
-            @click="handleClickPinNote(props.formNotes.isPinned)">
+  <dialog id="modal-menu-note" class="ui-modal ui-modal-bottom" @cancel.prevent="handleCancel">
+    <div class="ui-modal-box p-0">
+      <!-- active notes -->
+      <ul v-if="!formNotes.deletedAt" class="ui-menu w-full">
+        <li data-ga-event="note_pin_toggle" @click="handleClickPinNote(props.formNotes.isPinned)">
+          <button type="button">
+            <Pin class="h-4 w-4 shrink-0 opacity-80" />
             {{ props.formNotes.isPinned ? $t('app.modal_menu_note_unpin') : $t('app.modal_menu_note_pin') }}
-          </li>
-          <li>
-            <hr class="border-base-300">
-          </li>
-          <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer" @click="handleClickCopyNote">
+          </button>
+        </li>
+
+        <li data-ga-event="note_copy" @click="handleClickCopyNote">
+          <button type="button">
+            <Copy class="h-4 w-4 shrink-0 opacity-80" />
             {{ $t('app.modal_menu_note_copy') }}
-          </li>
-          <li>
-            <hr class="border-base-300">
-          </li>
-          <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer"
-            @click="handleClickLockNote(props.formNotes.isLocked)">
+          </button>
+        </li>
+
+        <li @click="handleClickMove">
+          <button type="button">
+            <FileMove class="h-4 w-4 shrink-0 opacity-80" />
+            {{ $t('app.modal_menu_note_move') }}
+          </button>
+        </li>
+
+        <li @click="handleClickAddToTag">
+          <button type="button">
+            <Tag class="h-4 w-4 shrink-0 opacity-80" />
+            {{ $t('app.menu_note_add_to_tag') }}
+          </button>
+        </li>
+
+        <li @click="handleClickInfo">
+          <button type="button">
+            <Info class="h-4 w-4 shrink-0 opacity-80" />
+            {{ $t('app.modal_menu_note_info') }}
+          </button>
+        </li>
+
+        <li data-ga-event="note_history_view" @click="handleClickHistory">
+          <button type="button">
+            <History class="h-4 w-4 shrink-0 opacity-80" />
+            {{ $t('app.modal_menu_note_history') }}
+          </button>
+        </li>
+
+        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
+
+        <li data-ga-event="note_lock_toggle" @click="handleClickLockNote(props.formNotes.isLocked)">
+          <button type="button">
+            <Lock class="h-4 w-4 shrink-0 opacity-80" />
             {{ props.formNotes.isLocked ? $t('app.modal_menu_note_unlock') : $t('app.modal_menu_note_lock') }}
-          </li>
-          <li>
-            <hr class="border-base-300">
-          </li>
-          <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer text-rose-500"
-            @click="handleClickDeleteNote">
+          </button>
+        </li>
+
+        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
+
+        <li class="text-danger" data-ga-event="note_delete" @click="handleClickDeleteNote">
+          <button type="button" class="text-danger">
+            <Trash class="h-4 w-4 shrink-0" />
             {{ $t('app.modal_menu_note_delete') }}
-          </li>
-        </ul> -->
+          </button>
+        </li>
+      </ul>
 
-        <!-- case deleted notes -->
-        <ul v-if="formNotes.deletedAt"
-          class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
-          <li class="w-full text-center" data-ga-event="note_restore" @click="handleClickRestoreNote">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_restore') }}</a>
-          </li>
-
-          <li class="w-full text-center" data-ga-event="note_copy" @click="handleClickCopyNote">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_copy') }}</a>
-          </li>
-
-          <li class="w-full text-center" @click="handleClickInfo">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_info') }}</a>
-          </li>
-
-          <li></li>
-
-          <li class="text-rose-500 w-full" data-ga-event="note_delete_forever" @click="handleClickDeleteNoteForever">
-            <a class="w-full block text-center">{{ $t('app.modal_menu_note_delete_forever') }}</a>
-          </li>
-        </ul>
-        <!-- <ul v-if="formNotes.deletedAt" class="p-1">
-          <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer" @click="handleClickRestoreNote">
+      <!-- deleted notes -->
+      <ul v-else class="ui-menu w-full">
+        <li data-ga-event="note_restore" @click="handleClickRestoreNote">
+          <button type="button">
+            <Restore class="h-4 w-4 shrink-0 opacity-80" />
             {{ $t('app.modal_menu_note_restore') }}
-          </li>
-          <li>
-            <hr class="border-base-300">
-          </li>
-          <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer" @click="handleClickCopyNote">
+          </button>
+        </li>
+
+        <li data-ga-event="note_copy" @click="handleClickCopyNote">
+          <button type="button">
+            <Copy class="h-4 w-4 shrink-0 opacity-80" />
             {{ $t('app.modal_menu_note_copy') }}
-          </li>
-          <li>
-            <hr class="border-base-300">
-          </li>
-          <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer text-rose-500"
-            @click="handleClickDeleteNoteForever">
+          </button>
+        </li>
+
+        <li @click="handleClickInfo">
+          <button type="button">
+            <Info class="h-4 w-4 shrink-0 opacity-80" />
+            {{ $t('app.modal_menu_note_info') }}
+          </button>
+        </li>
+
+        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
+
+        <li class="text-danger" data-ga-event="note_delete_forever" @click="handleClickDeleteNoteForever">
+          <button type="button" class="text-danger">
+            <Trash class="h-4 w-4 shrink-0" />
             {{ $t('app.modal_menu_note_delete_forever') }}
-          </li>
-        </ul> -->
-      </div>
+          </button>
+        </li>
+      </ul>
+
+      <form class="mt-2">
+        <button type="button"
+          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[13px] font-medium text-foreground"
+          @click="handleCancel">
+          {{ $t('app.action_cancel') }}
+        </button>
+      </form>
     </div>
-    <form method="dialog" class="modal-backdrop">
-      <button>close</button>
+    <form class="ui-modal-backdrop" @click.prevent="handleCancel">
+      <button type="button">close</button>
     </form>
   </dialog>
 </template>

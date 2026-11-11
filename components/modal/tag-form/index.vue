@@ -11,17 +11,18 @@ const emit = defineEmits([
 ]);
 
 const presetColors = [
-  '#ef4444',
-  '#f97316',
-  '#f59e0b',
-  '#22c55e',
-  '#14b8a6',
-  '#3b82f6',
-  '#6366f1',
-  '#a855f7',
-  '#ec4899',
+  '#c97a86',
+  '#d99a5f',
+  '#c9a45b',
+  '#7aa88b',
+  '#5fa3a0',
+  '#6f8fc4',
+  '#8583c2',
+  '#9a85c9',
+  '#c47aa6',
 ];
 
+const { t } = useI18n();
 const modalTagFormKey = ref(0);
 const newTagName = ref<string>(props.tagName || '');
 const selectedColor = ref<string>(props.tagColor || presetColors[0]);
@@ -34,6 +35,9 @@ watch(() => [props.tagName, props.tagColor], ([newName, newColor]) => {
 const isCustomColor = computed(() => !presetColors.includes(selectedColor.value));
 const isValidate = computed(() => newTagName.value.length > 0);
 const isEditMode = computed(() => !!props.tagId);
+const dialogTitle = computed(() => isEditMode.value
+  ? t('app.modal_tag_form_title_edit')
+  : t('app.modal_tag_form_title_create'));
 
 const handleClickPresetColor = (color: string) => {
   selectedColor.value = color;
@@ -57,8 +61,6 @@ const handleConfirmTagForm = (e: Event) => {
     return;
   }
 
-  // Prevent <form method="dialog"> from closing the dialog automatically,
-  // so the parent can control closing (ensures it works on mobile too)
   e.preventDefault();
 
   emit('confirm', {
@@ -83,57 +85,43 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-tag-form" :key="modalTagFormKey"
-    class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
-      <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
-      </form>
-      <h3 class="font-bold text-lg">
-        {{ isEditMode ? $t('app.modal_tag_form_title_edit') : $t('app.modal_tag_form_title_create') }}
-      </h3>
-      <div class="pt-4">
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="font-semibold label-text">{{ $t('app.modal_tag_form_input_name') }}</span>
-          </div>
-          <input v-model="newTagName" type="text" class="input input-sm lg:input-md input-bordered w-full"
-            :data-ga-event="isEditMode ? 'tag_edit' : 'tag_create'" @keydown.enter="handleConfirmTagForm"
-            autocomplete="off" autofocus />
-        </label>
+  <UiDialog :key="modalTagFormKey" id="modal-tag-form" top width="24rem" :title="dialogTitle" :show-cancel="false"
+    :show-ok="false" @close="handleClickClose">
+    <UiFormField :label="$t('app.modal_tag_form_input_name')">
+      <UiInput v-model="newTagName" size="sm" :data-ga-event="isEditMode ? 'tag_edit' : 'tag_create'"
+        @keydown.enter="handleConfirmTagForm" autocomplete="off" autofocus />
+    </UiFormField>
 
-        <div class="mt-4">
-          <div class="label">
-            <span class="font-semibold label-text">{{ $t('app.modal_tag_form_input_color') }}</span>
-          </div>
-          <div class="flex flex-wrap gap-2 items-center">
-            <button v-for="color in presetColors" :key="color" type="button"
-              class="w-7 h-7 rounded-full shrink-0 flex items-center justify-center"
-              :class="{ 'ring-2 ring-offset-2 ring-base-content ring-offset-base-100': selectedColor === color }"
-              :style="{ backgroundColor: color }" @click="handleClickPresetColor(color)"></button>
+    <div class="mt-4">
+      <div class="ui-label">
+        <span class="font-semibold ui-label-text">{{ $t('app.modal_tag_form_input_color') }}</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button v-for="color in presetColors" :key="color" type="button"
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+          :class="{ 'ring-2 ring-foreground ring-offset-2 ring-offset-card': selectedColor === color }"
+          :style="{ backgroundColor: color }" @click="handleClickPresetColor(color)"></button>
 
-            <button type="button"
-              class="w-7 h-7 rounded-full shrink-0 flex items-center justify-center border-2 border-dashed border-base-content/40"
-              :class="{ 'ring-2 ring-offset-2 ring-base-content ring-offset-base-100 border-solid': isCustomColor }"
-              :style="isCustomColor ? { backgroundColor: selectedColor, borderStyle: 'solid' } : {}"
-              :title="$t('app.modal_tag_form_custom_color')" @click="handleClickCustomColor">
-              <span v-if="!isCustomColor" class="text-xs">+</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="modal-action">
-          <form method="dialog">
-            <!-- if there is a button in form, it will close the modal -->
-            <button class="btn btn-sm mr-2">{{ $t('app.modal_tag_form_cancel') }}</button>
-            <button class="btn btn-sm btn-primary" :disabled="!isValidate"
-              :data-ga-event="isEditMode ? 'tag_edit' : 'tag_create'" @click="handleConfirmTagForm">{{
-                $t('app.modal_tag_form_ok') }}</button>
-          </form>
-        </div>
+        <button type="button"
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-border"
+          :class="{ 'border-solid ring-2 ring-foreground ring-offset-2 ring-offset-card': isCustomColor }"
+          :style="isCustomColor ? { backgroundColor: selectedColor, borderStyle: 'solid' } : {}"
+          :title="$t('app.modal_tag_form_custom_color')" @click="handleClickCustomColor">
+          <span v-if="!isCustomColor" class="text-xs">+</span>
+        </button>
       </div>
     </div>
-  </dialog>
+
+    <template #footer>
+      <UiButton variant="default" size="sm" @click="handleClickClose">
+        {{ $t('app.modal_tag_form_cancel') }}
+      </UiButton>
+      <UiButton variant="primary" size="sm" :disabled="!isValidate"
+        :data-ga-event="isEditMode ? 'tag_edit' : 'tag_create'" @click="handleConfirmTagForm">
+        {{ $t('app.modal_tag_form_ok') }}
+      </UiButton>
+    </template>
+  </UiDialog>
 
   <ModalTagColorCustom v-if="isShowModalTagColorCustom" @confirm="handleConfirmCustomColor"
     @close="handleCloseModalTagColorCustom" />

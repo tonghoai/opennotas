@@ -1,38 +1,54 @@
 <script setup lang="ts">
-import CircleCheck from '../../../assets/svg/circle-check.svg?component';
+import { closeDialogAnimated } from '~/utils/dialog-motion';
+import { Check } from '~/utils/icons';
 
 const props = defineProps(['sortType']);
-
 const emit = defineEmits(['clickSort']);
 
+const close = () => {
+  closeDialogAnimated(document.getElementById('modal-sort-note') as HTMLDialogElement | null);
+};
+
 const handleClickSort = (type: 'createdAt' | 'updatedAt') => {
+  close();
   emit('clickSort', type);
-  (document.getElementById('modal-sort-note') as any)?.close();
 };
 </script>
 
 <template>
-  <dialog id="modal-sort-note" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box p-0 w-5/6 border border-base-content/15">
-      <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
-        <li class="w-full text-center" @click="() => handleClickSort('createdAt')">
-          <a class="w-full flex items-center justify-center gap-2">
-            <CircleCheck v-if="props.sortType === 'createdAt'" class="w-4 h-4" />
-            <span class="w-4 h-4" v-else />
-            {{ $t('app.menu_note_sort_by_created_at') }}
-          </a>
-        </li>
-        <li class="w-full text-center" @click="() => handleClickSort('updatedAt')">
-          <a class="w-full flex items-center justify-center gap-2">
-            <CircleCheck v-if="props.sortType === 'updatedAt'" class="w-4 h-4" />
-            <span class="w-4 h-4" v-else />
+  <dialog id="modal-sort-note" class="ui-modal ui-modal-bottom" @cancel.prevent="close">
+    <div class="ui-modal-box p-0">
+      <div class="px-3.5 pb-2 pt-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {{ $t('app.toolbar_note_sort_by_title') }}
+      </div>
+
+      <ul class="ui-menu w-full">
+        <li @click="handleClickSort('updatedAt')">
+          <button type="button">
+            <Check v-if="props.sortType === 'updatedAt'" class="h-4 w-4 shrink-0 text-primary" />
+            <span v-else class="h-4 w-4 shrink-0"></span>
             {{ $t('app.menu_note_sort_by_updated_at') }}
-          </a>
+          </button>
+        </li>
+        <li @click="handleClickSort('createdAt')">
+          <button type="button">
+            <Check v-if="props.sortType === 'createdAt'" class="h-4 w-4 shrink-0 text-primary" />
+            <span v-else class="h-4 w-4 shrink-0"></span>
+            {{ $t('app.menu_note_sort_by_created_at') }}
+          </button>
         </li>
       </ul>
+
+      <form class="mt-2">
+        <button type="button"
+          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[13px] font-medium"
+          @click="close">
+          {{ $t('app.action_cancel') }}
+        </button>
+      </form>
     </div>
-    <form method="dialog" class="modal-backdrop">
-      <button>close</button>
+    <form class="ui-modal-backdrop" @click.prevent="close">
+      <button type="button">close</button>
     </form>
   </dialog>
 </template>

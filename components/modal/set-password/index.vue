@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { X } from '~/utils/icons';
 const colorMode = useColorMode();
 const { $i18n } = useNuxtApp();
 
@@ -48,9 +49,9 @@ const handleConfirmPassword = () => {
 const inputPasswordRef = ref<any>(null);
 const inputOldPasswordRef = ref<any>(null);
 const showOldPasswordWrong = () => {
-  inputOldPasswordRef.value.classList.add('animate-shake', 'animate-duration-100', 'input-error');
+  inputOldPasswordRef.value.classList.add('animate-shake', 'animate-duration-100', 'ui-input-error');
   setTimeout(() => {
-    inputOldPasswordRef.value.classList.remove('animate-shake', 'animate-duration-100', 'input-error');
+    inputOldPasswordRef.value.classList.remove('animate-shake', 'animate-duration-100', 'ui-input-error');
   }, 1000);
 
   if (!!document.getElementById('modal-set-password')) {
@@ -87,53 +88,53 @@ onMounted(() => {
 
 <template>
   <dialog id="modal-set-password"
-    class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
+    class="ui-modal ui-modal-top">
     <div id="modal-set-password-content"
-      class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
+      class="ui-modal-box mx-auto p-5 lg:p-6 w-5/6 lg:w-96 border border-border">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" :disabled="props.isLoading"
-          @click="handleClickClose">✕</button>
+        <button class="ui-btn ui-btn-sm ui-btn-circle ui-btn-ghost absolute right-3 top-3" :disabled="props.isLoading"
+          @click="handleClickClose"><X class="h-4 w-4" /></button>
       </form>
-      <h3 class="font-bold text-lg">
+      <h3 class="text-[14px] font-semibold pr-8">
         {{ props.type === 'set' ? $t('app.modal_set_password_title') : $t('app.modal_set_password_change_title') }}
       </h3>
-      <div class="py-4">
-        <div v-if="props.type !== 'set'" class="form-control w-full">
-          <div class="label">
-            <span class="font-semibold label-text">{{ $t('app.modal_set_password_old_password_input_title') }}</span>
+      <div class="py-5">
+        <div v-if="props.type !== 'set'" class="ui-form-control w-full">
+          <div class="ui-label">
+            <span class="font-semibold ui-label-text">{{ $t('app.modal_set_password_old_password_input_title') }}</span>
           </div>
           <input ref="inputOldPasswordRef" v-model="oldPassword" type="password"
             :placeholder="$t('app.modal_set_password_old_password_input_title')"
-            class="input input-sm lg:input-md input-bordered w-full" @keydown.enter="handleConfirmPassword"
+            class="ui-input ui-input-sm ui-input-md ui-input-bordered w-full" @keydown.enter="handleConfirmPassword"
             autocomplete="off" autofocus />
         </div>
 
-        <div class="form-control w-full pt-2">
-          <div class="label">
-            <span class="font-semibold label-text">{{ $t('app.modal_set_password_new_password_input_title') }}</span>
+        <div class="ui-form-control w-full pt-2">
+          <div class="ui-label">
+            <span class="font-semibold ui-label-text">{{ $t('app.modal_set_password_new_password_input_title') }}</span>
           </div>
           <input ref="inputPasswordRef" v-model="newPassword" type="password"
             :placeholder="$t('app.modal_set_password_new_password_input_title')"
-            class="input input-sm lg:input-md input-bordered w-full" @keydown.enter="handleConfirmPassword"
+            class="ui-input ui-input-sm ui-input-md ui-input-bordered w-full" @keydown.enter="handleConfirmPassword"
             autocomplete="off" autofocus />
         </div>
 
-        <div class="form-control w-full pt-2">
-          <div class="label">
-            <span class="font-semibold label-text">{{ $t('app.modal_set_password_confirm_password_input_title')
+        <div class="ui-form-control w-full pt-2">
+          <div class="ui-label">
+            <span class="font-semibold ui-label-text">{{ $t('app.modal_set_password_confirm_password_input_title')
             }}</span>
           </div>
           <input ref="inputPasswordRef" v-model="confirmPassword" type="password"
             :placeholder="$t('app.modal_set_password_confirm_password_input_title')"
-            class="input input-sm lg:input-md input-bordered w-full" @keydown.enter="handleConfirmPassword"
+            class="ui-input ui-input-sm ui-input-md ui-input-bordered w-full" @keydown.enter="handleConfirmPassword"
             autocomplete="off" autofocus />
         </div>
 
-        <div class="form-control w-full pt-2">
-          <div class="label"></div>
-          <button class="btn btn-sm btn-primary" :disabled="!isValidate || props.isLoading"
+        <div class="ui-form-control w-full pt-2">
+          <div class="ui-label"></div>
+          <button class="ui-btn ui-btn-sm ui-btn-primary" :disabled="!isValidate || props.isLoading"
             @click="handleConfirmPassword">
-            <span v-if="props.isLoading" class="loading loading-spinner loading-xs"></span>
+            <span v-if="props.isLoading" class="ui-loading ui-loading-spinner ui-loading-xs"></span>
             {{ props.isLoading ? $t('app.modal_set_password_processing') : $t('app.modal_set_password_ok') }}
           </button>
         </div>

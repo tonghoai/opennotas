@@ -13,26 +13,17 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-sync-config" class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
-      <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
-      </form>
-      <h3 class="font-bold text-lg pr-8">{{ $t('app.setting_sync_config_title') }}</h3>
-      <div class="pt-4">
-        <textarea v-model="draft" rows="8" class="textarea textarea-bordered w-full font-mono text-sm"></textarea>
+  <UiDialog id="modal-sync-config" top width="24rem" :show-cancel="false" :show-ok="false"
+    :title="$t('app.setting_sync_config_title')" @close="handleClickClose">
+    <UiTextarea v-model="draft" :rows="8" class="font-mono text-sm" />
 
-        <div class="modal-action">
-          <form method="dialog">
-            <button class="btn btn-sm mr-2" @click="handleClickClose">
-              {{ $t('app.modal_sync_config_cancel') }}
-            </button>
-            <button class="btn btn-sm btn-primary" @click="handleConfirm">
-              {{ $t('app.setting_sync_adapter_save') }}
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </dialog>
+    <template #footer>
+      <UiButton variant="default" size="sm" @click="handleClickClose">
+        {{ $t('app.modal_sync_config_cancel') }}
+      </UiButton>
+      <UiButton variant="primary" size="sm" @click="handleConfirm">
+        {{ $t('app.setting_sync_adapter_save') }}
+      </UiButton>
+    </template>
+  </UiDialog>
 </template>

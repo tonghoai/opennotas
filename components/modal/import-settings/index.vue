@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { X } from '~/utils/icons';
 const { $i18n } = useNuxtApp();
 
 const emit = defineEmits([
@@ -52,9 +53,9 @@ const handleChooseFile = (e: Event) => {
 };
 
 const shakePasswordInput = () => {
-  inputPasswordRef.value?.classList.add('animate-shake', 'animate-duration-100', 'input-error');
+  inputPasswordRef.value?.classList.add('animate-shake', 'animate-duration-100', 'ui-input-error');
   setTimeout(() => {
-    inputPasswordRef.value?.classList.remove('animate-shake', 'animate-duration-100', 'input-error');
+    inputPasswordRef.value?.classList.remove('animate-shake', 'animate-duration-100', 'ui-input-error');
   }, 1000);
 }
 
@@ -102,44 +103,44 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-import-settings" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
+  <dialog id="modal-import-settings" class="ui-modal">
+    <div class="ui-modal-box p-5 lg:p-6 w-5/6 lg:w-96 border border-border">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
+        <button class="ui-btn ui-btn-sm ui-btn-circle ui-btn-ghost absolute right-3 top-3" @click="handleClickClose"><X class="h-4 w-4" /></button>
       </form>
-      <h3 class="font-bold text-lg">
+      <h3 class="text-[14px] font-semibold pr-8">
         {{ $t('app.modal_import_settings_title') }}
       </h3>
       <div class="pt-4">
         <div>{{ $t('app.modal_import_settings_content') }}</div>
 
-        <label class="form-control w-full mt-4">
+        <label class="ui-form-control w-full mt-4">
           <input :key="fileImportSettingsKey" type="file"
-            class="file-input file-input-bordered w-full file-input-sm lg:file-input-md" @change="handleChooseFile"
+            class="ui-file-input ui-file-input-bordered w-full ui-file-input-sm ui-file-input-md" @change="handleChooseFile"
             autocomplete="off" autofocus />
         </label>
 
-        <div class="form-control w-full mt-4" v-if="needsPassword">
-          <div class="label">
-            <span class="label-text">
+        <div class="ui-form-control w-full mt-4" v-if="needsPassword">
+          <div class="ui-label">
+            <span class="ui-label-text">
               {{ $t('app.modal_import_settings_password_title') }}
             </span>
           </div>
           <input ref="inputPasswordRef" v-model="password" type="password"
             :placeholder="$t('app.modal_import_settings_password_title')"
-            class="input input-sm lg:input-md input-bordered w-full" @keydown.enter="handleClickSubmit"
+            class="ui-input ui-input-sm ui-input-md ui-input-bordered w-full" @keydown.enter="handleClickSubmit"
             autocomplete="off" />
         </div>
 
-        <div class="modal-action">
+        <div class="ui-modal-action">
           <form method="dialog" class="flex">
-            <button class="btn btn-sm mr-2">
+            <button class="ui-btn ui-btn-sm mr-2">
               {{ $t('app.modal_import_settings_cancel') }}
             </button>
-            <button v-if="needsPassword" type="button" class="btn btn-sm mr-2 flex-1" @click="handleClickSkipSensitive">
+            <button v-if="needsPassword" type="button" class="ui-btn ui-btn-sm mr-2 flex-1" @click="handleClickSkipSensitive">
               {{ $t('app.modal_import_settings_skip_sensitive') }}
             </button>
-            <button class="btn btn-sm btn-primary" @click="handleClickSubmit" :disabled="!isValidate">
+            <button class="ui-btn ui-btn-sm ui-btn-primary" @click="handleClickSubmit" :disabled="!isValidate">
               {{ $t('app.modal_import_settings_ok') }}
             </button>
           </form>

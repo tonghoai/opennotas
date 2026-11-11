@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { X } from '~/utils/icons';
 import * as Diff from 'diff';
 import { getNoteDetail, getNoteHistory } from '~/services/main';
 
@@ -52,14 +53,14 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-note-history-diff" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box w-5/6 lg:w-[36rem] border border-base-content/15">
+  <dialog id="modal-note-history-diff" class="ui-modal">
+    <div class="ui-modal-box w-5/6 lg:w-[36rem] border border-border">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
+        <button class="ui-btn ui-btn-sm ui-btn-circle ui-btn-ghost absolute right-3 top-3" @click="handleClickClose"><X class="h-4 w-4" /></button>
       </form>
-      <h3 class="font-bold text-lg">{{ $t('app.modal_note_history_diff_title') }}</h3>
+      <h3 class="text-[14px] font-semibold pr-8">{{ $t('app.modal_note_history_diff_title') }}</h3>
 
-      <div class="py-4">
+      <div class="py-5">
         <p v-if="!hasChanges" class="text-center opacity-65 py-4">
           {{ $t('app.modal_note_history_diff_empty') }}
         </p>
@@ -67,7 +68,7 @@ const handleClickClose = () => {
         <div v-else class="text-xs overflow-x-auto max-h-96 overflow-y-auto rounded-lg">
           <div v-for="(line, idx) in diffLines" :key="idx" class="flex items-start gap-2 px-1 py-0.5" :class="{
             'bg-success/15': line.type === 'added',
-            'bg-error/15': line.type === 'removed',
+            'bg-danger/15': line.type === 'removed',
             'opacity-70': line.type === 'context',
           }">
             <span class="select-none opacity-60 w-3 shrink-0 text-center">{{ line.type === 'added' ? '+' : line.type === 'removed' ? '-' :
@@ -82,13 +83,13 @@ const handleClickClose = () => {
             {{ $t('app.modal_note_history_diff_legend_current') }}
           </span>
           <span class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-sm bg-error/40 shrink-0"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-danger/40 shrink-0"></span>
             {{ $t('app.modal_note_history_diff_legend_backup') }}
           </span>
         </div>
       </div>
     </div>
-    <form method="dialog" class="modal-backdrop">
+    <form method="dialog" class="ui-modal-backdrop">
       <button>close</button>
     </form>
   </dialog>

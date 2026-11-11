@@ -1,51 +1,60 @@
 <script setup lang="ts">
+import { closeDialogAnimated } from '~/utils/dialog-motion';
+import { Edit } from '~/utils/icons';
+import { Trash } from '~/utils/icons';
+
 const props = defineProps([
   'folderId',
 ]);
 
 const emit = defineEmits(['renameFolder', 'deleteFolder']);
 
+const close = () => {
+  closeDialogAnimated(document.getElementById('modal-menu-folder') as HTMLDialogElement | null);
+};
+
 const handleClickRenameFolder = () => {
+  close();
   emit('renameFolder', props.folderId);
 };
 
 const handleClickDeleteFolder = () => {
+  close();
   emit('deleteFolder', props.folderId);
 };
 </script>
 
 <template>
-  <dialog id="modal-menu-folder" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box p-0 w-5/6 border border-base-content/15">
-      <!-- <div class="bg-base-100 shadow-sm rounded"> -->
-      <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
-        <li class="w-full text-center" @click="handleClickRenameFolder">
-          <a class="w-full block text-center">{{ $t('app.modal_menu_folder_rename') }}</a>
+  <dialog id="modal-menu-folder" class="ui-modal ui-modal-bottom" @cancel.prevent="close">
+    <div class="ui-modal-box p-0">
+      <ul class="ui-menu w-full">
+        <li @click="handleClickRenameFolder">
+          <button type="button">
+            <Edit class="h-4 w-4 shrink-0 opacity-80" />
+            {{ $t('app.modal_menu_folder_rename') }}
+          </button>
         </li>
 
-        <li></li>
+        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
 
-        <li class="text-rose-500 w-full" @click="handleClickDeleteFolder">
-          <a class="w-full block text-center">{{ $t('app.modal_menu_folder_delete') }}</a>
+        <li class="text-danger" @click="handleClickDeleteFolder">
+          <button type="button" class="text-danger">
+            <Trash class="h-4 w-4 shrink-0" />
+            {{ $t('app.modal_menu_folder_delete') }}
+          </button>
         </li>
       </ul>
-      <!-- <ul class="p-1">
-          <li id="menu-folder-rename" class="flex justify-center px-5 py-2 rounded-sm cursor-pointer"
-            @click="handleClickRenameFolder">
-            {{ $t('app.modal_menu_folder_rename') }}
-          </li>
-          <li>
-            <hr class="border-base-300">
-          </li>
-          <li class="flex justify-center px-5 py-2 rounded-sm cursor-pointer text-rose-500"
-            @click="handleClickDeleteFolder">
-            {{ $t('app.modal_menu_folder_delete') }}
-          </li>
-        </ul> -->
-      <!-- </div> -->
+
+      <form class="mt-2">
+        <button type="button"
+          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[13px] font-medium"
+          @click="close">
+          {{ $t('app.action_cancel') }}
+        </button>
+      </form>
     </div>
-    <form method="dialog" class="modal-backdrop">
-      <button>close</button>
+    <form class="ui-modal-backdrop" @click.prevent="close">
+      <button type="button">close</button>
     </form>
   </dialog>
 </template>

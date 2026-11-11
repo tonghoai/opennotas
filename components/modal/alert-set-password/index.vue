@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { X } from '~/utils/icons';
 const emit = defineEmits(['close']);
 
 const handleClickClose = () => {
@@ -8,18 +9,18 @@ const handleClickClose = () => {
 
 <template>
   <dialog id="modal-alert-set-password"
-    class="modal modal-top lg:modal-middle backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box mx-auto p-4 lg:p-6 w-5/6 lg:w-96 border border-base-content/15">
+    class="ui-modal ui-modal-top">
+    <div class="ui-modal-box mx-auto p-5 lg:p-6 w-5/6 lg:w-96 border border-border">
       <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="handleClickClose">✕</button>
+        <button class="ui-btn ui-btn-sm ui-btn-circle ui-btn-ghost absolute right-3 top-3" @click="handleClickClose"><X class="h-4 w-4" /></button>
       </form>
-      <h3 class="font-bold text-lg">{{ $t('app.modal_alert_set_password_title') }}</h3>
+      <h3 class="text-[14px] font-semibold pr-8">{{ $t('app.modal_alert_set_password_title') }}</h3>
       <div class="pt-4">
         <div>{{ $t('app.modal_alert_set_password_content') }}</div>
 
-        <div class="modal-action">
+        <div class="ui-modal-action">
           <form method="dialog">
-            <button class="btn btn-sm btn-primary">
+            <button class="ui-btn ui-btn-sm ui-btn-primary">
               {{ $t('app.modal_alert_set_password_ok') }}
             </button>
           </form>

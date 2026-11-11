@@ -1,36 +1,60 @@
 <script setup lang="ts">
+import { closeDialogAnimated } from '~/utils/dialog-motion';
+import { Edit } from '~/utils/icons';
+import { Trash } from '~/utils/icons';
+
 const props = defineProps([
   'tagId',
 ]);
 
 const emit = defineEmits(['editTag', 'deleteTag']);
 
+const close = () => {
+  closeDialogAnimated(document.getElementById('modal-menu-tag') as HTMLDialogElement | null);
+};
+
 const handleClickEditTag = () => {
+  close();
   emit('editTag', props.tagId);
 };
 
 const handleClickDeleteTag = () => {
+  close();
   emit('deleteTag', props.tagId);
 };
 </script>
 
 <template>
-  <dialog id="modal-menu-tag" class="modal backdrop:bg-black/10 backdrop:backdrop-blur-sm">
-    <div class="modal-box p-0 w-5/6 border border-base-content/15">
-      <ul class="menu bg-base-100 rounded-box w-full animate-fade-down animate-duration-100 gap-1">
-        <li class="w-full text-center" @click="handleClickEditTag">
-          <a class="w-full block text-center">{{ $t('app.menu_tag_edit') }}</a>
+  <dialog id="modal-menu-tag" class="ui-modal ui-modal-bottom" @cancel.prevent="close">
+    <div class="ui-modal-box p-0">
+      <ul class="ui-menu w-full">
+        <li @click="handleClickEditTag">
+          <button type="button">
+            <Edit class="h-4 w-4 shrink-0 opacity-80" />
+            {{ $t('app.menu_tag_edit') }}
+          </button>
         </li>
 
-        <li></li>
+        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
 
-        <li class="text-rose-500 w-full" @click="handleClickDeleteTag">
-          <a class="w-full block text-center">{{ $t('app.menu_tag_delete') }}</a>
+        <li class="text-danger" @click="handleClickDeleteTag">
+          <button type="button" class="text-danger">
+            <Trash class="h-4 w-4 shrink-0" />
+            {{ $t('app.menu_tag_delete') }}
+          </button>
         </li>
       </ul>
+
+      <form class="mt-2">
+        <button type="button"
+          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[13px] font-medium"
+          @click="close">
+          {{ $t('app.action_cancel') }}
+        </button>
+      </form>
     </div>
-    <form method="dialog" class="modal-backdrop">
-      <button>close</button>
+    <form class="ui-modal-backdrop" @click.prevent="close">
+      <button type="button">close</button>
     </form>
   </dialog>
 </template>
