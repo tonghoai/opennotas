@@ -28,6 +28,8 @@ type FolderUpdateType = {
 type NoteType = {
   id: string;
   folderId: string;
+  /** Folder the note was in before being moved to Trash; used by Restore. */
+  previousFolderId?: string | null;
   content: string;
   title?: string;
   isPinned: boolean;
@@ -41,6 +43,7 @@ type NoteType = {
 type NoteCreateType = {
   id: string;
   folderId: string;
+  previousFolderId?: string | null;
   content: string;
   title?: string;
   isPinned: boolean;
@@ -54,6 +57,7 @@ type NoteCreateType = {
 
 type NoteUpdateType = {
   folderId: string;
+  previousFolderId?: string | null;
   content: string;
   title?: string;
   isPinned: boolean;

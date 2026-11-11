@@ -51,6 +51,7 @@ class TursoAdapter implements NotasAdapter {
     return notes.map((note: any) => ({
       id: note.id,
       folderId: note.folderId,
+      previousFolderId: note.previousFolderId || null,
       content: note.content,
       isLocked: note.isLocked,
       isPinned: note.isPinned,
@@ -104,6 +105,7 @@ class TursoAdapter implements NotasAdapter {
       .values({
         id: note.id,
         folderId: note.folderId,
+        previousFolderId: note.previousFolderId || null,
         content: note.content,
         isLocked: note.isLocked,
         isPinned: note.isPinned,
@@ -117,6 +119,7 @@ class TursoAdapter implements NotasAdapter {
         target: noteModel.id,
         set: {
           folderId: note.folderId,
+          previousFolderId: note.previousFolderId || null,
           content: note.content,
           isLocked: note.isLocked,
           isPinned: note.isPinned,
@@ -130,6 +133,7 @@ class TursoAdapter implements NotasAdapter {
       .returning({
         id: noteModel.id,
         folderId: noteModel.folderId,
+        previousFolderId: noteModel.previousFolderId,
         content: noteModel.content,
         isLocked: noteModel.isLocked,
         isPinned: noteModel.isPinned,

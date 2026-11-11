@@ -3,6 +3,7 @@ import { text, sqliteTable, integer } from "drizzle-orm/sqlite-core";
 const noteModel = sqliteTable("notes", {
   id: text("id").primaryKey(),
   folderId: text("folderId"),
+  previousFolderId: text("previousFolderId"),
   content: text("content"),
   isPinned: integer("isPinned"),
   isLocked: integer("isLocked"),
