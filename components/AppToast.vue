@@ -1,66 +1,83 @@
 <script setup lang="ts">
 import { useToast } from '~/composables/useToast';
 
-const { toasts, dismiss } = useToast();
-
-const variantIconClass: Record<string, string> = {
-  info: 'text-info',
-  success: 'text-success',
-  warning: 'text-warning',
-  error: 'text-error',
-};
+const { toasts, dismiss, runToastAction } = useToast();
 
 const toastPopoverEl = ref<HTMLElement | null>(null);
-watch(toasts, (list) => {
+let toastHideTimer: ReturnType<typeof setTimeout> | null = null;
+
+const syncToastPopover = () => {
   const el = toastPopoverEl.value as any;
   if (!el || typeof el.showPopover !== 'function') return;
-  if (el.matches(':popover-open')) el.hidePopover();
-  if (list.length > 0) el.showPopover();
-}, { deep: true });
+
+  if (toasts.value.length > 0) {
+    if (toastHideTimer) {
+      clearTimeout(toastHideTimer);
+      toastHideTimer = null;
+    }
+    if (!el.matches(':popover-open')) el.showPopover();
+    return;
+  }
+
+  // Keep the popover open while the last toast finishes its leave transition.
+  if (!el.matches(':popover-open') || toastHideTimer) return;
+  toastHideTimer = setTimeout(() => {
+    toastHideTimer = null;
+    if (!toasts.value.length && el.matches(':popover-open')) el.hidePopover();
+  }, 220);
+};
+
+const handleToastBeforeLeave = () => {
+  const stack = toastPopoverEl.value;
+  if (!stack) return;
+
+  const activeIds = new Set(toasts.value.map((toast) => String(toast.id)));
+  const leaving = [...stack.querySelectorAll<HTMLElement>('.app-toast')].filter((toast) => {
+    const id = toast.dataset.toastId;
+    return id && !activeIds.has(id) && toast.style.position !== 'absolute';
+  });
+  if (!leaving.length) return;
+
+  // Measure every leaving toast before moving any of them out of flow. If we
+  // do this one by one, the first absolute toast collapses the stack and the
+  // remaining toasts measure at the wrong position.
+  const stackRect = stack.getBoundingClientRect();
+  const rects = leaving.map((toast) => ({ toast, rect: toast.getBoundingClientRect() }));
+
+  for (const { toast, rect } of rects) {
+    toast.style.position = 'absolute';
+    toast.style.top = 'auto';
+    toast.style.bottom = `${Math.max(0, stackRect.bottom - rect.bottom)}px`;
+    toast.style.left = '50%';
+    toast.style.right = 'auto';
+    toast.style.width = `${rect.width}px`;
+    toast.style.marginLeft = `${-rect.width / 2}px`;
+    toast.style.marginRight = '0';
+  }
+};
+
+// Only react when the stack becomes empty/non-empty. Re-showing the popover on
+// every toast update cancels the TransitionGroup layout animation and makes
+// the remaining toasts jump into place.
+watch(() => toasts.value.length, syncToastPopover);
+
+onMounted(syncToastPopover);
+onBeforeUnmount(() => {
+  if (toastHideTimer) clearTimeout(toastHideTimer);
+});
 </script>
 
 <template>
   <Teleport to="body">
     <div ref="toastPopoverEl" popover="manual"
-      class="fixed bottom-20 left-1/2 -translate-x-1/2 top-auto right-auto flex flex-col-reverse gap-1.5 z-[1000] m-0 p-0 border-0 bg-transparent overflow-visible pointer-events-none">
-      <TransitionGroup name="toast">
-        <div v-for="toast in toasts" :key="toast.id"
-          class="app-toast flex items-center gap-2 bg-neutral border border-neutral-content/10 shadow-md min-w-56 max-w-72 pointer-events-auto py-2 pl-3 pr-1.5 rounded-xl"
-          role="alert">
-          <!-- success icon -->
-          <svg v-if="toast.variant === 'success'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0"
-            :class="variantIconClass.success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <!-- error icon -->
-          <svg v-else-if="toast.variant === 'error'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0"
-            :class="variantIconClass.error" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <!-- warning icon -->
-          <svg v-else-if="toast.variant === 'warning'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0"
-            :class="variantIconClass.warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-          </svg>
-          <!-- info icon -->
-          <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" :class="variantIconClass.info"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-
-          <span class="text-sm text-neutral-content leading-snug flex-1">{{ toast.message }}</span>
-
-          <button class="btn btn-ghost btn-xs btn-circle text-neutral-content opacity-40 hover:opacity-100"
-            @click="dismiss(toast.id)" aria-label="Dismiss">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+      class="pointer-events-none fixed left-1/2 right-auto top-auto z-[1000] m-0 flex
+        -translate-x-1/2 flex-col-reverse items-center gap-1.5 overflow-visible border-0
+        bg-transparent p-0"
+      style="bottom: calc(5rem + env(safe-area-inset-bottom, 0px));">
+      <TransitionGroup name="toast" @before-leave="handleToastBeforeLeave">
+        <UiNotification v-for="toast in toasts" :key="toast.id" :data-toast-id="toast.id" :variant="toast.variant"
+          :message="toast.message" :actionLabel="toast.actionLabel" @action="runToastAction(toast.id)"
+          @dismiss="dismiss(toast.id)" />
       </TransitionGroup>
     </div>
   </Teleport>
@@ -68,24 +85,35 @@ watch(toasts, (list) => {
 
 <style scoped>
 .toast-enter-active {
-  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-}
-
-.toast-leave-active {
-  transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+  transition: opacity 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .toast-enter-from {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px);
 }
 
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(8px);
+  transform: translateY(6px);
 }
 
+/* Keep move class before leave-active: when several toasts leave together Vue
+   can also add toast-move, and its transform-only transition would otherwise
+   override the leave opacity transition. */
 .toast-move {
-  transition: transform 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.toast-leave-active {
+  position: absolute;
+  pointer-events: none;
+  transform: translateY(0) !important;
+  transition: opacity 0.18s ease-in, transform 0.18s ease-in;
+}
+
+.toast-leave-active.toast-leave-to {
+  transform: translateY(6px) !important;
 }
 </style>
