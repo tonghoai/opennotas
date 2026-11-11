@@ -12,17 +12,16 @@ import {
 import { commandsCtx, editorViewCtx } from "@milkdown/kit/core";
 import { toggleStrikethroughCommand } from "@milkdown/kit/preset/gfm";
 import { callCommand } from "@milkdown/kit/utils";
-import { insert } from "@milkdown/kit/utils";
 
-import H from '../assets/svg/h.svg?component';
-import Task from '../assets/svg/square-check.svg?component';
-import BulletList from '../assets/svg/list.svg?component';
-import Bold from '../assets/svg/bold.svg?component';
-import ItalicSVG from '../assets/svg/italic.svg?component';
-import Strike from '../assets/svg/strikethrough.svg?component';
-import ImageUp from '../assets/svg/image-up.svg?component';
-import CodeSVG from '../assets/svg/code.svg?component';
-import Pilcrow from '../assets/svg/pilcrow.svg?component';
+import { H } from '~/utils/icons';
+import { Task } from '~/utils/icons';
+import { BulletList } from '~/utils/icons';
+import { Bold } from '~/utils/icons';
+import { ItalicSVG } from '~/utils/icons';
+import { Strike } from '~/utils/icons';
+import { ImageUp } from '~/utils/icons';
+import { CodeSVG } from '~/utils/icons';
+import { Pilcrow } from '~/utils/icons';
 
 const props = defineProps([
   'editor',
@@ -136,15 +135,7 @@ const handleClickStrike = () => {
 };
 
 const handleClickImage = () => {
-  switch (props.editorType) {
-    case 'tiptap':
-      clickInsertImage();
-      break;
-    case 'crepe':
-      props.editor?.action(insert('![]()'));
-      focusCrepeEditor();
-      break;
-  }
+  clickInsertImage();
 };
 
 const handleClickCodeBlock = () => {
@@ -162,64 +153,99 @@ const handleClickCodeBlock = () => {
 
 <template>
   <div
-    class="flex gap-6 flex-row justify-between items-center bg-primary p-1 rounded-lg shadow-lg animate-fade-up animate-duration-300 border border-neutral">
-    <div class="flex flex-row gap-2 items-center">
-      <div class="dropdown dropdown-top dropdown-start flex items-center">
-        <div tabindex="0" role="button"
-          class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-          :class="{ '!bg-primary-content !text-primary': false }">
-          <H class="size-4 lg:size-5 cursor-pointer" />
-        </div>
-        <ul tabindex="0" class="dropdown-content menu bg-base-200 border border-neutral rounded-box z-[1] shadow">
-          <li @click="() => handleClickHeading(1)"><a>H1</a></li>
-          <li @click="() => handleClickHeading(2)"><a>H2</a></li>
-          <li @click="() => handleClickHeading(3)"><a>H3</a></li>
+    class="ui-format-toolbar flex max-w-[calc(100vw-1rem)] flex-wrap items-center gap-1 rounded-ui border border-border bg-popover p-1.5 text-popover-foreground shadow-md">
+    <div class="flex items-center gap-0.5">
+      <div class="ui-dropdown ui-dropdown-top ui-dropdown-start flex items-center">
+        <button type="button" class="ui-format-btn" :aria-label="$t('app.format_heading')"
+          :title="$t('app.format_heading')">
+          <H class="h-4 w-4" />
+        </button>
+        <ul tabindex="0" class="ui-dropdown-content ui-menu border border-border bg-popover text-popover-foreground">
+          <li @click="handleClickHeading(1)"><button type="button">H1</button></li>
+          <li @click="handleClickHeading(2)"><button type="button">H2</button></li>
+          <li @click="handleClickHeading(3)"><button type="button">H3</button></li>
         </ul>
       </div>
 
-      <button class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-        :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickTaskList()">
-        <Task class="size-4 lg:size-5 cursor-pointer" />
+      <button type="button" class="ui-format-btn" :aria-label="$t('app.format_task')"
+        :title="$t('app.format_task')" @click="handleClickTaskList">
+        <Task class="h-4 w-4" />
       </button>
 
-      <button class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-        :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickBulletList()">
-        <BulletList class="size-4 lg:size-5 cursor-pointer" />
+      <button type="button" class="ui-format-btn" :aria-label="$t('app.format_bullet')"
+        :title="$t('app.format_bullet')" @click="handleClickBulletList">
+        <BulletList class="h-4 w-4" />
       </button>
 
-      <button class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-        :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickParagraph()">
-        <Pilcrow class="size-4 lg:size-5 cursor-pointer" />
+      <button type="button" class="ui-format-btn" :aria-label="$t('app.format_paragraph')"
+        :title="$t('app.format_paragraph')" @click="handleClickParagraph">
+        <Pilcrow class="h-4 w-4" />
       </button>
     </div>
-    <div class="w-px h-6 bg-primary-content/20"></div>
-    <div class="flex flex-row gap-2">
-      <button class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-        :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickBold()">
-        <Bold class="size-4 lg:size-5 cursor-pointer" />
+
+    <span class="mx-1.5 hidden h-5 w-px bg-border sm:block" aria-hidden="true"></span>
+
+    <div class="flex items-center gap-0.5">
+      <button type="button" class="ui-format-btn" :aria-label="$t('app.format_bold')"
+        :title="$t('app.format_bold')" @click="handleClickBold">
+        <Bold class="h-4 w-4" />
       </button>
 
-      <button class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-        :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickItalic()">
-        <ItalicSVG class="size-4 lg:size-5 cursor-pointer" />
+      <button type="button" class="ui-format-btn" :aria-label="$t('app.format_italic')"
+        :title="$t('app.format_italic')" @click="handleClickItalic">
+        <ItalicSVG class="h-4 w-4" />
       </button>
 
-      <button class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-        :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickStrike()">
-        <Strike class="size-4 lg:size-5 cursor-pointer" />
+      <button type="button" class="ui-format-btn" :aria-label="$t('app.format_strike')"
+        :title="$t('app.format_strike')" @click="handleClickStrike">
+        <Strike class="h-4 w-4" />
       </button>
     </div>
-    <div class="w-px h-6 bg-primary-content/20"></div>
-    <div class="flex flex-row gap-2">
-      <button class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-        :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickImage()">
-        <ImageUp class="size-4 lg:size-5 cursor-pointer" />
+
+    <span class="mx-1.5 hidden h-5 w-px bg-border sm:block" aria-hidden="true"></span>
+
+    <div class="flex items-center gap-0.5">
+      <button type="button" class="ui-format-btn" :aria-label="$t('app.format_image')"
+        :title="$t('app.format_image')" @click="handleClickImage">
+        <ImageUp class="h-4 w-4" />
       </button>
 
-      <button class="btn btn-xs lg:btn-sm btn-square !rounded-md bg-primary-content/20 hover:bg-primary-content/30 text-primary-content border-none"
-        :class="{ '!bg-primary-content !text-primary': false }" @click="handleClickCodeBlock()">
-        <CodeSVG class="size-4 lg:size-5 cursor-pointer" />
+      <button type="button" class="ui-format-btn" :aria-label="$t('app.format_code')"
+        :title="$t('app.format_code')" @click="handleClickCodeBlock">
+        <CodeSVG class="h-4 w-4" />
       </button>
     </div>
   </div>
 </template>
+
+<style scoped>
+.ui-format-toolbar {
+  border-color: rgb(var(--ui-border-strong));
+}
+
+.ui-format-btn {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(var(--ui-radius) - 2px);
+  color: rgb(var(--ui-popover-foreground));
+  transition: background-color var(--ui-duration-fast) var(--ui-ease);
+}
+
+.ui-format-btn:hover,
+.ui-format-btn:focus-visible {
+  background-color: rgb(var(--ui-accent));
+  color: rgb(var(--ui-accent-foreground));
+  outline: none;
+}
+
+@media (max-width: 1023.98px) {
+  .ui-format-btn {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+}
+</style>

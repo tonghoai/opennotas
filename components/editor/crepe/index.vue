@@ -4,17 +4,15 @@ import { editorViewCtx } from "@milkdown/core";
 import { undoCommand, redoCommand } from "@milkdown/plugin-history";
 import { splitListItemCommand } from "@milkdown/preset-commonmark";
 import { replaceAll, getMarkdown, $prose } from '@milkdown/utils'
+import { insert } from '@milkdown/kit/utils'
 import { TextSelection, Plugin } from '@milkdown/prose/state'
 import type { Node } from '@milkdown/prose/model'
 import * as Diff from 'diff'
 import { createSearchPlugin, setSearchState, stepMatch, clearSearchState } from '~/utils/editor-search'
 import type { SearchCounts } from '~/utils/editor-search'
 
-const { $i18n } = useNuxtApp();
-
 import "@milkdown/crepe/theme/common/style.css";
 import "../../../assets/css/crepe.css";
-
 import {
   saveImage,
   resolveImageUrl,
@@ -29,6 +27,8 @@ import alertSquareSvgRaw from '~/assets/svg/alert-square-rounded.svg?raw';
 import photoUpSvgRaw from '~/assets/svg/photo-up.svg?raw';
 import subtitlesSvgRaw from '~/assets/svg/subtitles.svg?raw';
 
+const { $i18n } = useNuxtApp();
+
 const props = defineProps([
   'value',
   'isDeleted',
@@ -40,18 +40,46 @@ const props = defineProps([
 const emit = defineEmits([
   'changeContent',
   'alertMessage',
+  'insertImage',
 ]);
 
 const isLoading = ref(true);
 
+// Tabler icon strings injected into Crepe's link-tooltip config.
+const tablerIcon = (paths: string) => `
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    ${paths}
+  </svg>
+`;
+
+const LINK_TOOLTIP_ICONS = {
+  link: tablerIcon(`
+    <path d="M9 15l6 -6" />
+    <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464" />
+    <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
+  `),
+  edit: tablerIcon(`
+    <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+    <path d="M13.5 6.5l4 4" />
+  `),
+  remove: tablerIcon(`
+    <path d="M4 7l16 0" />
+    <path d="M10 11l0 6" />
+    <path d="M14 11l0 6" />
+    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+  `),
+  confirm: tablerIcon(`<path d="M5 12l5 5l10 -10" />`),
+};
+
 let editor: Crepe;
 
-// Track resolved blob URLs → imageId for badge lookup
 const blobUrlToImageId = new Map<string, string>();
-// Track injected badge elements per imageId
 const imageBadgeMap = new Map<string, HTMLElement>();
 let domObserver: MutationObserver | null = null;
 let linkEditObserver: MutationObserver | null = null;
+let linkEditScrollSnapshot: { editor: HTMLElement | null; top: number; x: number; y: number } | null = null;
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
 let isRefreshingBadges = false;
 let imagePasteHandler: ((e: Event) => void) | null = null;
@@ -59,6 +87,41 @@ let imageResizeHandler: ((e: PointerEvent) => void) | null = null;
 let imageEditMouseDownHandler: ((e: MouseEvent) => void) | null = null;
 let imageEditClickSwallowHandler: ((e: MouseEvent) => void) | null = null;
 let isReplacingAll = false;
+
+// Crepe updates the toolbar on every transaction; wait until the pointer is released.
+const SELECTION_TOOLBAR_DELAY = 220;
+let selectionToolbarTimer: ReturnType<typeof setTimeout> | null = null;
+
+const clearSelectionToolbarTimer = () => {
+  if (selectionToolbarTimer) {
+    clearTimeout(selectionToolbarTimer);
+    selectionToolbarTimer = null;
+  }
+};
+
+const hideSelectionToolbarDuringPointer = (event: PointerEvent) => {
+  const target = event.target as Element | null;
+  if (!target?.closest('.ProseMirror')) return;
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+  clearSelectionToolbarTimer();
+  document.body.classList.add('crepe-selecting');
+};
+
+const revealSelectionToolbarAfterPointer = () => {
+  if (!document.body.classList.contains('crepe-selecting')) return;
+
+  clearSelectionToolbarTimer();
+  selectionToolbarTimer = setTimeout(() => {
+    document.body.classList.remove('crepe-selecting');
+    selectionToolbarTimer = null;
+  }, SELECTION_TOOLBAR_DELAY);
+};
+
+const cancelSelectionToolbarDelay = () => {
+  clearSelectionToolbarTimer();
+  document.body.classList.remove('crepe-selecting');
+};
 
 const toolbarPos = ref<{ x: number; y: number } | null>(null);
 const toolbarWrapRef = ref<HTMLElement | null>(null);
@@ -116,7 +179,6 @@ const createBadgeSvg = (type: 'upload' | 'warning' | 'spinner'): string => {
 };
 
 const handleManualSync = async () => {
-  // Mark all visible pending/failed badges as syncing
   imageBadgeMap.forEach((badge) => {
     if (!badge.classList.contains('image-sync-badge--syncing')) {
       badge.className = 'image-sync-badge image-sync-badge--syncing';
@@ -147,7 +209,6 @@ const refreshSyncBadges = async () => {
   if (isRefreshingBadges) return;
   isRefreshingBadges = true;
 
-  // Disconnect observer to prevent re-entrant mutations from badge DOM changes
   domObserver?.disconnect();
 
   try {
@@ -207,7 +268,6 @@ const refreshSyncBadges = async () => {
       }
     }
 
-    // Remove stale badges for images no longer in the editor
     for (const [imageId, badge] of imageBadgeMap) {
       if (!activeImageIds.has(imageId)) {
         badge.remove();
@@ -222,7 +282,6 @@ const refreshSyncBadges = async () => {
     }
   } finally {
     isRefreshingBadges = false;
-    // Reconnect observer after DOM changes are done
     const el = document.querySelector('#crepe-editor');
     if (el && domObserver) {
       domObserver.observe(el, { childList: true, subtree: true });
@@ -235,10 +294,7 @@ const startRefreshInterval = () => {
   refreshInterval = setInterval(refreshSyncBadges, 10_000);
 };
 
-// syncImages() also runs from the app's general background sync (utils/sync.ts, via
-// pullPush/idleSync) — not just from handleManualSync's own badge click. Watching the
-// shared isImageSyncing flag lets badges show the loading spinner for that path too,
-// instead of sitting static on the upload icon for the whole background sync.
+// Background syncs also update badges, not just handleManualSync's badge click.
 watch(isImageSyncing, (syncing) => {
   if (syncing) {
     imageBadgeMap.forEach((badge) => {
@@ -272,10 +328,36 @@ const setupDomObserver = () => {
   domObserver.observe(editorEl, { childList: true, subtree: true });
 };
 
-// Milkdown's link-edit popup focuses its input via requestAnimationFrame right when it
-// opens, which can race with the popup's own `data-show` flip and silently no-op if the
-// element is still `display:none` at that instant. Force-focus it ourselves whenever it
-// becomes visible so the popup never opens without focus landing in the input.
+const captureLinkEditScroll = (event: PointerEvent) => {
+  const target = event.target as Element | null;
+  if (!target?.closest('.link-edit-button')) return;
+
+  const editor = document.querySelector<HTMLElement>('#form-editors');
+  linkEditScrollSnapshot = {
+    editor,
+    top: editor?.scrollTop ?? 0,
+    x: window.scrollX,
+    y: window.scrollY,
+  };
+};
+
+const restoreLinkEditScroll = () => {
+  const snapshot = linkEditScrollSnapshot;
+  if (!snapshot) return;
+  linkEditScrollSnapshot = null;
+
+  const restore = () => {
+    if (snapshot.editor?.isConnected) snapshot.editor.scrollTop = snapshot.top;
+    window.scrollTo(snapshot.x, snapshot.y);
+  };
+
+  requestAnimationFrame(() => {
+    restore();
+    requestAnimationFrame(restore);
+  });
+};
+
+// Focus after data-show is applied: Crepe's own rAF focus can land too early.
 const setupLinkEditFocusObserver = () => {
   const editorEl = document.querySelector('#crepe-editor');
   if (!editorEl) return;
@@ -288,8 +370,9 @@ const setupLinkEditFocusObserver = () => {
 
       const input = target.querySelector<HTMLInputElement>('.link-edit input.input-area');
       if (input && document.activeElement !== input) {
-        input.focus();
+        input.focus({ preventScroll: true });
       }
+      restoreLinkEditScroll();
     }
   });
   linkEditObserver.observe(editorEl, {
@@ -300,6 +383,13 @@ const setupLinkEditFocusObserver = () => {
 };
 
 onMounted(() => {
+  const editorEl = document.querySelector('#crepe-editor');
+  editorEl?.addEventListener('pointerdown', hideSelectionToolbarDuringPointer as EventListener, true);
+  editorEl?.addEventListener('pointerdown', captureLinkEditScroll as EventListener, true);
+  window.addEventListener('pointerup', revealSelectionToolbarAfterPointer, true);
+  window.addEventListener('pointercancel', revealSelectionToolbarAfterPointer, true);
+  window.addEventListener('blur', cancelSelectionToolbarDelay);
+
   editor = new Crepe({
     root: document.querySelector("#crepe-editor")!,
     features: {
@@ -307,13 +397,14 @@ onMounted(() => {
       [Crepe.Feature.Latex]: false,
     },
     featureConfigs: {
+      [Crepe.Feature.LinkTooltip]: {
+        linkIcon: LINK_TOOLTIP_ICONS.link,
+        editButton: LINK_TOOLTIP_ICONS.edit,
+        removeButton: LINK_TOOLTIP_ICONS.remove,
+        confirmButton: LINK_TOOLTIP_ICONS.confirm,
+      },
       [Crepe.Feature.Cursor]: {
-        // prosemirror-virtual-cursor races with the list-item NodeView's own
-        // requestAnimationFrame-deferred selection fix on every Enter inside a
-        // list, suspected to cause duplicated lines on real mobile
-        // soft-keyboard input (not reproducible via synthetic keydown
-        // testing). Keep the feature enabled (still get the drag/drop
-        // indicator) but disable just the virtual caret.
+        // Virtual cursor duplicates lines with mobile IME input.
         virtual: false,
       },
       [Crepe.Feature.BlockEdit]: {
@@ -381,13 +472,7 @@ onMounted(() => {
       }))
     );
 
-    // Pressing Enter on an empty list item at the end of the document lifts
-    // it out into a new empty paragraph (ProseMirror's built-in
-    // splitListItem behavior) — but @milkdown/plugin-trailing already
-    // guarantees a trailing empty paragraph exists, and only skips adding
-    // one when it's missing, not when a duplicate now exists. That leaves
-    // two empty paragraphs stacked at the end of the doc. Collapse them
-    // back down to one, keeping the earlier one (where the cursor now is).
+    // splitListItem + plugin-trailing can leave two empty paragraphs at the end.
     editor.editor.use(
       $prose(() => new Plugin({
         appendTransaction(transactions, _oldState, newState) {
@@ -410,10 +495,7 @@ onMounted(() => {
       }))
     );
 
-    // ProseMirror scrolls the selection into view (with no margin) on every
-    // local edit by default, which fights our own eased scroll in
-    // ensureCursorBottomMargin and produces a jump-then-smooth double motion.
-    // Suppressing it here makes our animation the only one that runs.
+    // Let ensureCursorBottomMargin own scrolling; ProseMirror's default fights it.
     editor.editor.use(
       $prose(() => new Plugin({
         props: {
@@ -422,16 +504,8 @@ onMounted(() => {
       }))
     );
 
-    // On real mobile keyboards, Enter is pressed while the view is still
-    // "composing" (IME), so ProseMirror's keydown handler silently skips the
-    // list-item keymap and the browser's native contenteditable split runs
-    // instead — which the list-item NodeView's DOM diffing then misreads as
-    // a duplicated blank line. beforeinput fires deterministically before
-    // that native mutation regardless of composition state, so intercepting
-    // insertParagraph here and running the same splitListItemCommand the
-    // desktop keymap uses avoids the native-mutation/diff race entirely.
-    // On desktop the keydown handler already prevents this event from ever
-    // firing, so this is a no-op there.
+    // Mobile IME Enter bypasses the list keymap; handle beforeinput before the
+    // native contenteditable split reaches the NodeView's DOM diffing.
     editor.editor.use(
       $prose(() => new Plugin({
         props: {
@@ -458,7 +532,6 @@ onMounted(() => {
       }))
     );
 
-    // in-note search
     editor.editor.use($prose(() => createSearchPlugin()));
 
     await editor.create();
@@ -478,7 +551,6 @@ onMounted(() => {
       e.stopPropagation();
       e.preventDefault();
 
-      // Capture insert position synchronously before async upload
       let insertPos = -1;
       editor.editor.action((ctx) => {
         const view = ctx.get(editorViewCtx);
@@ -508,25 +580,10 @@ onMounted(() => {
     document.querySelector('#crepe-editor')
       ?.addEventListener('paste', imagePasteHandler, true);
 
-    // Milkdown's image-block NodeView only claims (stopEvent) clicks landing directly on a
-    // real <input> — a click anywhere else in the empty-state placeholder (the upload
-    // label, the "or paste link" text, the surrounding empty space) is left unclaimed.
-    // ProseMirror sets its NodeSelection (flashing the "selected" overlay) on MOUSEDOWN,
-    // before any 'click' handler ever runs — intercepting only 'click' (as an earlier
-    // version of this did) is always too late: the overlay has already flashed on by the
-    // time 'click' fires. Intercept at 'mousedown' instead, in the capture phase, so
-    // ProseMirror never sees the event at all: open the file picker directly on the
-    // upload label, and just focus the link input for everything else in the placeholder.
+    // Intercept placeholder mousedown before ProseMirror shows NodeSelection.
     imageEditMouseDownHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Bail out for a mousedown landing directly on a real <input> — Milkdown's own
-      // NodeView already stopEvent's these correctly. This also guards against
-      // re-entrancy: the input?.click() call below dispatches a real, bubbling click
-      // event (not 'mousedown', so it can't loop back into this same listener).
       if (target instanceof HTMLInputElement) return;
-      // Let the Confirm button (shown once the link input has a value) work natively too —
-      // it isn't part of the empty-state placeholder this handler exists to fix, and
-      // intercepting it here would eat the click Milkdown needs to actually insert the image.
       if (target.closest('.confirm')) return;
 
       const editEl = target.closest<HTMLElement>(
@@ -553,15 +610,8 @@ onMounted(() => {
     };
     document.querySelector('#crepe-editor')
       ?.addEventListener('mousedown', imageEditMouseDownHandler, true);
-    // The mousedown handler above already did the real work (focus the link input, or open
-    // the file picker) and stopped the mousedown from reaching ProseMirror. The 'click' that
-    // naturally follows the same physical click still reaches ProseMirror separately, and
-    // its own click handling steals focus back to the editor root — so it also needs
-    // blocking. This must NOT re-run the branch logic above though: for a real click on the
-    // upload label (as opposed to the synthetic one our own input.click() call dispatches,
-    // whose target is the input and already gets skipped by the HTMLInputElement guard), the
-    // target is still the label, so re-running that branch would call input.click() a SECOND
-    // time and open the file picker twice. Just swallow the event instead.
+    // ProseMirror's click handler would steal focus; swallow it without re-running
+    // the upload branch (which would open the picker twice).
     imageEditClickSwallowHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target instanceof HTMLInputElement) return;
@@ -576,7 +626,6 @@ onMounted(() => {
     document.querySelector('#crepe-editor')
       ?.addEventListener('click', imageEditClickSwallowHandler, true);
 
-    // Dampen image resize speed — Milkdown uses absolute 1:1 position, we use delta × damping
     const RESIZE_DAMPING = 0.4;
     imageResizeHandler = (e: PointerEvent) => {
       const handle = (e.target as Element).closest<HTMLElement>('.image-resize-handle');
@@ -724,35 +773,35 @@ onUnmounted(() => {
     imageEditMouseDownHandler = null;
     imageEditClickSwallowHandler = null;
   }
+  const editorEl = document.querySelector('#crepe-editor');
+  editorEl?.removeEventListener('pointerdown', hideSelectionToolbarDuringPointer as EventListener, true);
+  window.removeEventListener('pointerup', revealSelectionToolbarAfterPointer, true);
+  window.removeEventListener('pointercancel', revealSelectionToolbarAfterPointer, true);
+  window.removeEventListener('blur', cancelSelectionToolbarDelay);
+  cancelSelectionToolbarDelay();
   editor.destroy();
 });
 
 const silent = ref<boolean>(false);
 
-// slient update value
-// use to update value without trigger change event
-// to keep the cursor position
+// Replace content without emitting a change event or moving the cursor.
 const slientUpdateValue = async (value: string) => {
   if (!editor) return
   silent.value = true
   isReplacingAll = true
 
-  // try catch to avoid error
   try {
     await editor.editor.action((ctx) => {
       const view = ctx.get(editorViewCtx)
 
-      // 1) Get cursor position by plain text (without block separators)
       const sel = view.state.selection
       const prevPos = sel.empty ? sel.from : sel.to
       const oldPlainBefore = view.state.doc.textBetween(0, prevPos, '', '')
       const oldPlain = view.state.doc.textBetween(0, view.state.doc.content.size, '', '')
       const oldOffset = oldPlainBefore.length
 
-      // 2) Replace all content
       replaceAll(value, true)(ctx)
 
-      // 3) Tính offset mới bằng diff
       const newPlain = view.state.doc.textBetween(0, view.state.doc.content.size, '', '')
       const parts = Diff.diffChars(oldPlain, newPlain)
       let oldPos = 0
@@ -766,7 +815,6 @@ const slientUpdateValue = async (value: string) => {
           continue
         }
         if (p.removed) {
-          // nếu caret nằm trong phần bị xoá -> snap về vị trí newPos tại điểm đó
           if (!found && oldOffset <= oldPos + len) {
             newOffset = newPos
             found = true
@@ -775,7 +823,6 @@ const slientUpdateValue = async (value: string) => {
           oldPos += len
           continue
         }
-        // unchanged
         if (!found && oldOffset <= oldPos + len) {
           newOffset = newPos + (oldOffset - oldPos)
           found = true
@@ -786,7 +833,6 @@ const slientUpdateValue = async (value: string) => {
       }
       if (!found) newOffset = newPos
 
-      // 4) Convert plain-text offset -> ProseMirror position
       const doc = view.state.doc
       const totalPlain = newPlain.length
       const target = Math.max(0, Math.min(newOffset, totalPlain))
@@ -807,7 +853,6 @@ const slientUpdateValue = async (value: string) => {
         return true
       })
 
-      // 5) Set cursor position
       const finalPos = pmPos == null ? doc.content.size : Math.max(0, Math.min(pmPos, doc.content.size))
       const tr = view.state.tr.setSelection(
         finalPos >= doc.content.size ? TextSelection.atEnd(doc) : TextSelection.create(doc, finalPos)
@@ -876,6 +921,13 @@ const toolbarStyle = computed(() => {
   };
 });
 
+const handleInsertImage = (data: { url: string; alt?: string }) => {
+  if (!data?.url) return;
+  const alt = (data.alt || '').replace(/[[\]]/g, '');
+  editor?.action(insert(`![${alt}](${data.url})`));
+  focus('end');
+};
+
 defineExpose({
   focus,
   readonly,
@@ -887,25 +939,26 @@ defineExpose({
   findNext,
   findPrev,
   clearSearch,
+  handleInsertImage,
 });
 </script>
 
 <template>
   <div v-show="isLoading"
-    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] animate-fade-right animate-duration-100 flex flex-col items-center justify-end"
-    :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }">
-    <div class="loader"></div>
+    class="mx-auto flex w-full min-h-[calc(100vh_/_2)] flex-col items-center justify-center px-4 py-4 outline-none lg:px-8"
+    :class="{ 'max-w-[720px]': props.settings?.general.editorView === 'compact' }">
+    <UiSpinner size="lg" :label="$t('app.loading')" />
   </div>
 
   <div v-show="!isLoading" id="crepe-editor"
-    class="w-full mx-auto outline-none px-2 lg:px-8 pt-6 pb-40 min-h-[calc(100vh_-_160px)] animate-fade-right animate-duration-100"
-    :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }">
+    class="mx-auto w-full min-h-[calc(100vh_-_160px)] px-4 pb-40 pt-4 outline-none lg:px-8"
+    :class="{ 'max-w-[720px]': props.settings?.general.editorView === 'compact' }">
 
   </div>
 
   <div v-if="props.isShowFormatToolbar" ref="toolbarWrapRef"
     :class="!toolbarPos ? 'sticky bottom-4 left-0 w-fit max-w-screen-md mx-auto' : 'w-fit'" :style="toolbarStyle"
     style="cursor: grab; touch-action: none; user-select: none;" @pointerdown="startToolbarDrag">
-    <ToolbarFormNotesFormat :editorType="'crepe'" :editor="editor?.editor" />
+    <ToolbarFormNotesFormat :editorType="'crepe'" :editor="editor?.editor" @insertImage="emit('insertImage')" />
   </div>
 </template>

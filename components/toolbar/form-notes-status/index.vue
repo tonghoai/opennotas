@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import dayjs from 'dayjs';
+import { countNoteCharacters, countNoteWords } from '~/utils/note-content';
 
 dayjs.extend(localizedFormat);
 
@@ -11,13 +12,8 @@ const props = defineProps([
   'idPulled',
 ]);
 
-const wordsCount = computed(() => {
-  return props.formNotes?.content?.trim() ? props.formNotes.content.trim().split(/\s+/).length : 0;
-});
-
-const charactersCount = computed(() => {
-  return props.formNotes?.content?.length || 0;
-});
+const wordsCount = computed(() => countNoteWords(props.formNotes?.content));
+const charactersCount = computed(() => countNoteCharacters(props.formNotes?.content));
 
 const formattedUpdatedAt = computed(() => {
   return props.formNotes?.updatedAt ? dayjs.unix(props.formNotes.updatedAt).format('lll') : '';
@@ -26,18 +22,24 @@ const formattedUpdatedAt = computed(() => {
 
 <template>
   <div v-if="props.noteId"
-    class="flex justify-between items-center gap-4 h-7 px-4 opacity-70 bg-base-100 border-t border-base-content/15 select-none overflow-hidden">
-    <div class="flex items-center gap-3 min-w-0">
-      <span class="whitespace-nowrap truncate text-xs font-semibold" :title="formattedUpdatedAt">
-        {{ $t('app.status_bar_last_modified') }}: {{ formattedUpdatedAt }}
+    class="ui-status-bar flex min-h-7 shrink-0 select-none items-center justify-between gap-5
+      overflow-hidden border-t border-border bg-card px-4 text-[10.5px] text-muted-foreground">
+    <div class="flex min-w-0 items-center gap-2.5">
+      <span class="truncate whitespace-nowrap" :title="formattedUpdatedAt">
+        {{ $t('app.status_bar_last_modified') }} {{ formattedUpdatedAt }}
       </span>
     </div>
 
-    <div class="flex items-center gap-3 min-w-0 shrink-0">
-      <span class="whitespace-nowrap text-xs font-semibold">{{ wordsCount }} {{ $t('app.status_bar_words') }}</span>
-      <span class="whitespace-nowrap hidden sm:inline text-xs font-semibold">{{ charactersCount }} {{
-        $t('app.status_bar_characters')
-      }}</span>
+    <div class="flex shrink-0 items-center gap-2.5 tabular-nums">
+      <span class="whitespace-nowrap">{{ wordsCount }} {{ $t('app.status_bar_words') }}</span>
+      <span class="hidden text-border sm:inline" aria-hidden="true">·</span>
+      <span class="hidden whitespace-nowrap sm:inline">{{ charactersCount }} {{ $t('app.status_bar_characters') }}</span>
     </div>
   </div>
 </template>
+
+<style scoped>
+.ui-status-bar {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+</style>

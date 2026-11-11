@@ -8,7 +8,6 @@ import * as Diff from 'diff';
 import { ensureCursorBottomMargin, scrollFormEditorsIntoView } from '~/utils/editor-scroll';
 import type { SearchCounts } from '~/utils/editor-search';
 
-// in-note search
 type SearchMatch = { from: number; to: number };
 type SearchFieldValue = { matches: SearchMatch[]; activeIndex: number };
 
@@ -25,9 +24,11 @@ const searchMatchesField = StateField.define<SearchFieldValue>({
   provide: (field) => EditorView.decorations.from(field, (value): DecorationSet => {
     if (!value.matches.length) return Decoration.none;
     return Decoration.set(
-      value.matches.map((m, i) =>
-        Decoration.mark({ class: i === value.activeIndex ? 'cm-searchMatch cm-searchMatch-selected' : 'cm-searchMatch' }).range(m.from, m.to)
-      )
+      value.matches.map((match, index) =>
+        Decoration
+          .mark({ class: index === value.activeIndex ? 'cm-searchMatch cm-searchMatch-selected' : 'cm-searchMatch' })
+          .range(match.from, match.to),
+      ),
     );
   }),
 });
@@ -60,15 +61,12 @@ const silent = ref<boolean>(false);
 const state = EditorState.create({
   doc: props.value,
   extensions: [
-    // highlightActiveLineGutter(),
-    // highlightSpecialChars(),
     history(),
     drawSelection(),
     dropCursor(),
     searchMatchesField,
     EditorState.allowMultipleSelections.of(true),
     rectangularSelection(),
-    // highlightActiveLine(),
     keymap.of([
       ...defaultKeymap,
       ...historyKeymap,
@@ -84,13 +82,7 @@ const state = EditorState.create({
         ensureCursorBottomMargin(() => v.view.coordsAtPos(v.view.state.selection.main.head));
       }
     }),
-    // markdown(),
-    // markdownLanguage,
-    // html(),
-    // htmlLanguage,
-    history(),
   ],
-
 });
 onMounted(() => {
   editor = new EditorView({
@@ -98,22 +90,6 @@ onMounted(() => {
     parent: document.querySelector("#cm-editor")!,
   });
 });
-
-// watch(() => props.value, (newValue) => {
-//   // keep the cursor position
-//   const cursor = editor.state.selection.main.head;
-//   editor.dispatch({
-//     selection: {
-//       anchor: cursor,
-//       head: cursor,
-//     },
-//     changes: {
-//       from: 0,
-//       to: editor.state.doc.length,
-//       insert: newValue,
-//     },
-//   });
-// });
 
 const focus = () => {
   if (!editor.hasFocus) {
@@ -138,9 +114,7 @@ const redo = () => {
 const focusState = () => {
 }
 
-// slient update value
-// use to update value without trigger change event
-// to keep the cursor position
+// Update content without emitting a change event or moving the cursor.
 const slientUpdateValue = (value: string) => {
   if (!editor) return
   silent.value = true
@@ -168,7 +142,6 @@ const slientUpdateValue = (value: string) => {
         oldPos += len
         continue
       }
-      // unchanged
       if (!found && oldCursor <= oldPos + len) {
         newCursor = newPos + (oldCursor - oldPos)
         found = true
@@ -188,7 +161,6 @@ const slientUpdateValue = (value: string) => {
   silent.value = false
 }
 
-// Scrolls a doc position into view
 const scrollPosIntoView = (pos: number) => {
   if (!editor) return;
 
@@ -198,7 +170,6 @@ const scrollPosIntoView = (pos: number) => {
     return;
   }
 
-  // CM6 virtualizes
   const block = editor.lineBlockAt(pos);
   const scrollerTop = editor.scrollDOM.getBoundingClientRect().top - editor.scrollDOM.scrollTop;
   scrollFormEditorsIntoView({ top: scrollerTop + block.top, bottom: scrollerTop + block.bottom });
@@ -258,7 +229,7 @@ defineExpose({
 
 <template>
   <div id="cm-editor"
-    class="w-full mx-auto outline-none px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] animate-fade-right animate-duration-100"
+    class="mx-auto w-full min-h-[calc(100vh_/_2)] px-4 py-4 outline-none lg:px-8"
     :class="{ 'max-w-screen-md': props.settings?.general.editorView === 'compact' }" />
 </template>
 
@@ -278,7 +249,7 @@ defineExpose({
 }
 
 .cm-focused .cm-cursor {
-  @apply !border-base-content;
+  @apply !border-foreground;
 }
 
 .cm-line {
@@ -291,28 +262,28 @@ defineExpose({
 
 .cm-selectionBackground,
 .cm-editor ::selection {
-  background-color: oklch(var(--p)) !important;
-  color: oklch(var(--pc)) !important;
+  background-color: rgb(var(--ui-primary)) !important;
+  color: rgb(var(--ui-primary-foreground)) !important;
 }
 
 /* in-note search — our own searchMatchesField decorations (see <script>), styled to
    match the .search-match/.search-match-active look used by the Tiptap/Crepe editors */
 .cm-searchMatch {
-  background-color: oklch(var(--wa) / 35%);
+  background-color: rgb(var(--ui-warning) / 35%);
   border-radius: 2px;
 }
 
 .cm-searchMatch-selected {
-  background-color: oklch(var(--wa) / 70%);
-  box-shadow: 0 0 0 1px oklch(var(--wa));
+  background-color: rgb(var(--ui-warning) / 70%);
+  box-shadow: 0 0 0 1px rgb(var(--ui-warning));
 }
 
 .cm-focused .cm-scroller .cm-selectionLayer .cm-selectionBackground {
-  background-color: oklch(var(--p)) !important;
-  color: oklch(var(--pc)) !important;
+  background-color: rgb(var(--ui-primary)) !important;
+  color: rgb(var(--ui-primary-foreground)) !important;
 }
 
 .ͼ4 .cm-line {
-  color: oklch(var(--bc)) !important;
+  color: rgb(var(--ui-foreground)) !important;
 }
 </style>

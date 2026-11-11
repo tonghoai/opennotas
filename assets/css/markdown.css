@@ -8,7 +8,7 @@
 }
 
 @keyframes spinner {
-  12.5 % {
+  12.5% {
     x: 13px;
     y: 1px;
   }
@@ -176,23 +176,11 @@
 
 .ProseMirror code {
   border-radius: 0.125rem;
-  /* --tw-bg-opacity: 1; */
-  background-color: oklch(var(--n));
-  color: oklch(var(--pc));
+  background-color: rgb(var(--ui-neutral));
+  color: rgb(var(--ui-primary-foreground));
   font-size: 0.875rem;
-  /* font-family: inherit; */
   padding: 0 0.25rem;
-  caret-color: oklch(var(--pc));
-  /* font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    Liberation Mono, Courier New, monospace; */
-  /* --tw-text-opacity: 1; */
-  /* color: rgb(255 255 255/var(--tw-text-opacity)); */
-  /* caret-color: #fff; */
-  /* --tw-shadow: 0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1); */
-  /* --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color); */
-  /* box-shadow: var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow); */
-  /* font-size: 0.75rem; */
-  /* padding: 0 0.25rem; */
+  caret-color: rgb(var(--ui-primary-foreground));
 }
 
 .ProseMirror pre code {
@@ -211,20 +199,16 @@
   margin-top: 1rem;
   margin-bottom: 1rem;
   border-radius: 0.5rem;
-  /* border-width: 1px; */
   --tw-border-opacity: 1;
-  /* border-color: rgb(0 0 0 / var(--tw-border-opacity)); */
   --tw-bg-opacity: 1;
-  /* background-color: rgb(64 64 64 / var(--tw-bg-opacity)); */
-  background-color: oklch(var(--n));
-  /* padding: 0.25rem; */
+  background-color: rgb(var(--ui-neutral));
   padding: 0.5rem 0.75rem;
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
   caret-color: #fff;
   white-space: pre !important;
   overflow: auto;
-  scrollbar-color: oklch(var(--pc)) transparent;
+  scrollbar-color: rgb(var(--ui-primary-foreground)) transparent;
 }
 
 :is(.dark .ProseMirror pre) {
@@ -245,7 +229,7 @@
 .ProseMirror pre code {
   background-color: inherit;
   padding: 0;
-  color: oklch(var(--pc));
+  color: rgb(var(--ui-primary-foreground));
   --tw-shadow: 0 0 #0000;
   --tw-shadow-colored: 0 0 #0000;
   box-shadow:
@@ -254,8 +238,8 @@
 }
 
 .ProseMirror pre code::selection {
-  background-color: oklch(var(--pc));
-  color: oklch(var(--p));
+  background-color: rgb(var(--ui-primary-foreground));
+  color: rgb(var(--ui-primary));
 }
 
 .ProseMirror pre .hljs-comment,
@@ -491,7 +475,7 @@
   position: relative;
   min-width: 100px;
   border-width: 1px;
-  border-color: oklch(var(--b3));
+  border-color: rgb(var(--ui-subtle));
   padding: 0.5rem;
   text-align: left;
   vertical-align: top;
@@ -708,14 +692,10 @@
 }
 
 .ProseMirror p {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-  line-height: 1.625;
+  margin-top: 0.625rem;
+  margin-bottom: 0.625rem;
+  line-height: 1.65;
 }
-
-/* .ProseMirror p:first-child {
-  margin-top: 0;
-} */
 
 .ProseMirror p:last-child {
   margin-bottom: 0;
@@ -726,22 +706,14 @@
   margin-bottom: 0.25rem;
 }
 
-/* .ProseMirror > p:first-child {
-  margin-top: 0;
-} */
-
-/* .ProseMirror > p:last-child {
-  margin-bottom: 1.875rem;
-} */
-
 .ProseMirror h1 {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
+  font-size: 1.75rem;
+  line-height: 2.125rem;
 }
 
 .ProseMirror h2 {
-  font-size: 1.5rem;
-  line-height: 2rem;
+  font-size: 1.375rem;
+  line-height: 1.875rem;
 }
 
 .ProseMirror h3 {
@@ -838,7 +810,7 @@
 }
 
 .ProseMirror img.ProseMirror-selectednode {
-  border: 5px solid oklch(var(--p));
+  border: 5px solid rgb(var(--ui-primary));
 }
 
 .ProseMirror [data-type="horizontalRule"] {
@@ -916,9 +888,7 @@
   z-index: 0;
   margin-left: auto;
   margin-right: auto;
-  /* max-width: 768px; */
-  /* padding: 4rem 2rem 4rem 5rem; */
-  caret-color: oklch(var(--bc));
+  caret-color: rgb(var(--ui-foreground));
   outline-width: 0;
 }
 
@@ -935,14 +905,14 @@
 
 .ProseMirror ::-moz-selection {
   display: inline;
-  background-color: oklch(var(--p));
+  background-color: rgb(var(--ui-primary));
 }
 
 .ProseMirror .selection,
 .ProseMirror ::selection {
   display: inline;
-  background-color: oklch(var(--p));
-  color: oklch(var(--pc));
+  background-color: rgb(var(--ui-primary));
+  color: rgb(var(--ui-primary-foreground));
 }
 
 :is(.dark .ProseMirror *)::-moz-selection {
@@ -1026,19 +996,44 @@
   font-weight: inherit;
 }
 
-/* in-note search (Tiptap/Crepe decorations) */
 .search-match,
 ::highlight(search-match) {
-  background-color: oklch(var(--wa) / 35%);
+  background-color: rgb(var(--ui-warning) / 35%);
   border-radius: 2px;
 }
 
 .search-match-active,
 ::highlight(search-match-active) {
-  background-color: oklch(var(--wa) / 70%);
-  box-shadow: 0 0 0 1px oklch(var(--wa));
+  background-color: rgb(var(--ui-warning) / 70%);
+  box-shadow: 0 0 0 1px rgb(var(--ui-warning));
 }
 
 .ProseMirror hr {
-  border-color: var(--neutral);
+  border-color: rgb(var(--ui-border));
+}
+
+/* GPUI Separator for Tiptap's horizontal-rule node. */
+.ProseMirror [data-type="horizontalRule"] {
+  margin: 1.5rem 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+.ProseMirror [data-type="horizontalRule"] hr {
+  height: 0;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid rgb(var(--ui-border));
+  background-color: transparent;
+}
+
+.ProseMirror [data-type="horizontalRule"]:hover,
+.ProseMirror [data-type="horizontalRule"].ProseMirror-selectednode {
+  background-color: transparent;
+}
+
+.ProseMirror [data-type="horizontalRule"].ProseMirror-selectednode hr {
+  border-top-color: rgb(var(--ui-primary) / 0.35);
+  outline: 2px solid rgb(var(--ui-primary) / 0.08);
+  outline-offset: 4px;
 }

@@ -39,7 +39,6 @@ const CustomImage = TipTapImage.configure({
   },
 });
 
-// in-note search
 const NoteSearch = Extension.create({
   name: 'noteSearch',
   addProseMirrorPlugins() {
@@ -51,7 +50,6 @@ let editor: Editor;
 onMounted(() => {
   const value = props.value;
   editor = new Editor({
-    // content: value.replace(/(\n)(?!\|)/g, '  \n\n'),
     content: value,
     editable: !props.isDeleted,
     extensions: [
@@ -91,7 +89,7 @@ onMounted(() => {
     ],
     editorProps: {
       attributes: {
-        class: `px-2 lg:px-8 py-6 min-h-[calc(100vh_/_2)] ${props.settings?.general.editorView === 'compact' ? 'max-w-screen-md' : ''}`,
+        class: `mx-auto w-full px-5 py-6 lg:px-8 lg:py-8 min-h-[calc(100vh_/_2)] ${props.settings?.general.editorView === 'compact' ? 'max-w-[720px]' : ''}`,
       },
       handleClickOn(view, pos, node, nodePos, event) {
         editor.commands.focus(pos, { scrollIntoView: true });
@@ -118,11 +116,7 @@ onMounted(() => {
     onUpdate: ({ editor }) => {
       try {
         const markdownContent = editor.storage.markdown.getMarkdown();
-        const content = markdownContent
-          .replace(/\\/g, '')
-        // .replace(/\n\n/g, '\n')
-        // .replace(/&hairsp;/g, '')
-        // .replace(/ /g, '')
+        const content = markdownContent.replace(/\\/g, '');
         emit('changeContent', content);
       } catch (_) {
         showErrorSnackbar($i18n.t('app.message_note_can_not_save'));
@@ -130,10 +124,6 @@ onMounted(() => {
     }
   });
 });
-
-// watch(() => props.value, (newValue) => {
-//   editor.commands.setContent(/\s*\]\s*$/.test(newValue) ? `${newValue}&hairsp;` : newValue);
-// });
 
 const clickInsertImage = () => {
   const image = editor.getAttributes('image');
@@ -194,9 +184,7 @@ onUnmounted(() => {
   editor.destroy();
 });
 
-// slient update value
-// use to update value without trigger change event
-// to keep the cursor position
+// Update content without emitting a change event or moving the cursor.
 const slientUpdateValue = (value: string) => {
   return;
 }
@@ -229,10 +217,9 @@ const CustomTaskItem = TaskItem.extend({
 
       checkboxWrapper.contentEditable = 'false';
       checkbox.type = 'checkbox';
-      checkbox.classList.add('checkbox', 'checkbox-sm');
+      checkbox.classList.add('ui-checkbox', 'ui-checkbox-sm');
       checkbox.addEventListener('change', event => {
-        // if the editor isn't editable and we don't have a handler for
-        // readonly checks we have to undo the latest change
+        // Undo read-only changes unless the host handles them.
         if (!editor.isEditable && !this.options.onReadOnlyChecked) {
           checkbox.checked = !checkbox.checked;
           return;
@@ -254,7 +241,6 @@ const CustomTaskItem = TaskItem.extend({
             .run();
         }
         if (!editor.isEditable && this.options.onReadOnlyChecked) {
-          // Reset state if onReadOnlyChecked returns false
           if (!this.options.onReadOnlyChecked(node, checked)) {
             checkbox.checked = !checkbox.checked;
           }
@@ -414,8 +400,8 @@ const openLink = () => {
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.isActive('image')">
       <div class="bubble-menu">
-        <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
-          <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="clickInsertImage">
+        <ul class="ui-menu ui-menu-xs ui-menu-horizontal bg-primary text-primary-foreground p-0.5 rounded-lg shadow-lg">
+          <li class="inline-block hover:bg-primary-foreground/15 rounded-md" @click="clickInsertImage">
             <a>
               <span class="flex gap-1 items-center text-xs font-semibold">
                 Change Image
@@ -430,8 +416,8 @@ const openLink = () => {
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="checkIsInLink">
       <div class="bubble-menu flex gap-2">
-        <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
-          <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="clickInsertLink">
+        <ul class="ui-menu ui-menu-xs ui-menu-horizontal bg-primary text-primary-foreground p-0.5 rounded-lg shadow-lg">
+          <li class="inline-block hover:bg-primary-foreground/15 rounded-md" @click="clickInsertLink">
             <a>
               <span class="flex gap-1 items-center text-xs font-semibold">
                 Edit
@@ -439,7 +425,7 @@ const openLink = () => {
             </a>
           </li>
 
-          <li class="inline-block hover:bg-primary-content/15 rounded-md"
+          <li class="inline-block hover:bg-primary-foreground/15 rounded-md"
             @click="editor.chain().focus().unsetAllMarks().run()">
             <a>
               <span class="flex gap-1 items-center text-xs font-semibold">
@@ -455,8 +441,8 @@ const openLink = () => {
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.state.selection.from !== editor.state.selection.to && !editor.isActive('link') && !editor.isActive('image') && !editor.isActive('codeBlock')">
       <div class="bubble-menu flex gap-2">
-        <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
-          <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="clickInsertLink">
+        <ul class="ui-menu ui-menu-xs ui-menu-horizontal bg-primary text-primary-foreground p-0.5 rounded-lg shadow-lg">
+          <li class="inline-block hover:bg-primary-foreground/15 rounded-md" @click="clickInsertLink">
             <a>
               <span class="flex gap-1 items-center text-xs font-semibold">
                 Insert Link
@@ -464,7 +450,7 @@ const openLink = () => {
             </a>
           </li>
 
-          <li class="inline-block hover:bg-primary-content/15 rounded-md"
+          <li class="inline-block hover:bg-primary-foreground/15 rounded-md"
             @click="editor.chain().focus().unsetAllMarks().run()">
             <a>
               <span class="flex gap-1 items-center text-xs font-semibold">
@@ -479,8 +465,8 @@ const openLink = () => {
     <!-- thêm bubble menu cho code block -->
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.isActive('codeBlock')">
-      <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
-        <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="copyCodeBlock">
+      <ul class="ui-menu ui-menu-xs ui-menu-horizontal bg-primary text-primary-foreground p-0.5 rounded-lg shadow-lg">
+        <li class="inline-block hover:bg-primary-foreground/15 rounded-md" @click="copyCodeBlock">
           <a>
             <span class="flex gap-1 items-center text-xs font-semibold">
               Copy
@@ -488,7 +474,7 @@ const openLink = () => {
           </a>
         </li>
 
-        <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="insertParaAboveCodeBlock">
+        <li class="inline-block hover:bg-primary-foreground/15 rounded-md" @click="insertParaAboveCodeBlock">
           <a>
             <span class="flex gap-1 items-center text-xs font-semibold">
               Insert Para. Above
@@ -496,7 +482,7 @@ const openLink = () => {
           </a>
         </li>
 
-        <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="insertParaBelowCodeBlock">
+        <li class="inline-block hover:bg-primary-foreground/15 rounded-md" @click="insertParaBelowCodeBlock">
           <a>
             <span class="flex gap-1 items-center text-xs font-semibold">
               Insert Para. Below
@@ -510,8 +496,8 @@ const openLink = () => {
     <bubble-menu :editor="editor" :tippy-options="{ duration: 100, hideOnClick: 'toggle' }"
       :should-show="() => editor.isActive('link') && editor.state.selection.from === editor.state.selection.to">
       <div class="bubble-menu">
-        <ul class="menu menu-xs menu-horizontal bg-primary text-primary-content p-0.5 rounded-lg shadow-lg">
-          <li class="inline-block hover:bg-primary-content/15 rounded-md" @click="openLink">
+        <ul class="ui-menu ui-menu-xs ui-menu-horizontal bg-primary text-primary-foreground p-0.5 rounded-lg shadow-lg">
+          <li class="inline-block hover:bg-primary-foreground/15 rounded-md" @click="openLink">
             <a>
               <span class="flex gap-1 items-center text-xs font-semibold">
                 Open Link
@@ -522,7 +508,7 @@ const openLink = () => {
       </div>
     </bubble-menu>
 
-    <div id="tiptap-editor" class="relative h-full animate-fade-right animate-duration-100">
+    <div id="tiptap-editor" class="relative h-full">
       <editor-content :editor="editor" />
 
       <div v-if="props.isShowFormatToolbar" class="sticky bottom-16 left-0 w-fit max-w-screen-md mx-auto">
@@ -535,25 +521,30 @@ const openLink = () => {
 <style>
 .tiptap {
   outline: none;
-  line-height: 32px;
+  font-size: var(--ui-editor-font-size, 14px);
+  line-height: var(--ui-editor-line-height, 1.5);
 
-  /* &:last-child {
-    padding-bottom: 64px !important;
-  } */
+  > p:first-child {
+    margin-top: 0.25rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 650;
+  }
 
   >*+* {
-    margin-top: 0.75em;
+    margin-top: var(--ui-editor-block-spacing, 0.75em);
   }
 }
 
 .ProseMirror button {
-  @apply bg-base-300 rounded border-none text-sm font-medium py-1 px-2 transition;
+  @apply bg-subtle rounded border-none text-sm font-medium py-1 px-2 transition;
 }
 
 .ProseMirror button.is-active,
 .ProseMirror input.is-active,
 .ProseMirror select.is-active,
 .ProseMirror textarea.is-active {
-  @apply bg-primary text-primary-content;
+  @apply bg-primary text-primary-foreground;
 }
 </style>

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { Notes } from '~/utils/icons';
+import { Trash } from '~/utils/icons';
+import { Tag } from '~/utils/icons';
+
 const props = defineProps([
   'id',
   'value',
@@ -7,6 +11,7 @@ const props = defineProps([
   'editorName',
   'isDeleted',
   'isShowFormatToolbar',
+  'emptyMode',
 ]);
 
 const emit = defineEmits([
@@ -25,9 +30,9 @@ const confirmPassword = () => {
   emit('confirmPassword', passwordUnlockValue.value);
 }
 const wrongPassword = () => {
-  passwordUnlockRef.value.classList.add('animate-shake', 'animate-duration-100', 'input-error');
+  passwordUnlockRef.value.classList.add('animate-shake', 'animate-duration-100', 'ui-input-error');
   setTimeout(() => {
-    passwordUnlockRef.value.classList.remove('animate-shake', 'animate-duration-100', 'input-error');
+    passwordUnlockRef.value.classList.remove('animate-shake', 'animate-duration-100', 'ui-input-error');
   }, 1000);
 }
 const resetPassword = () => {
@@ -72,7 +77,7 @@ const focus = (location: 'start' | 'end' = 'start') => {
   editorRef.value?.focus(location);
 }
 const handleClickMarkdownBody = (e: MouseEvent) => {
-  if ((e.target as HTMLElement).closest('input, textarea, .dropdown, .milkdown-toolbar, .milkdown-link-edit, .milkdown-link-preview, .milkdown-slash-menu, .milkdown-block-handle')) return;
+  if ((e.target as HTMLElement).closest('input, textarea, .ui-dropdown, .milkdown-toolbar, .milkdown-link-edit, .milkdown-link-preview, .milkdown-slash-menu, .milkdown-block-handle')) return;
   focus('end');
 }
 const readonly = () => {
@@ -162,12 +167,24 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex justify-center bg-svg h-full transition-all" v-if="!id"></div>
+  <div v-if="!id" class="flex h-full flex-col items-center justify-center gap-3.5 px-8 text-center">
+    <Trash v-if="props.emptyMode === 'trash'" class="h-10 w-10 opacity-20" />
+    <Tag v-else-if="props.emptyMode === 'tags'" class="h-10 w-10 opacity-20" />
+    <Notes v-else class="h-10 w-10 opacity-20" />
+    <p class="text-[14px] font-medium text-foreground/80">
+      {{ props.emptyMode === 'trash' ? $t('app.list_empty_trash_title')
+        : props.emptyMode === 'tags' ? $t('app.tags_overview_title') : $t('app.editor_empty_title') }}
+    </p>
+    <p class="max-w-64 text-[12.5px] leading-5 text-muted-foreground">
+      {{ props.emptyMode === 'trash' ? $t('app.list_empty_trash_desc')
+        : props.emptyMode === 'tags' ? $t('app.tags_overview_desc') : $t('app.editor_empty_desc') }}
+    </p>
+  </div>
 
   <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="handleClickMarkdownBody">
     <ToolbarFormNotesSearch v-if="isSearchOpen" ref="formNotesSearchRef" v-model="searchQuery"
       :matchCurrent="matchInfo.current" :matchTotal="matchInfo.total"
-      class="sticky top-0 z-[60] animate-fade-down animate-duration-200 shadow-sm" @next="handleSearchNext"
+      class="sticky top-0 z-[60] shadow-sm" @next="handleSearchNext"
       @prev="handleSearchPrev" @close="closeSearch" @click.stop />
 
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
@@ -181,12 +198,13 @@ defineExpose({
 
     <EditorCrepe v-if="editorName === 'Crepe'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :isShowFormatToolbar="props.isShowFormatToolbar" :noteId="props.id"
-      @changeContent="handleChangeContent" @alertMessage="handleAlertMessage" />
+      @changeContent="handleChangeContent" @alertMessage="handleAlertMessage"
+      @insertImage="emit('clickInsertImage', { url: '', alt: '' })" />
   </div>
 
   <div class="flex justify-center pt-8 pb-1 bg-svg h-full transition-all" v-show="id && isLocked">
     <input ref="passwordUnlockRef" type="password" :placeholder="$t('app.form_note_input_password_title')"
-      class="input input-bordered max-w-xs" v-model="passwordUnlockValue" @keyup.enter="confirmPassword"
+      class="ui-input ui-input-bordered max-w-xs" v-model="passwordUnlockValue" @keyup.enter="confirmPassword"
       autocomplete="off" autofocus />
   </div>
 </template>

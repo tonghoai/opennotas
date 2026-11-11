@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Search from '~/assets/svg/search.svg?component';
-import ChevronRight from '~/assets/svg/chevron-right.svg?component';
-import X from '~/assets/svg/x.svg?component';
+import { Search } from '~/utils/icons';
+import { ChevronRight } from '~/utils/icons';
+import { X } from '~/utils/icons';
 
 const props = defineProps([
   'modelValue',
@@ -34,8 +34,8 @@ defineExpose({
 </script>
 
 <template>
-  <div class="p-2 flex items-center gap-2 bg-base-100 border-b border-base-300">
-    <label class="input input-sm flex-1 flex items-center gap-2 rounded-lg border-none bg-base-200">
+  <div class="flex items-center gap-2 border-b border-border bg-card p-2">
+    <label class="ui-input ui-input-sm flex-1 flex items-center gap-2 rounded-lg border-none bg-muted">
       <Search class="w-4 h-4 opacity-50 flex-none" />
       <input ref="inputRef" type="text" class="grow bg-transparent"
         :placeholder="$t('app.form_note_search_placeholder')" autocomplete="off" v-model="query"
@@ -46,15 +46,18 @@ defineExpose({
       </span>
     </label>
 
-    <button class="btn btn-ghost btn-circle btn-sm press" :disabled="!matchTotal"
-      :title="$t('app.form_note_search_prev_tooltip')" @click="emit('prev')">
+    <button type="button" class="ui-btn ui-btn-ghost ui-btn-circle ui-btn-sm press" :disabled="!matchTotal"
+      :aria-label="$t('app.form_note_search_prev_tooltip')" :title="$t('app.form_note_search_prev_tooltip')"
+      @click="emit('prev')">
       <ChevronRight class="w-4 h-4 -rotate-90" />
     </button>
-    <button class="btn btn-ghost btn-circle btn-sm press" :disabled="!matchTotal"
-      :title="$t('app.form_note_search_next_tooltip')" @click="emit('next')">
+    <button type="button" class="ui-btn ui-btn-ghost ui-btn-circle ui-btn-sm press" :disabled="!matchTotal"
+      :aria-label="$t('app.form_note_search_next_tooltip')" :title="$t('app.form_note_search_next_tooltip')"
+      @click="emit('next')">
       <ChevronRight class="w-4 h-4 rotate-90" />
     </button>
-    <button class="btn btn-ghost btn-circle btn-sm press" :title="$t('app.form_note_search_close_tooltip')"
+    <button type="button" class="ui-btn ui-btn-ghost ui-btn-circle ui-btn-sm press"
+      :aria-label="$t('app.form_note_search_close_tooltip')" :title="$t('app.form_note_search_close_tooltip')"
       @click="emit('close')">
       <X class="w-4 h-4" />
     </button>
