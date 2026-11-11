@@ -1,13 +1,20 @@
 function _toggleModal(modalId: string, isOpen: boolean, state: Ref<boolean>) {
   if (isOpen) {
     if (state) state.value = true;
-    setTimeout(() => {
-      (document.getElementById(modalId) as any)?.showModal();
-    }, 100);
+    requestAnimationFrame(() => {
+      const dialog = document.getElementById(modalId) as any;
+      if (!dialog?.showModal) return;
+      if (!dialog.open) dialog.showModal();
+      if (!dialog.querySelector('[autofocus]')) {
+        if (!dialog.hasAttribute('tabindex')) dialog.setAttribute('tabindex', '-1');
+        dialog.focus?.({ preventScroll: true });
+      }
+    });
     return;
   }
 
-  (document.getElementById(modalId) as any)?.close();
+  const dialog = document.getElementById(modalId) as any;
+  if (dialog?.open) dialog.close();
   if (state) state.value = false;
 }
 
@@ -47,10 +54,6 @@ function toggleModalTagColorCustom(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-tag-color-custom", isOpen, state);
 }
 
-function toggleModalConfirmDeleteTag(isOpen: boolean, state: Ref<boolean>) {
-  _toggleModal("modal-confirm-delete-tag", isOpen, state);
-}
-
 function toggleModalMenuNoteTags(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-menu-note-tags", isOpen, state);
 }
@@ -63,9 +66,6 @@ function toggleModalMenuSidebar(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-menu-sidebar", isOpen, state);
 }
 
-function toggleModalMenuEditor(isOpen: boolean, state: Ref<boolean>) {
-  _toggleModal("modal-menu-editor", isOpen, state);
-}
 
 function toggleModalUnlockNotes(isOpen: boolean, state: Ref<boolean>) {
   _toggleModal("modal-unlock-notes", isOpen, state);
@@ -149,11 +149,9 @@ export {
   toggleModalMenuTag,
   toggleModalTagForm,
   toggleModalTagColorCustom,
-  toggleModalConfirmDeleteTag,
   toggleModalMenuNoteTags,
   toggleModalSortNote,
   toggleModalMenuSidebar,
-  toggleModalMenuEditor,
   toggleModalUnlockNotes,
   toggleModalAlertSetPassword,
   toggleModalNotesDetail,

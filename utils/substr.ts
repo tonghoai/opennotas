@@ -1,9 +1,14 @@
+import { getNoteExcerpt, getNoteTitle } from './note-content';
+
+// Backwards-compatible helpers. Keep the old names because note-history,
+// sync and older call sites import them, but route them through the shared
+// Markdown/plain-text pipeline so titles and excerpts agree everywhere.
 const substrTitle = (str: string) => {
-  return str.split('\n')[0];
+  return getNoteTitle(str);
 }
 
 const substrContent = (str: string) => {
-  return (str.split('\n').slice(1).find(line => line.trim() !== '') ?? '').substr(0, 60).trim();
+  return getNoteExcerpt(str, 60);
 }
 
 export {

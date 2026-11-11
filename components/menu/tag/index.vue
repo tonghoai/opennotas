@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Pencil from '~/assets/svg/pencil.svg?component';
-import Trash from '~/assets/svg/trash.svg?component';
+import { Pencil } from '~/utils/icons';
+import { Trash } from '~/utils/icons';
 
 const props = defineProps([
   'tagId',
@@ -18,9 +18,9 @@ const handleClickDeleteTag = () => {
 </script>
 
 <template>
-  <ul class="menu bg-base-100 rounded-box w-36 border border-neutral animate-fade-down animate-duration-100">
+  <ul role="menu" class="ui-menu bg-popover text-popover-foreground rounded-ui w-36 border border-border">
     <li id="menu-tag-edit" @click="handleClickEditTag">
-      <a class="flex flex-row items-center gap-3">
+      <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
         <Pencil class="w-4 h-4 shrink-0" />
         <span class="flex items-center justify-center">{{ $t('app.menu_tag_edit') }}</span>
       </a>
@@ -28,8 +28,8 @@ const handleClickDeleteTag = () => {
 
     <li></li>
 
-    <li class="text-rose-500" @click="handleClickDeleteTag">
-      <a class="flex flex-row items-center gap-3">
+    <li class="text-danger" @click="handleClickDeleteTag">
+      <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
         <Trash class="w-4 h-4 shrink-0" />
         <span class="flex items-center justify-center">{{ $t('app.menu_tag_delete') }}</span>
       </a>

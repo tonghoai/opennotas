@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import PinV2 from '~/assets/svg/pin-v2.svg?component';
-import Copy from '~/assets/svg/copy.svg?component';
-import CircleKey from '~/assets/svg/circle-key.svg?component';
-import Trash from '~/assets/svg/trash.svg?component';
-import Restore from '~/assets/svg/restore.svg?component';
-import Info from '~/assets/svg/info.svg?component';
-import History from '~/assets/svg/history.svg?component';
-import FileMove from '~/assets/svg/file-arrow-right.svg?component';
-import Tag from '~/assets/svg/tag.svg?component';
-import ChevronRight from '~/assets/svg/chevron-right.svg?component';
+import { PinV2 } from '~/utils/icons';
+import { Copy } from '~/utils/icons';
+import { CircleKey } from '~/utils/icons';
+import { Trash } from '~/utils/icons';
+import { Restore } from '~/utils/icons';
+import { Info } from '~/utils/icons';
+import { History } from '~/utils/icons';
+import { FileMove } from '~/utils/icons';
+import { Tag } from '~/utils/icons';
+import { ChevronRight } from '~/utils/icons';
 
 const props = defineProps([
   'noteId',
@@ -66,29 +66,29 @@ const handleClickDeleteNoteForever = () => {
   <div class="">
     <!-- case active notes -->
     <!-- <ul v-if="!formNotes.deletedAt" class="px-1.5 py-2">
-      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer"
+      <li class="px-5 py-1.5 hover:bg-subtle rounded-lg cursor-pointer"
         @click="handleClickPinNote(props.formNotes.isPinned)">
         {{ props.formNotes.isPinned ? $t('app.menu_note_unpin') : $t('app.menu_note_pin') }}
       </li>
 
-      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer" @click="handleClickCopyNote">
+      <li class="px-5 py-1.5 hover:bg-subtle rounded-lg cursor-pointer" @click="handleClickCopyNote">
         {{ $t('app.menu_note_copy') }}
       </li>
 
-      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer"
+      <li class="px-5 py-1.5 hover:bg-subtle rounded-lg cursor-pointer"
         @click="handleClickLockNote(props.formNotes.isLocked)">
         {{ props.formNotes.isLocked ? $t('app.menu_note_unlock') : $t('app.menu_note_lock') }}
       </li>
 
-      <li class="px-5 py-1.5 hover:bg-base-300 rounded-lg cursor-pointer text-rose-500" @click="handleClickDeleteNote">
+      <li class="px-5 py-1.5 hover:bg-subtle rounded-lg cursor-pointer text-danger" @click="handleClickDeleteNote">
         {{ $t('app.menu_note_delete') }}
       </li>
     </ul> -->
 
-    <ul v-if="!formNotes.deletedAt"
-      class="menu bg-base-100 rounded-box w-48 border border-neutral animate-fade-down animate-duration-100">
+    <ul v-if="!formNotes.deletedAt" role="menu"
+      class="ui-menu bg-popover text-popover-foreground rounded-ui w-48 border border-border">
       <li class="" data-ga-event="note_pin_toggle" @click="handleClickPinNote(props.formNotes.isPinned)">
-        <a class="flex flex-row items-center gap-3">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <PinV2 class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ props.formNotes.isPinned ? $t('app.menu_note_unpin') :
             $t('app.menu_note_pin') }}</span>
@@ -96,14 +96,14 @@ const handleClickDeleteNoteForever = () => {
       </li>
 
       <li class="" data-ga-event="note_copy" @click="handleClickCopyNote">
-        <a class="flex flex-row items-center gap-3">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <Copy class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
         </a>
       </li>
 
-      <li class="" @click.stop="handleClickMove($event)">
-        <a class="flex flex-row items-center justify-between gap-3">
+      <li class="" data-menu-keep-open @click.stop="handleClickMove($event)">
+        <a role="menuitem" href="#" class="flex flex-row items-center justify-between gap-3" @click.prevent>
           <span class="flex flex-row items-center gap-3">
             <FileMove class="w-4 h-4 shrink-0" />
             <span class="flex items-center justify-center">{{ $t('app.menu_note_move') }}</span>
@@ -112,8 +112,8 @@ const handleClickDeleteNoteForever = () => {
         </a>
       </li>
 
-      <li class="" @click.stop="handleClickAddToTag($event)">
-        <a class="flex flex-row items-center justify-between gap-3">
+      <li class="" data-menu-keep-open @click.stop="handleClickAddToTag($event)">
+        <a role="menuitem" href="#" class="flex flex-row items-center justify-between gap-3" @click.prevent>
           <span class="flex flex-row items-center gap-3">
             <Tag class="w-4 h-4 shrink-0" />
             <span class="flex items-center justify-center">{{ $t('app.menu_note_add_to_tag') }}</span>
@@ -123,14 +123,14 @@ const handleClickDeleteNoteForever = () => {
       </li>
 
       <li class="" @click="handleClickInfo">
-        <a class="flex flex-row items-center gap-3">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <Info class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_info') }}</span>
         </a>
       </li>
 
       <li class="" data-ga-event="note_history_view" @click="handleClickHistory">
-        <a class="flex flex-row items-center gap-3">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <History class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_history') }}</span>
         </a>
@@ -139,7 +139,7 @@ const handleClickDeleteNoteForever = () => {
       <li></li>
 
       <li class="" data-ga-event="note_lock_toggle" @click="handleClickLockNote(props.formNotes.isLocked)">
-        <a class="flex flex-row items-center gap-3">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <CircleKey class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ props.formNotes.isLocked ? $t('app.menu_note_unlock') :
             $t('app.menu_note_lock') }}</span>
@@ -148,8 +148,8 @@ const handleClickDeleteNoteForever = () => {
 
       <li></li>
 
-      <li class="text-rose-500" data-ga-event="note_delete" @click="handleClickDeleteNote">
-        <a class="flex flex-row items-center gap-3">
+      <li class="text-danger" data-ga-event="note_delete" @click="handleClickDeleteNote">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <Trash class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_delete') }}</span>
         </a>
@@ -157,24 +157,24 @@ const handleClickDeleteNoteForever = () => {
     </ul>
 
     <!-- case deleted notes -->
-    <ul v-if="formNotes.deletedAt"
-      class="menu bg-base-100 rounded-box w-44 border border-neutral animate-fade-down animate-duration-100">
+    <ul v-if="formNotes.deletedAt" role="menu"
+      class="ui-menu bg-popover text-popover-foreground rounded-ui w-44 border border-border">
       <li class="" data-ga-event="note_restore" @click="handleClickRestoreNote">
-        <a class="flex flex-row items-center gap-3">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <Restore class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_restore') }}</span>
         </a>
       </li>
 
       <li class="" data-ga-event="note_copy" @click="handleClickCopyNote">
-        <a class="flex flex-row items-center gap-3">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <Copy class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_copy') }}</span>
         </a>
       </li>
 
       <li class="" @click="handleClickInfo">
-        <a class="flex flex-row items-center gap-3">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <Info class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_info') }}</span>
         </a>
@@ -182,8 +182,8 @@ const handleClickDeleteNoteForever = () => {
 
       <li></li>
 
-      <li class="text-rose-500" data-ga-event="note_delete_forever" @click="handleClickDeleteNoteForever">
-        <a class="flex flex-row items-center gap-3">
+      <li class="text-danger" data-ga-event="note_delete_forever" @click="handleClickDeleteNoteForever">
+        <a role="menuitem" href="#" class="flex flex-row items-center gap-3" @click.prevent>
           <Trash class="w-4 h-4 shrink-0" />
           <span class="flex items-center justify-center">{{ $t('app.menu_note_delete_forever') }}</span>
         </a>

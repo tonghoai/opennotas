@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import Language from '../assets/svg/language.svg?component';
-import PWA from '../assets/svg/pwa.svg?component';
-import Simple from '../assets/svg/simple.svg?component';
-import Platform from '../assets/svg/platform.svg?component';
-import Sync from '../assets/svg/sync.svg?component';
-import Security from '../assets/svg/security.svg?component';
-import Globe from '../assets/svg/globe.svg?component';
+import { Language } from '~/utils/icons';
+import { PWA } from '~/utils/icons';
+import { Simple } from '~/utils/icons';
+import { Platform } from '~/utils/icons';
+import { Sync } from '~/utils/icons';
+import { Security } from '~/utils/icons';
+import { Globe } from '~/utils/icons';
 import { setInstalledApp } from '~/services/main';
 
 useHead({
@@ -193,13 +193,13 @@ const _scrollTo = (elm: Element) => {
   <div class="landing-page">
     <div class="landing max-w-screen-lg mx-auto px-4 lg:px-2">
       <!-- Navigation -->
-      <div id="home" class="navbar py-4">
+      <div id="home" class="ui-navbar py-4">
         <div class="flex-1 gap-2.5 items-center">
           <img :src="'/logo-icon.png'" width="36" height="36" alt="OpenNotas Logo" class="rounded-lg">
           <span class="font-semibold text-base tracking-tight">{{ $t('app_name') }}</span>
         </div>
         <div class="flex-none hidden lg:flex">
-          <ul class="menu flex-row items-center menu-horizontal px-1 gap-1">
+          <ul class="ui-menu flex-row items-center ui-menu-horizontal px-1 gap-1">
             <li @click="scrollToHome"><a>{{ $t('landing.navbar_home') }}</a></li>
             <li @click="scrollToFeature"><a>{{ $t('landing.navbar_feature') }}</a></li>
             <li @click="scrollToSignature"><a>{{ $t('landing.navbar_signature') }}</a></li>
@@ -207,12 +207,12 @@ const _scrollTo = (elm: Element) => {
               $t('landing.navbar_document') }}</a></li>
             <li @click="scrollToFaq"><a>{{ $t('landing.navbar_faqs') }}</a></li>
             <li>
-              <div class="dropdown p-0">
-                <div tabindex="0" role="button" class="btn btn-sm btn-ghost btn-square">
+              <div class="ui-dropdown p-0">
+                <div tabindex="0" role="button" class="ui-btn ui-btn-sm ui-btn-ghost ui-btn-square">
                   <Language />
                 </div>
                 <ul tabindex="0"
-                  class="dropdown-content z-[1] menu p-2 border border-base-300 rounded-box w-36 shadow-sm"
+                  class="ui-dropdown-content z-[1] ui-menu bg-popover text-popover-foreground p-2 border border-subtle rounded-ui-lg w-36 shadow-sm"
                   style="top: 42px; left: 0">
                   <li @click="setLocale('vi')"><a>{{ $t('vi') }}</a></li>
                   <li @click="setLocale('en')"><a>{{ $t('en') }}</a></li>
@@ -221,7 +221,7 @@ const _scrollTo = (elm: Element) => {
                 </ul>
               </div>
             </li>
-            <li><a class="install-btn btn btn-sm btn-sm btn-primary ml-2 rounded-md px-5">{{ $t('landing.install_app')
+            <li><a class="install-btn ui-btn ui-btn-sm ui-btn-primary ml-2 rounded-md px-5">{{ $t('landing.install_app')
                 }}</a></li>
           </ul>
         </div>
@@ -257,29 +257,29 @@ const _scrollTo = (elm: Element) => {
           <div class="mx-auto max-w-2xl">
             <span class="eyebrow">{{ $t('app_name') }}</span>
             <h1
-              class="mt-4 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-base-content leading-snug">
+              class="mt-4 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground leading-snug">
               {{ $t('landing.slogan') }}
             </h1>
             <p class="hero-tagline mt-4">
               {{ $t('landing.hero_tagline') }}
             </p>
             <div class="mt-7 flex flex-wrap justify-center items-center gap-3">
-              <a class="install-btn btn btn-sm btn-primary rounded-md px-5">
+              <a class="install-btn ui-btn ui-btn-sm ui-btn-primary rounded-md px-5">
                 <PWA />
                 {{ $t('landing.install_app') }}
               </a>
 
-              <span class="hidden lg:block text-xs text-base-content/40">·</span>
+              <span class="hidden lg:block text-xs text-foreground/40">·</span>
 
               <a href="/app" target="_blank" rel="noopener noreferrer"
-                class="btn btn-sm btn-outline rounded-md px-5 hidden lg:flex bg-base-100">
+                class="ui-btn ui-btn-sm ui-btn-outline rounded-md px-5 hidden lg:flex bg-card">
                 <Globe />
                 {{ $t('landing.try_web_version') }}
               </a>
             </div>
-            <p class="mt-6 text-xs text-base-content/55">
+            <p class="mt-6 text-xs text-foreground/55">
               {{ $t('landing.accept_terms') }}
-              <a class="link link-hover underline-offset-2 text-sm font-semibold text-base-content"
+              <a class="ui-link ui-link-hover underline-offset-2 text-sm font-semibold text-foreground"
                 href="/service#terms">{{ $t('landing.footer_agreement_terms') }}</a>
             </p>
           </div>
@@ -413,62 +413,62 @@ const _scrollTo = (elm: Element) => {
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 max-w-4xl mx-auto">
-          <div tabindex="0" class="collapse collapse-arrow border border-base-300 rounded-md bg-base-100">
+          <div tabindex="0" class="ui-collapse ui-collapse-arrow border border-subtle rounded-md bg-card">
             <input type="checkbox" />
-            <div class="collapse-title text-sm font-semibold">
+            <div class="ui-collapse-title text-sm font-semibold">
               {{ $t('landing.faqs_question_1') }}
             </div>
-            <div class="collapse-content">
+            <div class="ui-collapse-content">
               <p class="faq-answer">{{ $t('landing.faqs_answer_1') }}</p>
             </div>
           </div>
 
-          <div tabindex="1" class="collapse collapse-arrow border border-base-300 rounded-md bg-base-100">
+          <div tabindex="1" class="ui-collapse ui-collapse-arrow border border-subtle rounded-md bg-card">
             <input type="checkbox" />
-            <div class="collapse-title text-sm font-semibold">
+            <div class="ui-collapse-title text-sm font-semibold">
               {{ $t('landing.faqs_question_2') }}
             </div>
-            <div class="collapse-content">
+            <div class="ui-collapse-content">
               <p class="faq-answer">{{ $t('landing.faqs_answer_2') }}</p>
             </div>
           </div>
 
-          <div tabindex="2" class="collapse collapse-arrow border border-base-300 rounded-md bg-base-100">
+          <div tabindex="2" class="ui-collapse ui-collapse-arrow border border-subtle rounded-md bg-card">
             <input type="checkbox" />
-            <div class="collapse-title text-sm font-semibold">
+            <div class="ui-collapse-title text-sm font-semibold">
               {{ $t('landing.faqs_question_3') }}
             </div>
-            <div class="collapse-content">
+            <div class="ui-collapse-content">
               <p class="faq-answer">{{ $t('landing.faqs_answer_3') }}</p>
             </div>
           </div>
 
-          <div tabindex="3" class="collapse collapse-arrow border border-base-300 rounded-md bg-base-100">
+          <div tabindex="3" class="ui-collapse ui-collapse-arrow border border-subtle rounded-md bg-card">
             <input type="checkbox" />
-            <div class="collapse-title text-sm font-semibold">
+            <div class="ui-collapse-title text-sm font-semibold">
               {{ $t('landing.faqs_question_4') }}
             </div>
-            <div class="collapse-content">
+            <div class="ui-collapse-content">
               <p class="faq-answer">{{ $t('landing.faqs_answer_4') }}</p>
             </div>
           </div>
 
-          <div tabindex="4" class="collapse collapse-arrow border border-base-300 rounded-md bg-base-100">
+          <div tabindex="4" class="ui-collapse ui-collapse-arrow border border-subtle rounded-md bg-card">
             <input type="checkbox" />
-            <div class="collapse-title text-sm font-semibold">
+            <div class="ui-collapse-title text-sm font-semibold">
               {{ $t('landing.faqs_question_5') }}
             </div>
-            <div class="collapse-content">
+            <div class="ui-collapse-content">
               <p class="faq-answer">{{ $t('landing.faqs_answer_5') }}</p>
             </div>
           </div>
 
-          <div tabindex="5" class="collapse collapse-arrow border border-base-300 rounded-md bg-base-100">
+          <div tabindex="5" class="ui-collapse ui-collapse-arrow border border-subtle rounded-md bg-card">
             <input type="checkbox" />
-            <div class="collapse-title text-sm font-semibold">
+            <div class="ui-collapse-title text-sm font-semibold">
               {{ $t('landing.faqs_question_6') }}
             </div>
-            <div class="collapse-content">
+            <div class="ui-collapse-content">
               <p class="faq-answer">{{ $t('landing.faqs_answer_6') }}</p>
             </div>
           </div>
@@ -478,14 +478,14 @@ const _scrollTo = (elm: Element) => {
       <!-- Call to action -->
       <section class="download-now mt-16 lg:mt-24">
         <div
-          class="relative overflow-hidden rounded-md border border-base-300 bg-gradient-to-b from-base-200/60 to-base-100 px-6 py-14 lg:py-16 text-center">
+          class="relative overflow-hidden rounded-md border border-subtle bg-gradient-to-b from-muted/60 to-card px-6 py-14 lg:py-16 text-center">
           <div aria-hidden="true"
             class="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 h-56 w-56 rounded-md blur-3xl"
             style="background: oklch(0.55 0.12 250 / 0.10);"></div>
           <div class="relative">
             <p class="text-xl lg:text-2xl font-semibold tracking-tight">{{ $t('landing.start_using') }}</p>
             <p class="cta-sub mt-3 mx-auto">{{ $t('landing.start_using_slogan') }}</p>
-            <a class="install-btn btn btn-sm btn-primary mt-6 rounded-md px-6">
+            <a class="install-btn ui-btn ui-btn-sm ui-btn-primary mt-6 rounded-md px-6">
               <PWA />
               {{ $t('landing.install_app') }}
             </a>
@@ -495,42 +495,42 @@ const _scrollTo = (elm: Element) => {
     </div>
 
     <!-- Footer -->
-    <footer class="footer p-6 lg:p-10 bg-base-200 text-base-content mt-16 lg:mt-20 pb-10">
+    <footer class="ui-footer p-6 lg:p-10 bg-muted text-foreground mt-16 lg:mt-20 pb-10">
       <div class="max-w-screen-lg w-full mx-auto flex gap-8 flex-col md:flex-row justify-between">
         <aside class="max-w-sm flex flex-col gap-2.5">
           <div class="flex items-center gap-2.5">
             <img :src="'/logo-icon.png'" width="36" height="36" alt="OpenNotas Logo" class="rounded-lg">
             <p class="font-semibold text-base">{{ $t('app_name') }}</p>
           </div>
-          <p class="text-sm text-base-content/65">{{ $t('landing.slogan') }}</p>
+          <p class="text-sm text-foreground/65">{{ $t('landing.slogan') }}</p>
         </aside>
         <nav class="flex flex-col gap-1.5">
-          <h6 class="footer-title opacity-50">{{ $t('landing.footer_page_title') }}</h6>
-          <a class="link link-hover" href="https://github.com/tonghoai/opennotas" target="_blank"
+          <h6 class="ui-footer-title opacity-50">{{ $t('landing.footer_page_title') }}</h6>
+          <a class="ui-link ui-link-hover" href="https://github.com/tonghoai/opennotas" target="_blank"
             rel="noopener noreferrer">
             {{ $t('landing.footer_page_github') }}
           </a>
-          <a class="link link-hover" @click="scrollToHome">{{ $t('landing.footer_page_intro') }}</a>
-          <a class="link link-hover" href="https://docs.opennotas.io" target="_blank" rel="noopener noreferrer">
+          <a class="ui-link ui-link-hover" @click="scrollToHome">{{ $t('landing.footer_page_intro') }}</a>
+          <a class="ui-link ui-link-hover" href="https://docs.opennotas.io" target="_blank" rel="noopener noreferrer">
             {{ $t('landing.footer_page_document') }}
           </a>
         </nav>
         <nav class="flex flex-col gap-1.5">
-          <h6 class="footer-title opacity-50">{{ $t('landing.footer_information_title') }}</h6>
-          <a class="link link-hover" href="#">{{ $t('landing.footer_information_about') }}</a>
-          <a class="link link-hover" href="#">
+          <h6 class="ui-footer-title opacity-50">{{ $t('landing.footer_information_title') }}</h6>
+          <a class="ui-link ui-link-hover" href="#">{{ $t('landing.footer_information_about') }}</a>
+          <a class="ui-link ui-link-hover" href="#">
             {{ $t('landing.footer_information_contact') }}
           </a>
-          <a class="link link-hover" href="https://docs.opennotas.io/community" target="_blank"
+          <a class="ui-link ui-link-hover" href="https://docs.opennotas.io/community" target="_blank"
             rel="noopener noreferrer">
             {{ $t('landing.footer_information_community') }}
           </a>
         </nav>
         <nav class="flex flex-col gap-1.5">
-          <h6 class="footer-title opacity-50">{{ $t('landing.footer_agreement_title') }}</h6>
-          <a class="link link-hover" href="/service#terms">{{ $t('landing.footer_agreement_terms') }}</a>
-          <a class="link link-hover" href="/service#privacy-policy">{{ $t('landing.footer_agreement_privacy') }}</a>
-          <a class="link link-hover" href="/services#cookie-policy">{{ $t('landing.footer_agreement_cookie') }}</a>
+          <h6 class="ui-footer-title opacity-50">{{ $t('landing.footer_agreement_title') }}</h6>
+          <a class="ui-link ui-link-hover" href="/service#terms">{{ $t('landing.footer_agreement_terms') }}</a>
+          <a class="ui-link ui-link-hover" href="/service#privacy-policy">{{ $t('landing.footer_agreement_privacy') }}</a>
+          <a class="ui-link ui-link-hover" href="/service#cookie-policy">{{ $t('landing.footer_agreement_cookie') }}</a>
         </nav>
       </div>
     </footer>
@@ -538,14 +538,14 @@ const _scrollTo = (elm: Element) => {
 </template>
 
 <style lang="scss">
-.menu :where(li ul):before {
+.ui-menu :where(li ul):before {
   width: 0;
 }
 </style>
 
 <style lang="scss" scoped>
 .landing-page {
-  background-color: oklch(var(--b1));
+  background-color: rgb(var(--ui-card));
   background-image: radial-gradient(oklch(0 0 0 / 0.035) 1px, transparent 1px);
   background-size: 24px 24px;
   background-position: -1px -1px;
@@ -558,18 +558,18 @@ const _scrollTo = (elm: Element) => {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: oklch(var(--p));
+  color: rgb(var(--ui-primary));
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  background-color: oklch(var(--p) / 0.06);
-  border: 1px solid oklch(var(--p) / 0.16);
+  background-color: rgb(var(--ui-primary) / 0.06);
+  border: 1px solid rgb(var(--ui-primary) / 0.16);
 }
 
 /* ===== Hero tagline ===== */
 .hero-tagline {
   font-size: 0.95rem;
   line-height: 1.7;
-  color: oklch(var(--bc) / 0.6);
+  color: rgb(var(--ui-foreground) / 0.6);
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
@@ -582,7 +582,7 @@ const _scrollTo = (elm: Element) => {
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
-  color: oklch(var(--bc));
+  color: rgb(var(--ui-foreground));
 
   @media (min-width: 1024px) {
     font-size: 1.875rem;
@@ -593,7 +593,7 @@ const _scrollTo = (elm: Element) => {
   margin-top: 0.65rem;
   font-size: 0.9rem;
   line-height: 1.65;
-  color: oklch(var(--bc) / 0.55);
+  color: rgb(var(--ui-foreground) / 0.55);
   max-width: 36rem;
   margin-left: auto;
   margin-right: auto;
@@ -607,7 +607,7 @@ const _scrollTo = (elm: Element) => {
   padding: 1.25rem;
   border: 1px solid oklch(0 0 0 / 0.07);
   border-radius: 0.875rem;
-  background-color: oklch(var(--b1));
+  background-color: rgb(var(--ui-card));
   box-shadow: 0 1px 0 oklch(0 0 0 / 0.02);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 
@@ -625,8 +625,8 @@ const _scrollTo = (elm: Element) => {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.625rem;
-  background-color: oklch(var(--p));
-  color: oklch(var(--pc));
+  background-color: rgb(var(--ui-primary));
+  color: rgb(var(--ui-primary-foreground));
   box-shadow: 0 4px 10px -6px oklch(0 0 0 / 0.3);
 }
 
@@ -634,13 +634,13 @@ const _scrollTo = (elm: Element) => {
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: oklch(var(--bc));
+  color: rgb(var(--ui-foreground));
 }
 
 .feature-desc {
   font-size: 0.85rem;
   line-height: 1.6;
-  color: oklch(var(--bc) / 0.62);
+  color: rgb(var(--ui-foreground) / 0.62);
 }
 
 /* ===== Signature highlights ===== */
@@ -649,7 +649,7 @@ const _scrollTo = (elm: Element) => {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: oklch(var(--p) / 0.65);
+  color: rgb(var(--ui-primary) / 0.65);
   margin-bottom: 0.4rem;
 }
 
@@ -658,7 +658,7 @@ const _scrollTo = (elm: Element) => {
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.25;
-  color: oklch(var(--bc));
+  color: rgb(var(--ui-foreground));
 
   @media (min-width: 1024px) {
     font-size: 1.75rem;
@@ -669,14 +669,14 @@ const _scrollTo = (elm: Element) => {
   margin-top: 0.85rem;
   font-size: 0.92rem;
   line-height: 1.7;
-  color: oklch(var(--bc) / 0.68);
+  color: rgb(var(--ui-foreground) / 0.68);
 }
 
 .signature-extra {
   margin-top: 0.6rem;
   font-size: 0.85rem;
   line-height: 1.65;
-  color: oklch(var(--bc) / 0.48);
+  color: rgb(var(--ui-foreground) / 0.48);
 }
 
 .signature-link {
@@ -684,7 +684,7 @@ const _scrollTo = (elm: Element) => {
   display: inline-block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: oklch(var(--p));
+  color: rgb(var(--ui-primary));
   text-decoration: none;
   transition: opacity 0.18s ease;
 
@@ -697,14 +697,14 @@ const _scrollTo = (elm: Element) => {
 .faq-answer {
   font-size: 0.875rem;
   line-height: 1.7;
-  color: oklch(var(--bc) / 0.7);
+  color: rgb(var(--ui-foreground) / 0.7);
 }
 
 /* ===== CTA ===== */
 .cta-sub {
   font-size: 0.9rem;
   line-height: 1.65;
-  color: oklch(var(--bc) / 0.62);
+  color: rgb(var(--ui-foreground) / 0.62);
   max-width: 30rem;
 }
 
@@ -717,16 +717,16 @@ const _scrollTo = (elm: Element) => {
 }
 
 /* ===== Refined navbar menu links (skip buttons) ===== */
-:deep(.menu > li > a:not(.btn)):not(.btn-primary) {
+:deep(.ui-menu > li > a:not(.ui-btn)):not(.ui-btn-primary) {
   border-radius: 0.5rem;
   font-size: 0.875rem;
   padding: 0.4rem 0.7rem;
-  color: oklch(var(--bc) / 0.7);
+  color: rgb(var(--ui-foreground) / 0.7);
   transition: background-color 0.18s ease, color 0.18s ease;
 
   &:hover {
     background-color: oklch(0 0 0 / 0.04);
-    color: oklch(var(--bc));
+    color: rgb(var(--ui-foreground));
   }
 }
 </style>

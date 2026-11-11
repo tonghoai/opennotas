@@ -1,25 +1,26 @@
 <script setup lang="ts">
-import { defineProps, onMounted } from 'vue';
+import { onMounted } from 'vue';
 
 import S3ProxyAdapter from '~/adapter/s3';
 import { resetSyncedImages } from '~/services/image';
 import { hasNewVersion } from '~/utils/check-app-version';
-import { toggleModalMenuEditor } from '~/utils/modal';
 import { useMobileBackToggle } from '~/utils/mobile-back';
 import SettingRow from '../../modal/setting/setting-row.vue';
 import SettingSelect from '../../modal/setting/setting-select.vue';
-import Menu from '../assets/svg/menu.svg?component';
-import Setting from '../assets/svg/settings.svg?component';
-import ArrowLeft from '../assets/svg/arrow-left.svg?component';
-import Info from '../assets/svg/info.svg?component';
-import Clipboard from '../assets/svg/clipboard.svg?component';
-import Undo from '../assets/svg/corner-up-left.svg?component';
-import Redo from '../assets/svg/corner-up-right.svg?component';
-import Search from '../assets/svg/search.svg?component';
-import X from '../assets/svg/x.svg?component';
-import ToolCase from '../assets/svg/tool-case.svg?component';
-import MenuVertical from '../assets/svg/menu-vertical.svg?component';
-import Type from '../assets/svg/type.svg?component';
+import { Menu } from '~/utils/icons';
+import { Setting } from '~/utils/icons';
+import { ArrowLeft } from '~/utils/icons';
+import { Sort } from '~/utils/icons';
+import { Info } from '~/utils/icons';
+import { Clipboard } from '~/utils/icons';
+import { Undo } from '~/utils/icons';
+import { Redo } from '~/utils/icons';
+import { Search } from '~/utils/icons';
+import { ToolCase } from '~/utils/icons';
+import { MenuVertical } from '~/utils/icons';
+import { Type } from '~/utils/icons';
+import { Pencil } from '~/utils/icons';
+import { toggleModalSortNote } from '~/utils/modal';
 
 const props = defineProps([
   'listFolders',
@@ -32,6 +33,12 @@ const props = defineProps([
   'settings',
   'isPasswordExist',
   'editorName',
+  'folderCounts',
+  'tagCounts',
+  'trashCount',
+  'actionObjectKeys',
+  'isSearchMode',
+  'sortType',
 ]);
 
 const emit = defineEmits([
@@ -45,6 +52,7 @@ const emit = defineEmits([
   'clickTags',
   'clickAddTag',
   'clickSearch',
+  'openSearch',
   'clickCancelSearch',
   'clickSetting',
   'clickBack',
@@ -70,26 +78,71 @@ const emit = defineEmits([
   'clickExportSettings',
   'triggerImportSettings',
   'clickSearchInNote',
+  'clickMenuNote',
+  'clickSort',
 ]);
 
 const { $i18n } = useNuxtApp();
 const { setLocale } = useI18n();
-// const colorMode = useColorMode();
+const runtimeConfig = useRuntimeConfig();
 
 const isDrawerOpen = ref<boolean>(false);
 useMobileBackToggle(isDrawerOpen);
 
 const activeFolderName = computed(() => {
+  if (props.isSearchMode) {
+    return $i18n.t('app.search_results_title');
+  }
   if (props.activeFolderId === 'bottombar-trash') {
     return $i18n.t('app.navbar_top_trash_title');
+  }
+  if (props.activeFolderId === 'bottombar-tags') {
+    const tag = props.listTags.find((item: any) => item.id === props.activeTagId);
+    return tag ? tag.name : $i18n.t('app.tab_tags');
   }
 
   const folder = props.listFolders.find((item: any) => item.id === props.activeFolderId);
   return folder ? folder.name : $i18n.t('app_name');
 });
 
+const sortLabel = computed(() =>
+  props.sortType === 'createdAt'
+    ? $i18n.t('app.list_sort_created')
+    : $i18n.t('app.list_sort_edited'),
+);
+const showSort = computed(() =>
+  !props.isInEditor
+  && props.activeFolderId !== 'bottombar-trash'
+  && !(props.activeFolderId === 'bottombar-tags' && !props.activeTagId)
+);
+const isShowSort = ref(false);
+const handleOpenSort = () => {
+  toggleModalSortNote(true, isShowSort);
+};
+const handleClickSort = (type: 'createdAt' | 'updatedAt') => {
+  emit('clickSort', type);
+};
+
+const editorTitle = computed(() => {
+  const firstLine = (props.formNotes?.content || '')
+    .split('\n')
+    .map((line: string) => line.trim())
+    .find((line: string) => line.length > 0);
+
+  const clean = firstLine
+    ? firstLine.replace(/^#{1,6}\s*/, '').replace(/[*_`>#-]/g, '').trim()
+    : '';
+
+  return clean || $i18n.t('app.navbar_top_note_title');
+});
+
 const isShowSearchInput = ref(false);
 useMobileBackToggle(isShowSearchInput);
+const handleOpenSearch = () => {
+  isDrawerOpen.value = false;
+  isDrawerSettingOpen.value = false;
+  emit('openSearch');
+};
 const handleToggleSearch = () => {
   isShowSearchInput.value = !isShowSearchInput.value;
   if (isShowSearchInput.value) {
@@ -115,7 +168,6 @@ watch(searchInput, (value) => {
   }, 500);
 });
 
-
 const handleClickFolderName = (folderId: string) => {
   emit('clickFolderName', folderId);
   isDrawerOpen.value = false;
@@ -133,7 +185,6 @@ const handleReorderFolderName = (data: any[]) => {
   emit('reorderFolderName', data);
 };
 
-const isTagsTabActive = computed(() => props.activeFolderId === 'bottombar-tags');
 const handleClickTagName = (tagId: string) => {
   emit('clickTagName', tagId);
   isDrawerOpen.value = false;
@@ -144,71 +195,96 @@ const handleRightClickTagName = (data: any) => {
 const handleClickAddTag = () => {
   emit('clickAddTag');
 };
-const handleClickFoldersTab = () => {
-  emit('clickFolderName', '');
-};
 const handleClickTagsTab = () => {
   emit('clickTags');
+  isDrawerOpen.value = false;
 };
 
 const handleClickSetting = () => {
-  handleClickSettingBtn();
+  isDrawerSettingOpen.value = true;
 };
-
 const handleClickBack = () => {
   emit('clickBack');
 };
-
 const handleClickUpdateData = () => {
   emit('clickUpdateData');
 };
 
 const isDrawerSettingOpen = ref<boolean>(false);
 useMobileBackToggle(isDrawerSettingOpen);
-const handleClickSettingBtn = () => {
-  isDrawerSettingOpen.value = true;
-};
 
 const handleClickTrash = () => {
   emit('clickTrash');
   isDrawerOpen.value = false;
 };
 
-const handleClickMenuSidebar = () => {
-  emit('clickMenuSidebar');
-};
-
-const handleClickUndo = () => {
-  emit('clickUndo', props.formNotes.id);
-}
-const handleClickRedo = () => {
-  emit('clickRedo', props.formNotes.id);
-}
-const handleClickCopyToClipboard = () => {
-  emit('copyToClipboard', props.formNotes.id);
-}
-const handleClickInfo = () => {
-  emit('clickInfo', props.formNotes.id);
-}
 const handleClickFormatToolbar = () => {
   emit('clickFormatToolbar', props.formNotes.id);
-}
-const handleClickPlainText = () => {
-  emit('clickPlainText', props.formNotes.id);
-}
+};
 const handleClickSearchInNote = () => {
   emit('clickSearchInNote', props.formNotes.id);
-}
+};
 
-const isModalMenuEditorOpen = ref<boolean>(false);
 const handleOpenMenuEditorModal = () => {
-  toggleModalMenuEditor(true, isModalMenuEditorOpen);
+  emit('clickMenuNote');
 }
 
 const handleSaveSettings = () => {
   emit('saveSettings', settings.value);
 }
-// default editor
+const isShowFontDialog = ref(false);
+const fontDialogValue = ref('');
+const fontDisplayName = computed(() =>
+  (settings.value.general?.fontFamily || '').trim() || $i18n.t('app.setting_general_font_system'),
+);
+const handleOpenFontDialog = () => {
+  fontDialogValue.value = settings.value.general?.fontFamily || '';
+  isShowFontDialog.value = true;
+};
+const handleSaveFontDialog = () => {
+  settings.value.general.fontFamily = fontDialogValue.value.trim();
+  isShowFontDialog.value = false;
+  handleSaveSettings();
+};
+
+const clampNumber = (value: any, fallback: number, min: number, max: number) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback;
+};
+const isShowEditorFontDialog = ref(false);
+const editorFontDialogValue = ref('');
+const editorFontSizeDraft = ref<number>(14);
+const editorLineHeightDraft = ref<number>(1.5);
+const editorBlockSpacingDraft = ref<number>(0.75);
+const editorFontDisplayName = computed(() => {
+  const value = (settings.value.general?.editorFontFamily || '').trim();
+  const size = settings.value.general?.editorFontSize ?? 14;
+  return !value || value.toLowerCase() === 'system'
+    ? `${size}px · ${settings.value.general?.editorLineHeight ?? 1.5}`
+    : `${value} · ${size}px`;
+});
+const handleOpenEditorFontDialog = () => {
+  editorFontDialogValue.value = settings.value.general?.editorFontFamily || '';
+  editorFontSizeDraft.value = Number(settings.value.general?.editorFontSize ?? 14);
+  editorLineHeightDraft.value = Number(settings.value.general?.editorLineHeight ?? 1.5);
+  editorBlockSpacingDraft.value = Number(settings.value.general?.editorBlockSpacing ?? 0.75);
+  isShowEditorFontDialog.value = true;
+};
+const handleSaveEditorFontDialog = () => {
+  const value = editorFontDialogValue.value.trim();
+  settings.value.general.editorFontFamily = value.toLowerCase() === 'system' ? '' : value;
+  settings.value.general.editorFontSize = clampNumber(editorFontSizeDraft.value, 14, 12, 32);
+  settings.value.general.editorLineHeight = clampNumber(editorLineHeightDraft.value, 1.5, 1.2, 2.4);
+  settings.value.general.editorBlockSpacing = clampNumber(editorBlockSpacingDraft.value, 0.75, 0, 3);
+  isShowEditorFontDialog.value = false;
+  handleSaveSettings();
+};
+watch(isDrawerSettingOpen, (open) => {
+  if (!open) {
+    isShowFontDialog.value = false;
+    isShowEditorFontDialog.value = false;
+  }
+});
 const handleChangeDefaultEditor = () => {
   handleSaveSettings();
   emit('changeDefaultEditor', true);
@@ -216,16 +292,11 @@ const handleChangeDefaultEditor = () => {
 const handleChangeEditorView = () => {
   handleSaveSettings();
 }
-// set password
 const handleClickSetPassword = () => {
-  // Show modal set password
   emit('clickSetPassword');
 }
 const adapterSelect = ref<string>('');
-// Explicit intent flag: only true once the user actually touches the adapter
-// dropdown. See components/modal/setting/index.vue for the full race-condition
-// explanation this guards against (async settings load racing the drawer mount
-// on mobile, which mounts eagerly at page load rather than on-demand).
+// Track explicit adapter edits separately from async parent settings updates.
 const userEditedAdapter = ref(false);
 
 type S3Config = {
@@ -244,17 +315,14 @@ const buildDraft = (cfg: any): S3Config => ({
   workerUrl: cfg?.workerUrl || '',
 });
 
-// Draft S3 config: what the user is currently editing in the form.
-// Only committed to settings.value when user clicks Save.
 const draftS3Config = ref<S3Config>(buildDraft(null));
 
 onMounted(() => {
   adapterSelect.value = settings.value.sync.adapter;
   draftS3Config.value = buildDraft(props.settings?.imageSync);
 });
-// change adapter
 const isAdapterChanged = computed(() => adapterSelect.value !== settings.value.sync.adapter);
-const handleSaveAdapter = (e: Event) => {
+const handleSaveAdapter = () => {
   emit('saveAdapter', adapterSelect.value);
   userEditedAdapter.value = false;
 }
@@ -268,20 +336,16 @@ const handleChangeLanguage = () => {
   handleSaveSettings();
 }
 
-// export notes
 const handleClickExportNotes = () => {
   emit('clickExportNotes', true);
 }
-// import notes
 const handleClickImportNotes = () => {
   emit('clickImportNotes', true);
 }
 
-// export settings
 const handleClickExportSettings = () => {
   emit('clickExportSettings');
 }
-// import settings
 const handleClickImportSettings = () => {
   emit('triggerImportSettings');
 }
@@ -309,7 +373,6 @@ const handleClickForceUpdate = async () => {
 const imageSyncTestStatus = ref<'idle' | 'testing' | 'success' | 'failed'>('idle');
 const isShowModalConfirmImageSyncChange = ref(false);
 
-// Enable Save button when draft differs from last saved state
 const isS3ConfigDirty = computed(() => {
   const saved = props.settings?.imageSync;
   const draft = draftS3Config.value;
@@ -317,7 +380,6 @@ const isS3ConfigDirty = computed(() => {
   return fields.some((f) => (saved?.[f] || '') !== (draft[f] || ''));
 });
 
-// True only when storage location fields changed (triggers confirmation + image reset)
 const hasCriticalS3Changed = (): boolean => {
   const saved = props.settings?.imageSync;
   const draft = draftS3Config.value;
@@ -330,7 +392,6 @@ const isS3ConfigComplete = computed(() => {
   return Boolean(d.s3Endpoint && d.s3AccessKey && d.s3SecretKey && d.s3Bucket);
 });
 
-// Apply draft into settings.value before saving
 const applyDraftToSettings = () => {
   settings.value = {
     ...settings.value,
@@ -390,7 +451,6 @@ const handleCancelImageSyncChange = () => {
   draftS3Config.value = buildDraft(props.settings?.imageSync);
 };
 
-// Sync Configuration (JSON) modal
 const isShowModalSyncConfig = ref(false);
 const handleOpenSyncConfigModal = () => {
   isShowModalSyncConfig.value = true;
@@ -407,7 +467,6 @@ const handleCloseSyncConfigModal = () => {
   isShowModalSyncConfig.value = false;
 };
 
-// Image Sync S3 config modal
 const isShowModalImageSyncConfig = ref(false);
 const handleOpenImageSyncConfigModal = () => {
   isShowModalImageSyncConfig.value = true;
@@ -459,156 +518,125 @@ defineExpose({
 </script>
 
 <template>
-  <div class="draw">
-    <input v-model="isDrawerOpen" id="my-drawer-3" type="checkbox" class="drawer-toggle" />
+  <div class="ui-drawer z-30">
+    <input v-model="isDrawerOpen" id="my-drawer-3" type="checkbox" class="ui-drawer-toggle"
+      :aria-label="$t('app.open_menu')" />
 
-    <!-- drawer home -->
-    <div v-if="!props.isInEditor" class="drawer-content flex flex-col">
-      <div class="navbar p-0">
-        <div class="flex-none">
-          <div class="px-4">
-            <label for="my-drawer-3" aria-label="open sidebar">
-              <Menu class="press cursor-pointer opacity-80" />
-            </label>
-          </div>
+    <div v-if="!props.isInEditor" class="ui-drawer-content">
+      <div class="mobile-safe-top mobile-safe-inline flex items-center gap-1 border-b border-border bg-card px-2">
+        <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square"
+          :aria-label="$t('app.open_menu')" @click="isDrawerOpen = true">
+          <Menu class="h-4 w-4" />
+        </button>
+
+        <div v-if="!isShowSearchInput" class="min-w-0 flex-1 px-2">
+          <h1 class="truncate text-[17px] font-semibold tracking-tight">{{ activeFolderName }}</h1>
         </div>
-        <div class="flex-1 flex justify-between pr-4">
-          <div v-if="!isShowSearchInput" class="font-semibold text-xl ml-1">
-            {{ activeFolderName }}
-          </div>
 
-          <div v-if="isShowSearchInput"
-            class="p-2 flex items-center h-12 w-full gap-2 animate-fade-down animate-duration-200">
-            <label class="input input-sm flex-1 flex items-center gap-2 rounded-lg border-none bg-base-200">
-              <Search class="w-4 h-4 opacity-50 flex-none" />
-              <input ref="searchInputRef" type="text" class="grow bg-transparent"
-                :placeholder="$t('app.toolbar_note_search_placeholder')" autocomplete="off" name="hidden"
-                v-model="searchInput" />
-              <span v-if="isShowSearchLoading" class="loading loading-spinner loading-xs flex-none"></span>
-            </label>
+        <div v-else class="flex min-w-0 flex-1 items-center gap-2 px-2">
+          <label class="ui-input ui-input-sm flex min-w-0 flex-1 items-center gap-2 border-transparent bg-muted">
+            <Search class="h-4 w-4 shrink-0 text-muted-foreground" />
+            <input ref="searchInputRef" v-model="searchInput" type="text" autocomplete="off"
+              :aria-label="$t('app.toolbar_note_search_tooltip')"
+              :placeholder="$t('app.toolbar_note_search_placeholder')" />
+            <UiSpinner v-if="isShowSearchLoading" size="xs" class="shrink-0" :label="$t('app.loading')" />
+          </label>
+          <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm" @click="handleToggleSearch">
+            {{ $t('app.toolbar_note_search_cancel') }}
+          </button>
+        </div>
 
-            <button class="flex-none btn btn-ghost btn-circle btn-sm" @click="handleToggleSearch">
-              <X class="w-4 h-4" />
+        <template v-if="!isShowSearchInput">
+          <button v-if="showSort" type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square"
+            :aria-label="`${$t('app.toolbar_note_sort_by_title')}: ${sortLabel}`"
+            :title="`${$t('app.toolbar_note_sort_by_title')}: ${sortLabel}`" aria-haspopup="dialog"
+            @click="handleOpenSort">
+            <Sort class="h-4 w-4" />
+          </button>
+
+          <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square"
+            :aria-label="$t('app.toolbar_note_search_tooltip')" :title="$t('app.toolbar_note_search_tooltip')" @click="handleOpenSearch">
+            <Search class="h-4 w-4" />
+          </button>
+
+          <span class="relative inline-flex">
+            <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square"
+              :aria-label="$t('app.setting_title')" :title="$t('app.setting_title')" data-ga-event="settings_open" @click="handleClickSetting">
+              <Setting class="h-4 w-4" />
             </button>
-          </div>
-
-          <div v-if="!isShowSearchInput" class="flex">
-            <Search class="press mr-4 cursor-pointer opacity-80" @click="handleToggleSearch" />
-            <span class="relative inline-block">
-              <Setting class="press cursor-pointer opacity-80" data-ga-event="settings_open"
-                @click="handleClickSetting" />
-              <span v-if="hasNewVersion"
-                class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-base-100"></span>
-            </span>
-          </div>
-        </div>
+            <span v-if="hasNewVersion"
+              class="pointer-events-none absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger"></span>
+          </span>
+        </template>
       </div>
     </div>
 
-    <!-- drawer in editor -->
-    <div v-if="props.isInEditor" class="navbar p-0">
-      <div class="flex-none">
-        <div class="px-4" @click="handleClickBack">
-          <ArrowLeft class="press cursor-pointer opacity-80" />
-        </div>
+    <div v-if="props.isInEditor" class="mobile-safe-top mobile-safe-inline flex items-center gap-1 border-b border-border bg-card px-2">
+      <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-circle border border-border bg-card"
+        :aria-label="$t('app.action_back')" :title="$t('app.action_back')" @click="handleClickBack">
+        <ArrowLeft class="h-4 w-4" />
+      </button>
+
+      <div class="min-w-0 flex-1 px-2">
+        <h1 class="truncate text-[15px] font-medium">{{ editorTitle }}</h1>
       </div>
-      <div class="flex-1 flex justify-between">
-        <div class="font-semibold text-xl ml-1">{{ $t('app.navbar_top_note_title') }}</div>
 
-        <div class="flex" v-if="!props.formNotes.isLocked">
-          <!-- <Clipboard class="press mr-4 cursor-pointer opacity-80" @click="handleClickCopyToClipboard" />
-          <Info class="press mr-4 cursor-pointer opacity-80" @click="handleClickInfo" /> -->
-          <ToolCase v-if="['Tiptap', 'Crepe'].includes(props.editorName)" class="press mr-4 cursor-pointer opacity-80"
-            @click="handleClickFormatToolbar" />
-          <Type class="press mr-4 cursor-pointer opacity-80" @click="handleClickPlainText" />
-          <Search class="press mr-4 cursor-pointer opacity-80" @click="handleClickSearchInNote" />
-          <Undo class="press mr-4 cursor-pointer opacity-80" @click="handleClickUndo" />
-          <Redo class="press mr-4 cursor-pointer opacity-80" @click="handleClickRedo" />
-          <div class="lg:hidden mr-2" @click="handleOpenMenuEditorModal">
-            <MenuVertical class="press cursor-pointer" />
-          </div>
+      <template v-if="!props.formNotes.isLocked">
+        <button v-if="['Tiptap', 'Crepe'].includes(props.editorName)" type="button"
+          class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square" :aria-label="$t('app.note_format')"
+          :title="$t('app.note_format')" @click="handleClickFormatToolbar">
+          <ToolCase class="h-4 w-4" />
+        </button>
 
-          <div class="hidden lg:block dropdown dropdown-bottom dropdown-end mr-2">
-            <div tabindex="0" role="button">
-              <MenuVertical class="press cursor-pointer" />
-            </div>
+        <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square"
+          :aria-label="$t('app.toolbar_note_find_in_note')" :title="$t('app.toolbar_note_find_in_note')"
+          @click="handleClickSearchInNote">
+          <Search class="h-4 w-4" />
+        </button>
 
-            <ul tabindex="0"
-              class="dropdown-content menu menu-sm bg-base-200 z-[1] w-48 p-2 shadow rounded-xl border border-neutral">
-              <li class="" @click="handleClickCopyToClipboard">
-                <a>
-                  {{ $t('app.menu_note_copy') }}
-                </a>
-              </li>
-              <li class="" @click="handleClickInfo">
-                <a>
-                  {{ $t('app.toolbar_form_note_info') }}
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+        <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square"
+          :aria-label="$t('app.note_more')" :title="$t('app.note_more')" @click="handleOpenMenuEditorModal">
+          <MenuVertical class="h-4 w-4" />
+        </button>
+      </template>
     </div>
 
-    <!-- draw hambuger menu -->
-    <div class="drawer-side z-1000">
-      <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"></label>
+    <div class="ui-drawer-side z-1000" :inert="!isDrawerOpen || undefined">
+      <label for="my-drawer-3" :aria-label="$t('app.action_close')" class="ui-drawer-overlay"></label>
 
-      <div class="menu p-0 w-2/3 min-h-full bg-base-100">
-        <div class="flex flex-col justify-between items-center w-full" style="height: calc(100vh);">
-          <div class="w-full">
-            <div class="lg:hidden mt-4 h-32 w-32 m-auto">
-              <img :src="'/logo-icon.png'" width="128" height="128" class="mb-4" alt="OpenNotas Logo" />
-            </div>
-
-            <div class="tabs tabs-bordered w-full">
-              <a class="tab flex-1" :class="{ 'tab-active': !isTagsTabActive }" @click="handleClickFoldersTab">
-                {{ $t('app.tab_folders') }}
-              </a>
-              <a class="tab flex-1" :class="{ 'tab-active': isTagsTabActive }" @click="handleClickTagsTab">
-                {{ $t('app.tab_tags') }}
-              </a>
-            </div>
-
-            <div>
-              <ListFolder v-if="!isTagsTabActive" ref="listFolderRef" :listFolders="props.listFolders"
-                :activeFolderId="props.activeFolderId" @clickFolderName="handleClickFolderName"
-                @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
-                @reorderFolderName="handleReorderFolderName" />
-              <ListTag v-else :listTags="props.listTags" :activeTagId="props.activeTagId" :isCollapseFolder="false"
-                @clickTagName="handleClickTagName" @rightClickTagName="handleRightClickTagName"
-                @clickAddTag="handleClickAddTag" />
-
-              <!-- <div class="px-2 pt-2">
-                <button class="btn btn-sm btn-block rounded" @click="handleClickAddFolder">
-                  <PlusCircle class="press" />
-                </button>
-              </div> -->
-            </div>
-          </div>
-
-          <div class="w-full">
-            <BottombarFolder :activeFolderId="props.activeFolderId" :isSyncing="isSyncing"
-              @clickUpdateData="handleClickUpdateData" @clickTrash="handleClickTrash"
-              @clickMenuSidebar="handleClickMenuSidebar" />
-          </div>
-        </div>
-      </div>
+      <AppSidebar :listFolders="props.listFolders" :listTags="props.listTags"
+        :activeFolderId="props.isSearchMode ? '__search__' : props.activeFolderId"
+        :activeTagId="props.isSearchMode ? '' : props.activeTagId"
+        :actionObjectKeys="props.actionObjectKeys" :isSyncing="props.isSyncing"
+        :folderCounts="props.folderCounts" :tagCounts="props.tagCounts" :trashCount="props.trashCount"
+        @clickFolderName="handleClickFolderName" @clickTags="handleClickTagsTab"
+        @rightClickFolderName="handleRightClickFolderName" @renameFolderName="handleRenameFolderName"
+        @reorderFolderName="handleReorderFolderName" @clickTagName="handleClickTagName"
+        @rightClickTagName="handleRightClickTagName" @clickAddFolder="handleClickAddFolder"
+        @clickAddTag="handleClickAddTag" @clickTrash="handleClickTrash"
+        @clickSettings="handleClickSetting" @clickSync="handleClickUpdateData"
+        @openSearch="handleOpenSearch"
+        @close="isDrawerOpen = false" />
     </div>
   </div>
 
-  <!-- drawer setting -->
-  <div class="draw drawer-end">
-    <input v-model="isDrawerSettingOpen" id="my-drawer-4" type="checkbox" class="drawer-toggle" />
+  <div class="ui-drawer ui-drawer-end z-40">
+    <input v-model="isDrawerSettingOpen" id="my-drawer-4" type="checkbox" class="ui-drawer-toggle"
+      :aria-label="$t('app.setting_title')" />
 
-    <div class="drawer-side z-1000">
-      <label for="my-drawer-4" aria-label="close sidebar" class="drawer-overlay"></label>
+    <div class="ui-drawer-side z-1000" :inert="!isDrawerSettingOpen || undefined">
+      <label for="my-drawer-4" :aria-label="$t('app.action_close')" class="ui-drawer-overlay"></label>
 
-
-      <div class="menu p-0 w-10/12 h-screen bg-base-100 flex flex-col">
-        <div class="w-full flex-1 overflow-y-auto overscroll-y-contain">
-          <!-- general setting -->
+      <div class="settings-drawer-shell ui-menu flex w-full flex-col bg-card p-0">
+        <div class="mobile-safe-top flex shrink-0 items-center gap-2 border-b border-border bg-card px-3">
+          <button type="button" class="ui-btn ui-btn-sm ui-btn-ghost ui-btn-circle border border-border bg-card"
+            :aria-label="$t('app.action_back')" :title="$t('app.action_back')"
+            @click="isDrawerSettingOpen = false">
+            <ArrowLeft class="h-4 w-4" />
+          </button>
+          <h2 class="min-w-0 flex-1 truncate text-[16px] font-semibold">{{ $t('app.setting_title') }}</h2>
+        </div>
+        <div class="settings-drawer w-full flex-1 overflow-y-auto overscroll-y-contain">
           <div class="p-4">
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_general_title') }}</h2>
             <div class="">
@@ -647,23 +675,34 @@ defineExpose({
                   ]" />
               </SettingRow>
 
+              <SettingRow :label="$t('app.setting_general_editor_typography_title')">
+                <button type="button"
+                  class="flex min-h-8 max-w-44 items-center gap-2 rounded-md border border-border bg-card px-2.5 text-[12px] font-medium"
+                  @click="handleOpenEditorFontDialog">
+                  <span class="min-w-0 truncate">{{ editorFontDisplayName }}</span>
+                  <Pencil class="h-3.5 w-3.5 shrink-0 opacity-55" />
+                </button>
+              </SettingRow>
+
               <SettingRow :label="$t('app.setting_general_font_title')">
-                <input v-model="settings.general.fontFamily" type="text"
-                  class="input input-sm input-bordered w-full min-w-0" data-ga-event-on-change="settings_font_save"
-                  @change="handleSaveSettings" autocomplete="off" />
+                <button type="button"
+                  class="flex min-h-8 max-w-44 items-center gap-2 rounded-md border border-border bg-card px-2.5 text-[12px] font-medium"
+                  @click="handleOpenFontDialog">
+                  <span class="min-w-0 truncate">{{ fontDisplayName }}</span>
+                  <Pencil class="h-3.5 w-3.5 shrink-0 opacity-55" />
+                </button>
               </SettingRow>
             </div>
           </div>
 
-          <hr class="border-base-content/20">
+          <hr class="border-border">
 
-          <!-- security setting -->
           <div class="p-4">
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_security_title') }}</h2>
             <div class="">
               <SettingRow :label="$t('app.setting_general_security_title')">
                 <button
-                  class="btn rounded-md btn-sm font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                  class="ui-btn rounded-md ui-btn-sm font-normal shadow-none border border-border truncate max-w-full"
                   data-ga-event="settings_password_open" @click="handleClickSetPassword">
                   {{ props.isPasswordExist ? $t('app.setting_general_security_change_password') :
                     $t('app.setting_general_security_set_password') }}
@@ -672,19 +711,17 @@ defineExpose({
             </div>
           </div>
 
-          <hr class="border-base-content/20">
+          <hr class="border-border">
 
-          <!-- sync setting -->
           <div class="p-4">
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_sync_title') }}</h2>
 
             <div class="space-y-6">
-              <!-- Note Sync -->
               <div class="">
-                <div class="grid grid-cols-[3fr_2fr] items-center gap-3 py-4">
+                <div class="grid grid-cols-1 items-center gap-3 py-4 sm:grid-cols-[3fr_2fr]">
                   <div class="min-w-0">
                     <p class="font-medium">{{ $t('app.setting_sync_adapter_title') }}</p>
-                    <p class="text-xs text-base-content/60 mt-1">
+                    <p class="text-xs text-muted-foreground mt-1">
                       {{ $t('app.setting_sync_adapter_description') }}
                       <br /><a href="https://docs.opennotas.io/started/setup-sync" target="_blank"
                         rel="noopener noreferrer" class="underline text-xs hover:text-primary">{{
@@ -692,8 +729,8 @@ defineExpose({
                         }}</a>
                     </p>
                   </div>
-                  <div class="min-w-0 flex justify-end items-center gap-2">
-                    <SettingSelect v-model="adapterSelect" @update:modelValue="userEditedAdapter = true" :options="[
+                  <div class="flex min-w-0 items-center justify-end gap-2">
+                    <SettingSelect v-model="adapterSelect" full-width @update:modelValue="userEditedAdapter = true" :options="[
                       { label: 'LocalForage (Offline)', value: 'LocalForage' },
                       { label: 'Turso (Online)', value: 'Turso' },
                     ]" />
@@ -713,24 +750,23 @@ defineExpose({
 
                 <SettingRow v-if="adapterSelect !== 'LocalForage'" :label="$t('app.setting_sync_config_title')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20"
+                    class="ui-btn ui-btn-sm rounded-md font-normal shadow-none border border-border"
                     data-ga-event="settings_sync_config_save" @click="handleOpenSyncConfigModal">
                     {{ $t('app.setting_configure_button') }}
                   </button>
                 </SettingRow>
               </div>
 
-              <!-- Image Sync -->
               <div class="">
                 <SettingRow :label="$t('app.setting_image_sync_enable')">
-                  <input type="checkbox" v-model="settings.imageSync.enabled" class="toggle"
-                    data-ga-event="settings_image_sync_toggle" @change="handleSaveSettings" />
+                  <UiSwitch v-model="settings.imageSync.enabled" data-ga-event="settings_image_sync_toggle"
+                    @change="handleSaveSettings" />
                 </SettingRow>
 
                 <div v-if="settings.imageSync?.enabled" class="grid grid-cols-[3fr_2fr] items-center gap-3 py-4">
                   <div class="min-w-0">
                     <p class="font-medium">{{ $t('app.setting_image_sync_config_title') }}</p>
-                    <p class="text-xs text-base-content/60 mt-1">
+                    <p class="text-xs text-muted-foreground mt-1">
                       {{ $t('app.setting_image_sync_description') }}
                       <br /><a href="https://docs.opennotas.io/started/setup-sync/s3-storage" target="_blank"
                         rel="noopener noreferrer" class="underline text-xs hover:text-primary">{{
@@ -739,7 +775,7 @@ defineExpose({
                   </div>
                   <div class="min-w-0 flex justify-end">
                     <button type="button"
-                      class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                      class="ui-btn ui-btn-sm rounded-md font-normal shadow-none border border-border truncate max-w-full"
                       data-ga-event="settings_image_sync_save" @click="handleOpenImageSyncConfigModal">
                       {{ $t('app.setting_configure_button') }}
                     </button>
@@ -749,9 +785,8 @@ defineExpose({
             </div>
           </div>
 
-          <hr class="border-base-content/20">
+          <hr class="border-border">
 
-          <!-- tools setting -->
           <div class="p-4">
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_tools_title') }}</h2>
 
@@ -759,7 +794,7 @@ defineExpose({
               <div class="">
                 <SettingRow :label="$t('app.setting_tools_backup_export')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    class="ui-btn ui-btn-sm rounded-md font-normal shadow-none border border-border truncate max-w-full"
                     data-ga-event="settings_export_notes" @click="handleClickExportNotes">
                     {{ $t('app.setting_tools_backup_export_button') }}
                   </button>
@@ -767,7 +802,7 @@ defineExpose({
 
                 <SettingRow :label="$t('app.setting_tools_backup_import')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    class="ui-btn ui-btn-sm rounded-md font-normal shadow-none border border-border truncate max-w-full"
                     data-ga-event="settings_import_notes" @click="handleClickImportNotes">
                     {{ $t('app.setting_tools_backup_import_button') }}
                   </button>
@@ -776,7 +811,7 @@ defineExpose({
                 <SettingRow :label="$t('app.setting_tools_settings_export')"
                   :description="$t('app.setting_tools_settings_export_description')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    class="ui-btn ui-btn-sm rounded-md font-normal shadow-none border border-border truncate max-w-full"
                     data-ga-event="settings_export_settings" @click="handleClickExportSettings">
                     {{ $t('app.setting_tools_settings_export_button') }}
                   </button>
@@ -784,7 +819,7 @@ defineExpose({
 
                 <SettingRow :label="$t('app.setting_tools_settings_import')">
                   <button type="button"
-                    class="btn btn-sm rounded-md font-normal shadow-none border border-base-content/20 truncate max-w-full"
+                    class="ui-btn ui-btn-sm rounded-md font-normal shadow-none border border-border truncate max-w-full"
                     data-ga-event="settings_import_settings" @click="handleClickImportSettings">
                     {{ $t('app.setting_tools_settings_import_button') }}
                   </button>
@@ -793,7 +828,7 @@ defineExpose({
 
               <div class="">
                 <SettingRow label="Service Worker">
-                  <button class="btn btn-sm btn-outline btn-error truncate max-w-full"
+                  <button class="ui-btn ui-btn-sm ui-btn-outline truncate max-w-full"
                     @click="handleClickResetServiceWorker">
                     {{ $t('app.setting_tools_reset_service_worker_title') }}
                   </button>
@@ -803,8 +838,8 @@ defineExpose({
                   :description="$t('app.setting_tools_force_update_description')">
                   <div class="relative inline-block max-w-full">
                     <span v-if="hasNewVersion"
-                      class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error rounded-full ring-2 ring-base-100"></span>
-                    <button class="btn btn-sm btn-outline btn-error truncate max-w-full"
+                      class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-danger rounded-full ring-2 ring-card"></span>
+                    <button class="ui-btn ui-btn-sm ui-btn-outline truncate max-w-full"
                       @click="handleClickForceUpdate">
                       {{ $t('app.setting_tools_force_update_button') }}
                     </button>
@@ -814,17 +849,19 @@ defineExpose({
             </div>
           </div>
 
-          <hr class="border-base-content/20">
+          <hr class="border-border">
 
-          <!-- about -->
           <div class="p-4">
             <h2 class="text-lg font-semibold mb-2">{{ $t('app.setting_about_title') }}</h2>
             <div class="flex flex-col items-center py-4">
-              <img :src="'/logo-icon.png'" height="96" width="96" alt="OpenNotas Logo" />
+              <img :src="'/logo-icon.png'" height="48" width="48" class="h-12 w-12" alt="OpenNotas Logo" />
               <a class="underline" href="https://opennotas.io">
-                <h1 class="font-bold text-2xl mt-2">{{ $t('app_name') }}</h1>
+                <h1 class="mt-2 text-[15px] font-semibold">{{ $t('app_name') }}</h1>
               </a>
-              <p class="mt-2 text-center text-sm">{{ $t('app.slogan') }}</p>
+              <p class="mt-1 max-w-72 text-center text-[12px] leading-5 text-muted-foreground">{{ $t('app.slogan') }}</p>
+              <p class="mt-3 text-[11px] tabular-nums text-muted-foreground">
+                {{ $t('app.version') }} {{ runtimeConfig.public.version }}
+              </p>
             </div>
           </div>
 
@@ -833,11 +870,11 @@ defineExpose({
         </div>
 
         <div v-if="isAdapterChanged"
-          class="shrink-0 border-t border-base-content/15 px-4 py-3 flex items-center justify-end gap-2 bg-base-100">
-          <button class="btn btn-sm" @click="handleCancelAdapterChange">
+          class="shrink-0 border-t border-border px-4 py-3 flex items-center justify-end gap-2 bg-card">
+          <button class="ui-btn ui-btn-sm" @click="handleCancelAdapterChange">
             {{ $t('app.setting_sync_adapter_cancel') }}
           </button>
-          <button class="btn btn-sm btn-primary" data-ga-event="settings_adapter_save" @click="handleSaveAdapter">
+          <button class="ui-btn ui-btn-sm ui-btn-primary" data-ga-event="settings_adapter_save" @click="handleSaveAdapter">
             {{ $t('app.setting_sync_adapter_save') }}
           </button>
         </div>
@@ -846,7 +883,56 @@ defineExpose({
     </div>
   </div>
 
-  <ModalMenuEditor @copyToClipboard="handleClickCopyToClipboard" @clickInfo="handleClickInfo" />
+  <UiDialog v-model:open="isShowFontDialog" :title="$t('app.setting_general_edit_font_title')"
+    :description="$t('app.setting_general_edit_font_description')" width="26rem" @ok="handleSaveFontDialog">
+    <label class="flex flex-col gap-1.5">
+      <span class="text-[12px] font-medium">{{ $t('app.setting_general_font_title') }}</span>
+      <input v-model="fontDialogValue" type="text" autofocus class="ui-input"
+        :placeholder="$t('app.setting_general_font_placeholder')" autocomplete="off"
+        @keydown.enter.prevent="handleSaveFontDialog" />
+    </label>
+  </UiDialog>
+
+  <UiDialog v-model:open="isShowEditorFontDialog" :title="$t('app.setting_general_edit_editor_typography_title')"
+    :description="$t('app.setting_general_edit_editor_typography_description')" width="28rem"
+    @ok="handleSaveEditorFontDialog">
+    <div class="flex flex-col gap-4">
+      <label class="flex flex-col gap-1.5">
+        <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_font_title') }}</span>
+        <input v-model="editorFontDialogValue" type="text" autofocus class="ui-input"
+          :placeholder="$t('app.setting_general_editor_font_placeholder')" autocomplete="off"
+          @keydown.enter.prevent="handleSaveEditorFontDialog" />
+      </label>
+
+      <div class="grid grid-cols-2 gap-3">
+        <label class="flex flex-col gap-1.5">
+          <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_font_size_title') }}</span>
+          <div class="relative">
+            <input v-model.number="editorFontSizeDraft" type="number" min="12" max="32" step="1"
+              class="ui-input pr-9" @keydown.enter.prevent="handleSaveEditorFontDialog" />
+            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] text-muted-foreground">px</span>
+          </div>
+        </label>
+
+        <label class="flex flex-col gap-1.5">
+          <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_line_height_title') }}</span>
+          <input v-model.number="editorLineHeightDraft" type="number" min="1.2" max="2.4" step="0.05"
+            class="ui-input" @keydown.enter.prevent="handleSaveEditorFontDialog" />
+        </label>
+      </div>
+
+      <label class="flex flex-col gap-1.5">
+        <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_block_spacing_title') }}</span>
+        <div class="relative">
+          <input v-model.number="editorBlockSpacingDraft" type="number" min="0" max="3" step="0.125"
+            class="ui-input pr-10" @keydown.enter.prevent="handleSaveEditorFontDialog" />
+          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] text-muted-foreground">em</span>
+        </div>
+      </label>
+    </div>
+  </UiDialog>
+
+  <ModalSortNote :sortType="props.sortType" @clickSort="handleClickSort" />
 
   <ModalConfirmImageSyncChange v-if="isShowModalConfirmImageSyncChange" @confirm="handleConfirmImageSyncChange"
     @close="handleCancelImageSyncChange" />
@@ -860,13 +946,71 @@ defineExpose({
 </template>
 
 <style lang="scss">
-html:has(.drawer-toggle:checked) {
+.mobile-safe-top {
+  height: calc(3.5rem + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+html:has(.ui-drawer-toggle:checked) {
   scrollbar-gutter: unset !important;
 }
 
-.draw {
-  position: fixed;
-  width: 100%;
-  z-index: 9;
+.settings-drawer-shell {
+  /* 100vh fallback; bottom inset keeps the save bar above the iOS home indicator. */
+  height: 100vh;
+  height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.settings-drawer {
+  background-color: rgb(var(--ui-background));
+}
+
+.settings-drawer h2 {
+  padding: 0 4px 10px;
+  color: rgb(var(--ui-muted-foreground)) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.settings-drawer .p-4 {
+  padding: 18px 16px;
+}
+
+.settings-drawer .p-4 > div {
+  overflow: hidden;
+  border: 1px solid rgb(var(--ui-border));
+  border-radius: var(--ui-radius);
+  background-color: rgb(var(--ui-card));
+}
+
+.settings-drawer .p-4 .grid {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.settings-drawer .p-4 .grid + .grid {
+  border-top: 1px solid rgb(var(--ui-border));
+}
+
+.settings-drawer .p-4 > div.space-y-6 {
+  overflow: visible;
+  border: 0;
+  background-color: transparent;
+}
+
+.settings-drawer .p-4 > div.space-y-6 > div {
+  overflow: hidden;
+  border: 1px solid rgb(var(--ui-border));
+  border-radius: var(--ui-radius);
+  background-color: rgb(var(--ui-card));
+}
+
+.settings-drawer hr {
+  margin: 0 16px;
+  border-color: rgb(var(--ui-border));
 }
 </style>

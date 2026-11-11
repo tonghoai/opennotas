@@ -1,143 +1,195 @@
 import { nextTick } from 'vue';
 
-function outsideClickMenu() {
-  document.addEventListener('click', () => {
-    const menuFolder: any = document.getElementById('menu-folder') || {};
-    if (menuFolder.style.display === 'block') {
-      menuFolder.style.display = 'none';
-    }
+const MENU_IDS = ['menu-folder', 'menu-note', 'menu-move-note', 'menu-tag', 'menu-note-tags'] as const;
+const VIEWPORT_MARGIN = 8;
 
-    const menuNote: any = document.getElementById('menu-note') || {};
-    if (menuNote.style.display === 'block') {
-      menuNote.style.display = 'none';
-    }
+let activeMenu: HTMLElement | null = null;
+let activeTrigger: HTMLElement | null = null;
 
-    const menuMoveNote: any = document.getElementById('menu-move-note') || {};
-    if (menuMoveNote.style.display === 'block') {
-      menuMoveNote.style.display = 'none';
-    }
+function getMenu(id: string): HTMLElement | null {
+  return document.getElementById(id);
+}
 
-    const menuTag: any = document.getElementById('menu-tag') || {};
-    if (menuTag.style.display === 'block') {
-      menuTag.style.display = 'none';
-    }
+function getMenuItems(menu: HTMLElement): HTMLElement[] {
+  return Array.from(menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'))
+    .filter((item) => item.offsetParent !== null);
+}
 
-    const menuNoteTags: any = document.getElementById('menu-note-tags') || {};
-    if (menuNoteTags.style.display === 'block') {
-      menuNoteTags.style.display = 'none';
-    }
-  });
+function focusMenu(menu: HTMLElement) {
+  const items = getMenuItems(menu);
+  items[0]?.focus({ preventScroll: true });
+}
+
+function restoreTriggerFocus() {
+  if (activeTrigger?.isConnected) {
+    activeTrigger.focus({ preventScroll: true });
+  }
+}
+
+function hideMenuElement(menu: HTMLElement | null, restoreFocus = false) {
+  if (!menu) return;
+  menu.style.display = 'none';
+  if (activeMenu === menu) {
+    activeMenu = null;
+    if (restoreFocus) restoreTriggerFocus();
+    activeTrigger = null;
+  }
+}
+
+function closeAllMenus(restoreFocus = false) {
+  for (const id of MENU_IDS) hideMenuElement(getMenu(id), restoreFocus);
+}
+
+async function placeMenu(menu: HTMLElement, data: any, options: { align?: 'start' | 'end'; flipX?: boolean } = {}) {
+  menu.style.display = 'block';
+  menu.style.visibility = 'hidden';
+  menu.style.left = '0px';
+  menu.style.top = '0px';
+  activeMenu = menu;
+  activeTrigger = data.trigger || data.triggerElement || null;
+
+  await nextTick();
+
+  const width = menu.offsetWidth;
+  const height = menu.offsetHeight;
+  const rect = data.rect as DOMRect | undefined;
+  const anchorRight = rect ? rect.right : Number(data.x) || 0;
+  const anchorLeft = rect ? rect.left : Number(data.x) || 0;
+  const anchorTop = rect ? rect.top : Number(data.y) || 0;
+  const anchorBottom = rect ? rect.bottom : Number(data.y) || 0;
+
+  let left = options.align === 'start' ? anchorLeft : anchorRight + 2;
+  let top = anchorBottom + 4;
+
+  if (options.flipX) {
+    left = anchorRight + 2;
+  }
+
+  if (left + width > window.innerWidth - VIEWPORT_MARGIN) {
+    left = Math.max(VIEWPORT_MARGIN, window.innerWidth - width - VIEWPORT_MARGIN);
+  }
+  if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
+
+  if (top + height > window.innerHeight - VIEWPORT_MARGIN) {
+    top = Math.max(VIEWPORT_MARGIN, anchorTop - height - 4);
+  }
+
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  menu.style.visibility = '';
+  focusMenu(menu);
 }
 
 function offsetMenuFolder(data: any) {
-  const menuFolder: any = document.getElementById('menu-folder') || {};
-  menuFolder.style.display = 'block';
-  menuFolder.style.left = `${data.x}px`;
-  menuFolder.style.top = `${data.y}px`;
-
-  // if data.y is near bottom, then push y up 150px
-  if (window.innerHeight - data.y < 200) {
-    menuFolder.style.top = `${data.y - 150}px`;
-  }
+  const menu = getMenu('menu-folder');
+  if (menu) void placeMenu(menu, data, { align: 'start' });
 }
 
-async function offsetMenuNote(data: any) {
-  const menuNote: any = document.getElementById('menu-note') || {};
-  menuNote.style.display = 'block';
-  menuNote.style.left = `${data.x}px`;
-  menuNote.style.top = `${data.y}px`;
-
-  // wait for the current note's menu items to render, then clamp against its real height
-  await nextTick();
-
-  const height = menuNote.offsetHeight;
-  let top = data.y;
-  if (top + height > window.innerHeight) {
-    top = Math.max(8, window.innerHeight - height - 8);
-  }
-  menuNote.style.top = `${top}px`;
+function offsetMenuNote(data: any) {
+  const menu = getMenu('menu-note');
+  if (menu) void placeMenu(menu, data, { align: 'end' });
 }
 
-// submenu opened beside menu-note, so it needs its own width estimate
-// to decide whether to flip left when the note menu is near the right edge
 const MOVE_MENU_WIDTH = 190;
-
 async function offsetMenuMoveNote(data: any) {
-  const menuMoveNote: any = document.getElementById('menu-move-note') || {};
-  menuMoveNote.style.display = 'block';
-
-  const openLeft = data.right + MOVE_MENU_WIDTH > window.innerWidth;
-  menuMoveNote.style.left = openLeft ? `${data.left - MOVE_MENU_WIDTH}px` : `${data.right}px`;
-  menuMoveNote.style.top = `${data.top}px`;
-
+  const menu = getMenu('menu-move-note');
+  if (!menu) return;
+  menu.style.display = 'block';
+  activeMenu = menu;
+  activeTrigger = data.trigger || null;
   await nextTick();
 
-  const height = menuMoveNote.offsetHeight;
-  let top = data.top;
-  if (top + height > window.innerHeight) {
-    top = Math.max(8, window.innerHeight - height - 8);
+  const width = menu.offsetWidth || MOVE_MENU_WIDTH;
+  const height = menu.offsetHeight;
+  const openLeft = (data.rect?.right || data.right || 0) + width > window.innerWidth;
+  let left = openLeft
+    ? (data.rect?.left || data.left || 0) - width - 2
+    : (data.rect?.right || data.right || 0) + 2;
+  left = Math.min(Math.max(VIEWPORT_MARGIN, left), window.innerWidth - width - VIEWPORT_MARGIN);
+  let top = data.rect?.top ?? data.top ?? 0;
+  if (top + height > window.innerHeight - VIEWPORT_MARGIN) {
+    top = Math.max(VIEWPORT_MARGIN, window.innerHeight - height - VIEWPORT_MARGIN);
   }
-  menuMoveNote.style.top = `${top}px`;
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  focusMenu(menu);
 }
 
 function offsetMenuTag(data: any) {
-  const menuTag: any = document.getElementById('menu-tag') || {};
-  menuTag.style.display = 'block';
-  menuTag.style.left = `${data.x}px`;
-  menuTag.style.top = `${data.y}px`;
-
-  // if data.y is near bottom, then push y up 150px
-  if (window.innerHeight - data.y < 200) {
-    menuTag.style.top = `${data.y - 150}px`;
-  }
+  const menu = getMenu('menu-tag');
+  if (menu) void placeMenu(menu, data, { align: 'start' });
 }
 
-// submenu opened beside menu-note, so it needs its own width estimate
-// to decide whether to flip left when the note menu is near the right edge
 const NOTE_TAGS_MENU_WIDTH = 220;
-
 async function offsetMenuNoteTags(data: any) {
-  const menuNoteTags: any = document.getElementById('menu-note-tags') || {};
-  menuNoteTags.style.display = 'block';
-
-  const openLeft = data.right + NOTE_TAGS_MENU_WIDTH > window.innerWidth;
-  menuNoteTags.style.left = openLeft ? `${data.left - NOTE_TAGS_MENU_WIDTH}px` : `${data.right}px`;
-  menuNoteTags.style.top = `${data.top}px`;
-
+  const menu = getMenu('menu-note-tags');
+  if (!menu) return;
+  menu.style.display = 'block';
+  activeMenu = menu;
+  activeTrigger = data.trigger || null;
   await nextTick();
 
-  const height = menuNoteTags.offsetHeight;
-  let top = data.top;
-  if (top + height > window.innerHeight) {
-    top = Math.max(8, window.innerHeight - height - 8);
+  const width = menu.offsetWidth || NOTE_TAGS_MENU_WIDTH;
+  const height = menu.offsetHeight;
+  const openLeft = (data.rect?.right || data.right || 0) + width > window.innerWidth;
+  let left = openLeft
+    ? (data.rect?.left || data.left || 0) - width - 2
+    : (data.rect?.right || data.right || 0) + 2;
+  left = Math.min(Math.max(VIEWPORT_MARGIN, left), window.innerWidth - width - VIEWPORT_MARGIN);
+  let top = data.rect?.top ?? data.top ?? 0;
+  if (top + height > window.innerHeight - VIEWPORT_MARGIN) {
+    top = Math.max(VIEWPORT_MARGIN, window.innerHeight - height - VIEWPORT_MARGIN);
   }
-  menuNoteTags.style.top = `${top}px`;
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  focusMenu(menu);
 }
 
-function hideMenuFolder() {
-  const menuFolder: any = document.getElementById('menu-folder') || {};
-  menuFolder.style.display = 'none';
+function handleMenuKeydown(event: KeyboardEvent) {
+  if (!activeMenu) return;
+  const items = getMenuItems(activeMenu);
+  const index = items.indexOf(document.activeElement as HTMLElement);
+
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeAllMenus(true);
+    return;
+  }
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    if (!items.length) return;
+    event.preventDefault();
+    const delta = event.key === 'ArrowDown' ? 1 : -1;
+    const nextIndex = index < 0
+      ? (delta > 0 ? 0 : items.length - 1)
+      : (index + delta + items.length) % items.length;
+    items[nextIndex]?.focus({ preventScroll: true });
+    return;
+  }
+
+  if (event.key === 'Home' || event.key === 'End') {
+    if (!items.length) return;
+    event.preventDefault();
+    items[event.key === 'Home' ? 0 : items.length - 1]?.focus({ preventScroll: true });
+  }
 }
 
-function hideMenuNote() {
-  const menuNote: any = document.getElementById('menu-note') || {};
-  menuNote.style.display = 'none';
+function outsideClickMenu() {
+  document.addEventListener('click', (event) => {
+    if (!activeMenu) return;
+    // Submenu actions keep the parent menu mounted; all others close it.
+    const target = event.target as HTMLElement;
+    if (target?.closest?.('[data-menu-keep-open]')) return;
+    closeAllMenus(!!activeMenu?.contains(target));
+  });
+  document.addEventListener('keydown', handleMenuKeydown);
 }
 
-function hideMenuMoveNote() {
-  const menuMoveNote: any = document.getElementById('menu-move-note') || {};
-  menuMoveNote.style.display = 'none';
-}
-
-function hideMenuTag() {
-  const menuTag: any = document.getElementById('menu-tag') || {};
-  menuTag.style.display = 'none';
-}
-
-function hideMenuNoteTags() {
-  const menuNoteTags: any = document.getElementById('menu-note-tags') || {};
-  menuNoteTags.style.display = 'none';
-}
+function hideMenuFolder() { hideMenuElement(getMenu('menu-folder')); }
+function hideMenuNote() { hideMenuElement(getMenu('menu-note')); }
+function hideMenuMoveNote() { hideMenuElement(getMenu('menu-move-note')); }
+function hideMenuTag() { hideMenuElement(getMenu('menu-tag')); }
+function hideMenuNoteTags() { hideMenuElement(getMenu('menu-note-tags')); }
 
 function disableDefaultContextMenu() {
   document.addEventListener('contextmenu', (e) => {
@@ -165,5 +217,6 @@ export {
   hideMenuMoveNote,
   hideMenuTag,
   hideMenuNoteTags,
+  closeAllMenus,
   disableDefaultContextMenu,
 };
