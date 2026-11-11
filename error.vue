@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import AlertSquareRounded from './assets/svg/alert-square-rounded.svg?component';
-import Download from './assets/svg/download.svg?component';
-import Restore from './assets/svg/restore.svg?component';
+import { AlertSquareRounded } from '~/utils/icons';
+import { Download } from '~/utils/icons';
+import { Restore } from '~/utils/icons';
 
 const isRecovering = ref(false);
 
@@ -25,17 +25,17 @@ const handleClickRecoverApp = async () => {
 <template>
   <div class="h-screen flex flex-col justify-center items-center px-4">
     <div class="flex flex-col items-center max-w-sm w-full text-center">
-      <AlertSquareRounded class="w-12 h-12 text-error mb-4" />
+      <AlertSquareRounded class="w-12 h-12 text-danger mb-4" />
       <h2 class="text-3xl font-semibold mb-2">Oops!</h2>
       <p class="text-sm opacity-70 mb-8">Something went wrong. You can export your notes to be safe, or try to
         recover the app below.</p>
 
       <div class="flex flex-col sm:flex-row gap-3 w-full justify-center">
-        <a href="/sos" class="btn btn-primary">
+        <a href="/sos" class="ui-btn ui-btn-primary">
           <Download class="w-4 h-4" />
           Export notes
         </a>
-        <button type="button" class="btn btn-outline btn-error" :disabled="isRecovering"
+        <button type="button" class="ui-btn ui-btn-outline ui-btn-danger" :disabled="isRecovering"
           @click="handleClickRecoverApp">
           <Restore class="w-4 h-4" :class="{ 'animate-spin': isRecovering }" />
           {{ isRecovering ? 'Recovering...' : 'Recover App' }}

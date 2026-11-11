@@ -1,23 +1,12 @@
 <template>
-  <img class="logo-loading" :src="'/logo-icon.png'" height="96" width="96" alt="Loading...">
+  <div class="flex flex-col items-center gap-3">
+    <img class="logo-mark" :src="'/logo-icon.png'" height="96" width="96" alt="OpenNotas">
+    <UiSpinner size="lg" :label="$t('app.loading')" />
+  </div>
 </template>
 
 <style lang="scss">
-.logo-loading {
-  opacity: 0.5;
-  transform: scale(1);
-  animation: logo-scale 500ms infinite alternate;
-}
-
-@keyframes logo-scale {
-  0% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
+.logo-mark {
+  opacity: 0.92;
 }
 </style>

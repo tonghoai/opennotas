@@ -4,6 +4,14 @@ export default <RouterConfig>{
   // https://router.vuejs.org/api/interfaces/routeroptions.html#routes
   routes: (_routes) => [
     {
+      // Dev-only design-system gallery. Safe to keep: it is not linked from
+      // the product UI and is marked noindex.
+      name: "dev-ui",
+      path: "/dev/ui",
+      component: () =>
+        import("~/pages/dev/ui.vue").then((r) => r.default || r),
+    },
+    {
       name: "landing",
       path: "/",
       component: () =>

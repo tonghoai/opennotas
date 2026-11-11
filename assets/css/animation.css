@@ -93,31 +93,11 @@
   }
   25%,
   75% {
-    background-color: oklch(var(--wa));
-    color: oklch(var(--wac));
+    background-color: rgb(var(--ui-warning));
+    color: rgb(var(--ui-warning-foreground));
   }
 }
 
 .fade-warning-animation {
   animation: fadeWarning 1000ms ease-in-out infinite;
 }
-
-/* .hidden-screen-mobile {
-  position: absolute;
-  transform: translateX(100vw);
-  clip-path: inset(0 0 0 0);
-  overflow: hidden;
-}
-
-.display-screen-mobile-animation {
-  animation: slideInDisplayScreenMobile 100ms forwards;
-}
-
-@keyframes slideInDisplayScreenMobile {
-  from {
-    transform: translateX(100vw);
-  }
-  to {
-    transform: translateX(0);
-  }
-} */

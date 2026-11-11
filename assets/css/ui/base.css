@@ -1,0 +1,166 @@
+/*
+ * OpenNotas UI base layer
+ * Global resets and accessibility defaults shared by every component.
+ * Keep this file small: component styling belongs in components.css.
+ */
+
+
+html {
+  font-family: var(--ui-font-sans);
+  font-size: 16px;
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background-color: rgb(var(--ui-background));
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior-y: contain;
+  background-color: rgb(var(--ui-background));
+  color: rgb(var(--ui-foreground));
+  font-family: var(--ui-font-sans);
+  font-size: var(--ui-font-size);
+  line-height: 1.45;
+  font-feature-settings: "kern" 1, "liga" 1;
+  -webkit-tap-highlight-color: transparent;
+  -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.012em;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--ui-ring));
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+  outline: none;
+}
+
+::selection {
+  background-color: rgb(var(--ui-selection) / 0.35);
+}
+
+[contenteditable] {
+  outline: none;
+}
+
+[contenteditable]::selection {
+  background-color: rgb(var(--ui-selection) / 0.4);
+}
+
+/*
+ * Scrollbars: hidden on desktop (GPUI-like quiet chrome), thin on mobile.
+ * The tokens keep them readable in both themes.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--ui-scrollbar-thumb) / var(--ui-scrollbar-thumb-alpha))
+    transparent;
+}
+
+@media (min-width: 1024px) {
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgb(
+    var(--ui-scrollbar-thumb) / var(--ui-scrollbar-thumb-alpha)
+  );
+  border-radius: var(--ui-radius-full);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* Dialogs receive programmatic focus on open; the visible focus ring is
+   reserved for real keyboard traversal inside the dialog. */
+dialog:focus {
+  outline: none;
+}
+
+
+/* The mobile top bar uses viewport-fit=cover, so content must clear the
+   notch/status area as well as the 56px bar itself. */
+.mobile-under-nav {
+  padding-top: calc(3.5rem + env(safe-area-inset-top, 0px));
+}
+
+/* The mobile navigation is position:fixed, so it is not affected by the app
+   shell. In landscape the notch/home indicator can occupy either horizontal
+   edge; inset headings and fixed overlays themselves instead. */
+@media (max-width: 1023.98px) {
+  .mobile-safe-inline {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .mobile-under-nav {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-under-nav {
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
