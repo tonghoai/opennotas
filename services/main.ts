@@ -58,6 +58,25 @@ async function getAllNotes() {
   return storage.getAllNotes();
 }
 // bulk join note -> tags in one pass, avoids an N+1 lookup per note when reformatting a whole list
+// Count active notes per tag for the sidebar. One pass over note-tags avoids
+// an N+1 count query for every tag row.
+async function getNoteCountsByTag() {
+  const [noteTags, notes] = await Promise.all([storage.getAllNoteTags(), storage.getAllNotes()]);
+  const activeNoteIds = new Set(
+    notes
+      .filter((note: any) => !note.deletedAt && !note.deleteCompletelyAt)
+      .map((note: any) => note.id),
+  );
+
+  const counts: Record<string, number> = {};
+  for (const noteTag of noteTags) {
+    if (noteTag.deletedAt || !activeNoteIds.has(noteTag.noteId)) continue;
+    counts[noteTag.tagId] = (counts[noteTag.tagId] || 0) + 1;
+  }
+
+  return counts;
+}
+
 async function buildTagsByNoteId() {
   const [noteTags, tags] = await Promise.all([storage.getAllNoteTags(), storage.getAllTags()]);
   const tagById = new Map(tags.filter((tag: any) => !tag.deletedAt).map((tag: any) => [tag.id, tag]));
@@ -76,8 +95,8 @@ async function getNotes(folderId: string, sortType: 'createdAt' | 'updatedAt', l
   const notes = await storage.getNotes(folderId);
   const tagsByNoteId = await buildTagsByNoteId();
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(substrTitle(note.content)) : (note.title || lockedTitle);
-    const content = !note.isLocked ? removeSpecialChar(substrContent(note.content)) : lockedContent;
+    const title = !note.isLocked ? substrTitle(note.content) : (note.title || lockedTitle);
+    const content = !note.isLocked ? substrContent(note.content) : lockedContent;
     return {
       ...note,
       title,
@@ -108,6 +127,7 @@ async function createNote(folderId: string, noteData?: any) {
     content: "",
     isLocked: false,
     isPinned: false,
+    previousFolderId: null,
     lastSync: 0,
     createdAt: nowUnix(),
     updatedAt: nowUnix(),
@@ -154,8 +174,8 @@ async function getDeletedNotes(lockedTitle: string, lockedContent: string) {
   const notes = await storage.getDeletedNotes();
   const tagsByNoteId = await buildTagsByNoteId();
   const reformatNotes = notes.map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(note.content.split('\n')[0]) : (note.title || lockedTitle);
-    const content = !note.isLocked ? removeSpecialChar(note.content.split('\n').slice(1).join('\n').substr(0, 60)) : lockedContent;
+    const title = !note.isLocked ? substrTitle(note.content) : (note.title || lockedTitle);
+    const content = !note.isLocked ? substrContent(note.content) : lockedContent;
     return {
       ...note,
       title,
@@ -176,6 +196,9 @@ async function getAllTags() {
 }
 async function getTags() {
   return storage.getTags();
+}
+async function getAllNoteTags() {
+  return storage.getAllNoteTags();
 }
 async function getTagDetail(tagId: string) {
   return storage.getTagDetail(tagId);
@@ -215,8 +238,8 @@ async function getNotesForTag(tagId: string, sortType: 'createdAt' | 'updatedAt'
   const notes = await Promise.all(noteTags.map((noteTag: any) => storage.getNoteDetail(noteTag.noteId)));
   const tagsByNoteId = await buildTagsByNoteId();
   const reformatNotes = notes.filter((note: any) => note.id && !note.deletedAt).map((note: any) => {
-    const title = !note.isLocked ? removeSpecialChar(substrTitle(note.content)) : (note.title || lockedTitle);
-    const content = !note.isLocked ? removeSpecialChar(substrContent(note.content)) : lockedContent;
+    const title = !note.isLocked ? substrTitle(note.content) : (note.title || lockedTitle);
+    const content = !note.isLocked ? substrContent(note.content) : lockedContent;
     return {
       ...note,
       title,
@@ -397,8 +420,10 @@ export {
   deleteTag,
   getTagsForNote,
   getNotesForTag,
+  getAllNoteTags,
   getNoteTagsByNote,
   getNoteTagsByTag,
+  getNoteCountsByTag,
   getNoteTagDetail,
   createNoteTag,
   updateNoteTag,

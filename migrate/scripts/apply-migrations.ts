@@ -48,7 +48,7 @@ async function writeRemoteSchemaVersion(client: any, version: number): Promise<v
   });
 }
 
-async function runPendingMigrations(client: any): Promise<void> {
+async function runPendingMigrations(client: any, verifiedVersionKey: string | null = VERIFIED_VERSION_KEY): Promise<void> {
   const remoteVersion = await readRemoteSchemaVersion(client);
 
   for (let version = remoteVersion; version < CURRENT_SCHEMA_VERSION; version++) {
@@ -64,26 +64,42 @@ async function runPendingMigrations(client: any): Promise<void> {
   }
 
   await writeRemoteSchemaVersion(client, CURRENT_SCHEMA_VERSION);
-  await localforage.setItem(VERIFIED_VERSION_KEY, CURRENT_SCHEMA_VERSION);
+  if (verifiedVersionKey) {
+    await localforage.setItem(verifiedVersionKey, CURRENT_SCHEMA_VERSION);
+  }
 }
 
 // Skips the remote check entirely once this device already knows it's on the latest
 // bundled schema — only re-checks Turso when the app itself ships a new migration.
-async function applySchemaMigrations(client: any): Promise<void> {
-  const verifiedVersion = await localforage.getItem<number>(VERIFIED_VERSION_KEY);
-  if (verifiedVersion === CURRENT_SCHEMA_VERSION) {
-    return;
+async function applySchemaMigrations(client: any, options: { verifiedVersionKey?: string | null } = {}): Promise<void> {
+  const verifiedVersionKey = options.verifiedVersionKey === undefined
+    ? VERIFIED_VERSION_KEY
+    : options.verifiedVersionKey;
+
+  // Local SQLite files are the source of truth for their own schema, so callers can opt
+  // out of the localforage fast-path (null) and always inspect the database itself.
+  if (verifiedVersionKey) {
+    const verifiedVersion = await localforage.getItem<number>(verifiedVersionKey);
+    if (verifiedVersion === CURRENT_SCHEMA_VERSION) {
+      return;
+    }
   }
 
-  if (migrationInFlight) {
+  // The local SQLite adapter passes null because each file owns its schema; run its
+  // migrations directly. Turso keeps the shared in-flight guard for the remote client.
+  if (verifiedVersionKey && migrationInFlight) {
     return migrationInFlight;
   }
 
-  migrationInFlight = runPendingMigrations(client).finally(() => {
-    migrationInFlight = null;
-  });
+  const flight = runPendingMigrations(client, verifiedVersionKey);
+  if (verifiedVersionKey) {
+    migrationInFlight = flight.finally(() => {
+      migrationInFlight = null;
+    });
+    return migrationInFlight;
+  }
 
-  return migrationInFlight;
+  return flight;
 }
 
-export { applySchemaMigrations };
+export { applySchemaMigrations, CURRENT_SCHEMA_VERSION };

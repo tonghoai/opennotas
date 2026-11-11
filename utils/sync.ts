@@ -3,6 +3,10 @@ import TursoAdapter from "~/adapter/turso";
 import {
   createFolder,
   createNote,
+  getAllFolders,
+  getAllNotes,
+  getAllNoteTags,
+  getAllTags,
   getFolderDetail,
   getNoteDetail,
   getPassword,
@@ -17,11 +21,18 @@ import {
   updateNoteTag,
 } from "~/services/main";
 import { syncImages } from "~/utils/image-sync";
+import { nowUnix } from "~/utils/datetime";
 
-function selectAdapter(
+const DIRECTORY_ADAPTER = "SqliteDirectory";
+
+function isLocalAdapter(adapter: string = "LocalForage") {
+  return adapter === "LocalForage" || adapter === DIRECTORY_ADAPTER;
+}
+
+async function createSyncAdapter(
   adapter: string = "LocalForage",
   configuration: any,
-  onLine: boolean
+  onLine: boolean = true,
 ) {
   switch (adapter) {
     case "LocalForage":
@@ -36,9 +47,22 @@ function selectAdapter(
       } catch (error) {
         throw new SyncError("");
       }
+    case DIRECTORY_ADAPTER: {
+      try {
+        const { DirectoryAdapter } = await import("~/adapter/directory");
+        return new DirectoryAdapter();
+      } catch (error) {
+        console.error("Failed to load directory adapter", error);
+        throw error;
+      }
+    }
     default:
       throw new SyncError("");
   }
+}
+
+function adapterCacheKey(adapter: string, configuration: any) {
+  return `${adapter}:${typeof configuration === "string" ? configuration : JSON.stringify(configuration || {})}`;
 }
 
 async function pullData(
@@ -49,16 +73,18 @@ async function pullData(
   idPulled: Ref<string[]>,
   actionObject: Ref<any>,
   isPasswordExist: Ref<boolean>,
-  activeNoteId: Ref<string>
+  activeNoteId: Ref<string>,
+  providedAdapter?: any,
 ) {
-  // if local then ignore
+  // LocalForage has no remote target. The directory adapter is local too, but it
+  // still participates in pull/push because it is a durable sync target.
   if (settings?.sync?.adapter === "LocalForage") {
     return {
       ok: false,
     };
   }
 
-  const syncAdapter: any = selectAdapter(
+  const syncAdapter: any = providedAdapter || await createSyncAdapter(
     settings?.sync?.adapter,
     settings?.sync?.configuration,
     window.navigator.onLine
@@ -215,20 +241,22 @@ async function pushData(
   privateKey: CryptoKey | undefined,
   actionObject: Ref<any>,
   lastPushData: Ref<number>,
-  now: number
+  now: number,
+  providedAdapter?: any,
 ) {
   if (settings?.sync?.adapter === "LocalForage") {
     // Still sync images even with LocalForage adapter if image sync is enabled
     await syncImages(settings);
-    return;
+    return [] as string[];
   }
 
-  const syncAdapter: any = selectAdapter(
+  const syncAdapter: any = providedAdapter || await createSyncAdapter(
     settings?.sync?.adapter,
     settings?.sync?.configuration,
     window.navigator.onLine
   );
 
+  const pushedKeys: string[] = [];
   for (const key of Object.keys(actionObject.value)) {
     const obj = actionObject.value[key];
     const id = key;
@@ -282,12 +310,53 @@ async function pushData(
       }
     }
 
-    lastPushData.value = now;
-    delete actionObject.value[key];
+    pushedKeys.push(key);
   }
 
   // Sync images after syncing notes
   await syncImages(settings);
+  return pushedKeys;
 }
 
-export { pullData, pushData };
+async function seedAdapterFromLocal(adapter: any, privateKey: CryptoKey) {
+  const now = nowUnix();
+  const folders = await getAllFolders();
+  for (const folder of folders) {
+    await adapter.pushFolder({ ...folder, lastSync: now });
+  }
+
+  const notes = await getAllNotes();
+  for (const note of notes) {
+    const detail = await getNoteDetail(note.id);
+    if (!detail?.id) continue;
+    await adapter.pushNote({
+      ...detail,
+      content: await encryptDataAES(detail.content, privateKey),
+      lastSync: now,
+      updatedAt: detail.updatedAt,
+    });
+  }
+
+  const tags = await getAllTags();
+  for (const tag of tags) {
+    await adapter.pushTag({ ...tag, lastSync: now });
+  }
+
+  const noteTags = await getAllNoteTags();
+  for (const noteTag of noteTags) {
+    await adapter.pushNoteTag({ ...noteTag, lastSync: now });
+  }
+
+  const password = await getPassword();
+  await adapter.pushSettings({
+    password,
+    id: "settings",
+    lastSync: now,
+    updatedAt: now,
+  });
+
+  await adapter.commitSync?.();
+  return now;
+}
+
+export { pullData, pushData, createSyncAdapter, adapterCacheKey, isLocalAdapter, seedAdapterFromLocal };
