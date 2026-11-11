@@ -15,7 +15,9 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
 
   css: [
-    "~/assets/css/main.css",
+    "~/assets/css/ui/tokens.css",
+    "~/assets/css/ui/base.css",
+    "~/assets/css/ui/components.css",
     "~/assets/css/style.css",
     "~/assets/css/markdown.css",
     "~/assets/css/codemirror.css",
@@ -40,12 +42,24 @@ export default defineNuxtConfig({
         {
           name: "viewport",
           content:
-            "width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, Interactive-widget=resizes-content, shrink-to-fit=no",
+            "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
         },
         { name: "mobile-web-app-capable", content: "yes" },
         { name: "apple-mobile-web-app-capable", content: "yes" },
+        // iOS picks legible status-bar content; black-translucent breaks light mode.
+        { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+        { name: "apple-mobile-web-app-title", content: "OpenNotas" },
+        { name: "application-name", content: "OpenNotas" },
+        { name: "format-detection", content: "telephone=no" },
+        { name: "color-scheme", content: "light dark" },
         { name: "msapplication-starturl", content: "/app" },
-        { name: "theme-color", content: "transparent", id: "theme-color" },
+        // app.vue keeps this in sync with --ui-card after hydration.
+        { name: "theme-color", content: "#ffffff", id: "theme-color" },
+        {
+          name: "description",
+          content:
+            "OpenNotas is a fast, local-first note-taking app with end-to-end encrypted sync and a calm, native-feeling interface.",
+        },
         {
           "http-equiv": "Content-Security-Policy",
           content: [
@@ -111,6 +125,18 @@ export default defineNuxtConfig({
   },
 
   modules: ["@nuxtjs/color-mode", "@nuxtjs/tailwindcss", "@nuxtjs/i18n"],
+
+  nitro: {
+    prerender: {
+      // The web manifest is a public static file, not an app route.
+      ignore: ["/manifest.json"],
+    },
+  },
+
+  tailwindcss: {
+    cssPath: ["~/assets/css/main.css", { injectPosition: "last" }],
+    configPath: "tailwind.config.js",
+  },
 
   i18n: {
     vueI18n: "./i18n.config.ts",

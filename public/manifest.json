@@ -3,28 +3,30 @@
   "name": "OpenNotas",
   "short_name": "Notas",
   "start_url": "/app",
-  "display": "fullscreen",
-  "display_override": ["standalone", "minimal-ui"],
-  "background_color": "#ffffff",
+  "display": "standalone",
+  "background_color": "#fafaf8",
   "lang": "en",
   "scope": "/",
-  "theme_color": "oklch(.145 0 0)",
+  "theme_color": "#ffffff",
   "description": "The best personal note-taking app, fast, secure, and free",
   "icons": [
     {
       "src": "pwa-128x128.png",
       "sizes": "256x256",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "pwa-256x256.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "pwa-512x512.png",
       "sizes": "1024x1024",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
   "screenshots": [

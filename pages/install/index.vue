@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import PWA from '../assets/svg/pwa.svg?component';
-import Safari from '../assets/svg/safari.svg?component';
-import ShareSquare from '../assets/svg/share-square.svg?component';
-import AddSquare from '../assets/svg/add-square.svg?component';
-import Dock from '../assets/svg/dock.svg?component';
+import { PWA } from '~/utils/icons';
+import { Safari } from '~/utils/icons';
+import { ShareSquare } from '~/utils/icons';
+import { AddSquare } from '~/utils/icons';
+import { Dock } from '~/utils/icons';
 
 const isInited = ref<boolean>(false);
 const isSupportWeb = ref<boolean>(true);
@@ -49,7 +49,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-screen max-w-screen-sm m-auto p-4 flex flex-col justify-center items-center">
+  <div class="install-shell max-w-screen-sm m-auto flex flex-col justify-center items-center">
     <img :src="'/logo.png'" class="w-24 h-24" alt="Logo">
     <h1 class="mt-2 text-3xl font-semibold">{{ $t('app_name') }}</h1>
     <p class="mt-6 text-center">
@@ -57,7 +57,7 @@ onMounted(() => {
     </p>
 
     <div v-show="isSupportPWA && !isSupportHalfPWA" class="mt-4 flex justify-center items-center">
-      <a id="install-btn" class="btn btn-primary">
+      <a id="install-btn" class="ui-btn ui-btn-primary">
         <PWA />
         {{ $t('landing.install_app') }}
       </a>
@@ -115,7 +115,7 @@ onMounted(() => {
     </div>
 
     <div class="mt-4" v-if="isInited && !isSupportPWA && !isSupportHalfPWA">
-      <div role="alert" class="alert alert-warning text-center">
+      <div role="alert" class="ui-alert ui-alert-warning text-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -125,3 +125,14 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.install-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: calc(1rem + env(safe-area-inset-top, 0px));
+  padding-right: calc(1rem + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+}
+</style>
