@@ -110,6 +110,14 @@ const move = (delta: number) => {
   });
 };
 
+const handleBack = () => {
+  if (dialogRef.value) {
+    dialogRef.value.close();
+    return;
+  }
+  emit('update:open', false);
+};
+
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'ArrowDown') {
     event.preventDefault();
@@ -141,26 +149,27 @@ onMounted(() => {
 
 <template>
   <UiDialog ref="dialogRef" :open="props.open" width="34rem" :title="$t('app.command_palette_title')" :show-close="false"
-    :show-cancel="false" :show-ok="false" overlay-closable @update:open="emit('update:open', $event)" @after-close="finishItem">
+    :back="true" :show-cancel="false" :show-ok="false" header-class="palette-header" overlay-closable
+    @update:open="emit('update:open', $event)" @after-close="finishItem" @back="handleBack">
     <div class="-m-5">
       <label class="flex items-center gap-3 border-b border-border px-5 py-3.5">
         <Search class="h-4 w-4 shrink-0 text-muted-foreground" />
         <input ref="inputRef" v-model="query" type="text" autocomplete="off" autofocus
-          class="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-muted-foreground"
+          class="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
           :placeholder="$t('app.command_palette_placeholder')" :aria-label="$t('app.command_palette_placeholder')"
           @keydown="handleKeydown" />
-        <kbd class="hidden rounded border border-border bg-muted px-1 text-[9px] text-muted-foreground sm:inline">Esc</kbd>
+        <kbd class="hidden rounded border border-border bg-muted px-1 text-[10px] text-muted-foreground sm:inline">Esc</kbd>
       </label>
 
       <div class="max-h-[52vh] overflow-y-auto p-2">
         <div v-if="!results.length" class="px-4 py-10 text-center">
-          <p class="text-[13px] font-medium">{{ $t('app.command_palette_empty_title') }}</p>
-          <p class="mt-1 text-[12px] text-muted-foreground">{{ $t('app.command_palette_empty_desc') }}</p>
+          <p class="text-[14px] font-medium">{{ $t('app.command_palette_empty_title') }}</p>
+          <p class="mt-1 text-[13px] text-muted-foreground">{{ $t('app.command_palette_empty_desc') }}</p>
         </div>
 
         <template v-for="(item, index) in results" :key="item.key">
           <p v-if="index === 0 || item.group !== results[index - 1]?.group"
-            class="px-3 pb-1.5 pt-3.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            class="px-3 pb-1.5 pt-3.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {{ item.group === 'notes' ? $t('app.command_group_notes')
               : item.group === 'folders' ? $t('app.command_group_folders')
                 : item.group === 'tags' ? $t('app.command_group_tags') : $t('app.command_group_actions') }}
@@ -177,8 +186,8 @@ onMounted(() => {
             <Plus v-else class="h-4 w-4 shrink-0 opacity-70" />
 
             <span class="min-w-0 flex-1">
-              <span class="block truncate text-[13.5px] font-medium">{{ item.label }}</span>
-              <span v-if="item.meta" class="mt-1 block truncate text-[11.5px] text-muted-foreground">{{ item.meta }}</span>
+              <span class="block truncate text-[14.5px] font-medium">{{ item.label }}</span>
+              <span v-if="item.meta" class="mt-1 block truncate text-[12.5px] text-muted-foreground">{{ item.meta }}</span>
             </span>
           </button>
         </template>
@@ -186,3 +195,22 @@ onMounted(() => {
     </div>
   </UiDialog>
 </template>
+
+<style>
+@media (max-width: 1023.98px) {
+  .ui-modal-header.palette-header {
+    height: calc(3.5rem + env(safe-area-inset-top, 0px));
+    align-items: center;
+    gap: 0.5rem;
+    padding: env(safe-area-inset-top, 0px) 0.75rem 0 !important;
+    border-bottom: 1px solid rgb(var(--ui-border));
+    background-color: rgb(var(--ui-card));
+  }
+
+  .ui-modal-header.palette-header .ui-modal-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+}
+</style>

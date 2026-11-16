@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ArrowLeft } from '~/utils/icons';
 import { X } from '~/utils/icons';
 import type { DialogVariant } from '~/utils/ui/types';
 
@@ -12,9 +13,11 @@ const props = withDefaults(
     description?: string;
     width?: string;
     boxClass?: string;
+    headerClass?: string;
     top?: boolean;
     overlayClosable?: boolean;
     showClose?: boolean;
+    back?: boolean;
     showCancel?: boolean;
     showOk?: boolean;
     okText?: string;
@@ -31,9 +34,11 @@ const props = withDefaults(
     description: '',
     width: '',
     boxClass: '',
+    headerClass: '',
     top: false,
     overlayClosable: true,
     showClose: true,
+    back: false,
     showCancel: true,
     showOk: true,
     okVariant: 'primary',
@@ -49,6 +54,7 @@ const emit = defineEmits<{
   (e: 'ok'): void;
   (e: 'cancel'): void;
   (e: 'close'): void;
+  (e: 'back'): void;
   (e: 'after-close'): void;
 }>();
 
@@ -163,7 +169,14 @@ defineExpose({ close });
     :aria-busy="loading ? 'true' : undefined" @close="handleNativeClose" @cancel="handleNativeCancel"
     @toggle="handleToggle" @click="handleDialogClick">
     <div class="ui-modal-box ui-modal-panel" :class="boxClass" :style="boxStyle" @click.stop>
-      <div v-if="title || description || showClose" class="ui-modal-header">
+      <div v-if="title || description || showClose || back" class="ui-modal-header" :class="headerClass">
+        <UiButton v-if="back" type="button" variant="ghost" size="sm" circle
+          class="ui-modal-back border border-border bg-card lg:hidden" :aria-label="$t('app.action_back')"
+          :title="$t('app.action_back')"
+          @click="emit('back')">
+          <ArrowLeft class="h-4 w-4" />
+        </UiButton>
+
         <div class="min-w-0 flex-1">
           <h3 v-if="title" :id="titleId" class="ui-modal-title">{{ title }}</h3>
           <p v-if="description" :id="descriptionId" class="ui-modal-description">{{ description }}</p>
