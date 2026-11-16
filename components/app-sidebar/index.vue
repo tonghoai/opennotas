@@ -67,6 +67,7 @@ onMounted(() => {
 });
 
 const handleClickFolder = (folderId: string) => {
+  isFolderReorderMode.value = false;
   emit('clickFolderName', folderId);
   emit('close');
 };
@@ -95,6 +96,10 @@ const toggleTags = () => {
 
 const isFoldersOpen = ref(true);
 const isTagsOpen = ref(true);
+const isFolderReorderMode = ref(false);
+const toggleFolderReorderMode = () => {
+  isFolderReorderMode.value = !isFolderReorderMode.value;
+};
 
 // The mobile drawer mounts its own AppSidebar, so this desktop rail state is local.
 const isSidebarCollapsed = ref(false);
@@ -107,7 +112,7 @@ const toggleSidebarCollapsed = () => {
   <aside
     class="sidebar-safe-top sidebar-safe-bottom sidebar-rail flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
     :class="{ 'is-collapsed': isSidebarCollapsed }">
-    <div class="flex h-12 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-4"
+    <div class="flex h-14 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-4 lg:h-12"
       :class="{ 'lg:justify-center lg:px-0': isSidebarCollapsed }">
       <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-circle border border-border bg-card lg:hidden"
         :aria-label="$t('app.action_back')" :title="$t('app.action_back')" @click="emit('close')">
@@ -116,7 +121,7 @@ const toggleSidebarCollapsed = () => {
 
       <template v-if="!isSidebarCollapsed">
         <img src="/logo.png" alt="OpenNotas" class="h-6 w-6 shrink-0 rounded" />
-        <span class="min-w-0 flex-1 truncate text-[15px] font-semibold tracking-tight">OpenNotas</span>
+        <span class="min-w-0 flex-1 truncate text-[16px] font-semibold tracking-tight">OpenNotas</span>
 
         <div class="hidden items-center gap-0.5 lg:flex">
           <button type="button" class="ui-btn ui-btn-ghost ui-btn-xs ui-btn-square"
@@ -161,49 +166,56 @@ const toggleSidebarCollapsed = () => {
         :title="$t('app.toolbar_note_search_placeholder')" aria-haspopup="dialog" @click="emit('openSearch')">
         <Search class="h-4 w-4 shrink-0" />
         <span v-if="!isSidebarCollapsed" class="min-w-0 flex-1 truncate">{{ $t('app.toolbar_note_search_placeholder') }}</span>
-        <kbd v-if="!isSidebarCollapsed" class="hidden shrink-0 rounded border border-border bg-card px-1 text-[9px] leading-4 text-muted-foreground sm:inline">{{ shortcutLabel }}</kbd>
+        <kbd v-if="!isSidebarCollapsed" class="hidden shrink-0 rounded border border-border bg-card px-1 text-[10px] leading-4 text-muted-foreground sm:inline">{{ shortcutLabel }}</kbd>
       </button>
     </div>
 
     <nav class="flex flex-col gap-0.5 px-3" :class="{ 'lg:px-2': isSidebarCollapsed }">
       <button type="button"
-        class="flex h-9 items-center gap-2.5 rounded-ui px-2.5 text-[13.5px] transition-colors"
+        class="flex h-9 items-center gap-2.5 rounded-ui px-2.5 text-[14.5px] transition-colors"
         :class="[isAllNotes ? 'bg-sidebar-active font-medium text-sidebar-active-foreground' : 'hover:bg-sidebar-accent', isSidebarCollapsed ? 'lg:justify-center lg:px-0' : '']"
         :aria-label="isSidebarCollapsed ? $t('app.list_folder_all') : undefined"
         :title="$t('app.list_folder_all')" @click="handleAllNotes">
         <Notes class="h-4 w-4 shrink-0 opacity-80" />
         <span v-if="!isSidebarCollapsed" class="min-w-0 flex-1 truncate text-left">{{ $t('app.list_folder_all') }}</span>
-        <span v-if="!isSidebarCollapsed" class="shrink-0 text-[11px] tabular-nums text-muted-foreground">{{ totalCount }}</span>
+        <span v-if="!isSidebarCollapsed" class="shrink-0 text-[12px] tabular-nums text-muted-foreground">{{ totalCount }}</span>
       </button>
 
       <button type="button"
-        class="flex h-9 items-center gap-2.5 rounded-ui px-2.5 text-[13.5px] transition-colors"
+        class="flex h-9 items-center gap-2.5 rounded-ui px-2.5 text-[14.5px] transition-colors"
         :class="[isTagsOverview ? 'bg-sidebar-active font-medium text-sidebar-active-foreground' : 'hover:bg-sidebar-accent', isSidebarCollapsed ? 'lg:justify-center lg:px-0' : '']"
         :aria-label="isSidebarCollapsed ? $t('app.tab_tags') : undefined"
         :title="$t('app.tab_tags')" @click="emit('clickTags')">
         <Tag class="h-4 w-4 shrink-0 opacity-80" />
         <span v-if="!isSidebarCollapsed" class="min-w-0 flex-1 truncate text-left">{{ $t('app.tab_tags') }}</span>
-        <span v-if="!isSidebarCollapsed" class="shrink-0 text-[11px] tabular-nums text-muted-foreground">{{ tagCount }}</span>
+        <span v-if="!isSidebarCollapsed" class="shrink-0 text-[12px] tabular-nums text-muted-foreground">{{ tagCount }}</span>
       </button>
 
       <button type="button"
-        class="flex h-9 items-center gap-2.5 rounded-ui px-2.5 text-[13.5px] transition-colors"
+        class="flex h-9 items-center gap-2.5 rounded-ui px-2.5 text-[14.5px] transition-colors"
         :class="[isTrashMode ? 'bg-sidebar-active font-medium text-sidebar-active-foreground' : 'hover:bg-sidebar-accent', isSidebarCollapsed ? 'lg:justify-center lg:px-0' : '']"
         :aria-label="isSidebarCollapsed ? $t('app.bottombar_folder_trash') : undefined"
         :title="$t('app.bottombar_folder_trash')" @click="handleTrash">
         <Trash class="h-4 w-4 shrink-0 opacity-80" />
         <span v-if="!isSidebarCollapsed" class="min-w-0 flex-1 truncate text-left">{{ $t('app.bottombar_folder_trash') }}</span>
-        <span v-if="!isSidebarCollapsed" class="shrink-0 text-[11px] tabular-nums text-muted-foreground">{{ props.trashCount }}</span>
+        <span v-if="!isSidebarCollapsed" class="shrink-0 text-[12px] tabular-nums text-muted-foreground">{{ props.trashCount }}</span>
       </button>
     </nav>
 
-    <div v-if="!isSidebarCollapsed" class="mt-5 flex items-center gap-1 px-3">
+    <div v-if="!isSidebarCollapsed" class="mt-5 flex shrink-0 items-center gap-1 px-3">
       <button type="button" class="flex min-w-0 flex-1 items-center gap-1 text-left" @click="toggleFolders">
         <ChevronRight class="h-3 w-3 text-muted-foreground transition-transform"
           :class="{ 'rotate-90': isFoldersOpen }" />
-        <span class="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <span class="truncate text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
           {{ $t('app.sidebar_folders') }}
         </span>
+      </button>
+
+      <button type="button" class="ui-btn ui-btn-xs ui-btn-square"
+        :class="isFolderReorderMode ? 'ui-btn-primary' : 'ui-btn-ghost'"
+        :aria-label="$t('app.sidebar_reorder_folders')" :title="$t('app.sidebar_reorder_folders')"
+        :aria-pressed="isFolderReorderMode" @click="toggleFolderReorderMode">
+        <UiReorderIcon class="h-3.5 w-3.5" />
       </button>
 
       <button type="button" class="ui-btn ui-btn-ghost ui-btn-xs ui-btn-square"
@@ -213,10 +225,10 @@ const toggleSidebarCollapsed = () => {
       </button>
     </div>
 
-    <div v-if="isFoldersOpen" class="mt-1.5 min-h-0 overflow-y-auto px-3"
+    <div v-if="isFoldersOpen" class="sidebar-folder-list mt-1.5 min-h-0 overflow-y-auto px-3"
       :class="{ 'lg:mt-3 lg:px-2': isSidebarCollapsed }">
       <button v-if="!realFolders.length" type="button"
-        class="flex h-9 w-full items-center gap-2.5 rounded-ui px-2.5 text-[13.5px] text-muted-foreground hover:bg-sidebar-accent"
+        class="flex h-9 w-full items-center gap-2.5 rounded-ui px-2.5 text-[14.5px] text-muted-foreground hover:bg-sidebar-accent"
         :class="{ 'lg:justify-center lg:px-0': isSidebarCollapsed }"
         :aria-label="isSidebarCollapsed ? $t('app.list_folder_empty') : undefined"
         :title="$t('app.list_folder_empty')" @click="emit('clickAddFolder')">
@@ -227,17 +239,18 @@ const toggleSidebarCollapsed = () => {
       </button>
       <ListFolder :listFolders="realFolders" :activeFolderId="props.activeFolderId"
         :actionObjectKeys="props.actionObjectKeys" :folderCounts="props.folderCounts" :collapsed="isSidebarCollapsed"
+        :isReorderMode="isFolderReorderMode"
         @clickFolderName="handleClickFolder" @rightClickFolderName="emit('rightClickFolderName', $event)"
         @renameFolderName="emit('renameFolderName', $event)" @reorderFolderName="emit('reorderFolderName', $event)" />
     </div>
 
     <div v-if="isSidebarCollapsed" class="mx-3 mt-3 border-t border-sidebar-border lg:mx-2" aria-hidden="true"></div>
 
-    <div v-if="!isSidebarCollapsed" class="mt-5 flex items-center gap-1 px-3">
+    <div v-if="!isSidebarCollapsed" class="mt-5 flex shrink-0 items-center gap-1 px-3">
       <button type="button" class="flex min-w-0 flex-1 items-center gap-1 text-left" @click="toggleTags">
         <ChevronRight class="h-3 w-3 text-muted-foreground transition-transform"
           :class="{ 'rotate-90': isTagsOpen }" />
-        <span class="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <span class="truncate text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
           {{ $t('app.tab_tags') }}
         </span>
       </button>
@@ -260,7 +273,7 @@ const toggleSidebarCollapsed = () => {
       :class="{ 'lg:px-0': isSidebarCollapsed }">
       <div class="flex items-center justify-center gap-1 lg:hidden">
         <button type="button"
-          class="flex h-10 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-ui px-2.5 text-[13px] font-medium transition-colors hover:bg-sidebar-accent"
+          class="flex h-10 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-ui px-2.5 text-[14px] font-medium transition-colors hover:bg-sidebar-accent"
           :aria-label="$t('app.setting_title')" :title="$t('app.setting_title')" data-ga-event="settings_open"
           @click="emit('clickSettings')">
           <span class="relative flex shrink-0">
@@ -272,7 +285,7 @@ const toggleSidebarCollapsed = () => {
         </button>
 
         <button type="button"
-          class="flex h-10 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-ui px-2.5 text-[13px] font-medium transition-colors hover:bg-sidebar-accent"
+          class="flex h-10 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-ui px-2.5 text-[14px] font-medium transition-colors hover:bg-sidebar-accent"
           :aria-label="$t('app.modal_menu_sidebar_sync')" :title="$t('app.modal_menu_sidebar_sync')"
           @click="emit('clickSync')">
           <span ref="refreshRefMobile" class="flex shrink-0">
@@ -282,7 +295,7 @@ const toggleSidebarCollapsed = () => {
         </button>
       </div>
 
-      <div class="mt-1.5 hidden items-center gap-1.5 px-2.5 text-[10.5px] leading-4 text-muted-foreground lg:mt-0 lg:flex lg:h-full lg:px-0"
+      <div class="mt-1.5 hidden items-center gap-1.5 px-2.5 text-[11.5px] leading-4 text-muted-foreground lg:mt-0 lg:flex lg:h-full lg:px-0"
         :class="{ 'lg:justify-center': isSidebarCollapsed }">
         <span class="h-1.5 w-1.5 shrink-0 rounded-full"
           :class="props.isSyncing ? 'bg-warning' : 'bg-success'"></span>
@@ -305,7 +318,15 @@ const toggleSidebarCollapsed = () => {
 
 .sidebar-rail {
   width: 17rem;
-  transition: width 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* The drawer animates the same element's transform; keep both properties in
+     one transition so the scoped width rule does not cancel the slide-in. */
+  transition: width 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebar-folder-list {
+  max-height: 30vh;
+  max-height: min(30dvh, 16rem);
 }
 
 @media (min-width: 1024px) {

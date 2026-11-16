@@ -84,20 +84,3 @@
 .press:active {
   transform: scale(0.7);
 }
-
-@keyframes fadeWarning {
-  0%,
-  100% {
-    background-color: inherit;
-    color: inherit;
-  }
-  25%,
-  75% {
-    background-color: rgb(var(--ui-warning));
-    color: rgb(var(--ui-warning-foreground));
-  }
-}
-
-.fade-warning-animation {
-  animation: fadeWarning 1000ms ease-in-out infinite;
-}
