@@ -37,8 +37,6 @@ const handleClickForceSync = () => {
           </button>
         </li>
 
-        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
-
         <li @click="handleClickForceSync">
           <button type="button">
             <Refresh class="h-4 w-4 shrink-0 opacity-80" />
@@ -49,7 +47,7 @@ const handleClickForceSync = () => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium"
+          class="ui-btn ui-btn-primary ui-btn-block min-h-11 text-[14px] font-medium"
           @click="close">
           {{ $t('app.action_cancel') }}
         </button>

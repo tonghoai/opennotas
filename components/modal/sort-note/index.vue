@@ -41,7 +41,7 @@ const handleClickSort = (type: 'createdAt' | 'updatedAt') => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium"
+          class="ui-btn ui-btn-primary ui-btn-block min-h-11 text-[14px] font-medium"
           @click="close">
           {{ $t('app.action_cancel') }}
         </button>

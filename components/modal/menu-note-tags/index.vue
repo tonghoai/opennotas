@@ -14,6 +14,28 @@ const close = () => {
 const handleToggle = (tagId: string) => {
   emit('toggleTag', tagId);
 };
+
+const fallbackTagColor = '#94a3b8';
+
+const normalizeHex = (color?: string) => {
+  const value = (color || '').trim();
+  if (/^#[0-9a-f]{3}$/i.test(value)) {
+    return `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`;
+  }
+  return /^#[0-9a-f]{6}$/i.test(value) ? value : fallbackTagColor;
+};
+
+const isAssigned = (tagId: string) => props.noteTagIds.includes(tagId);
+
+// The circular indicator is the state: filled with the tag colour when
+// assigned, hollow with just the tag-colour border when not.
+const tagDotStyle = (tag: any) => {
+  const color = normalizeHex(tag.color);
+  return {
+    backgroundColor: isAssigned(tag.id) ? color : 'transparent',
+    borderColor: color,
+  };
+};
 </script>
 
 <template>
@@ -30,11 +52,10 @@ const handleToggle = (tagId: string) => {
 
         <li v-for="tag in props.listTags" :key="tag.id" data-ga-event="note_tag_toggle"
           @click.stop="handleToggle(tag.id)">
-          <button type="button">
-            <span class="flex h-4 w-4 shrink-0 items-center justify-center">
-              <span v-if="props.noteTagIds.includes(tag.id)" class="h-2 w-2 rounded-full bg-primary"></span>
-            </span>
-            <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: tag.color || '#94a3b8' }"></span>
+          <button type="button" class="tag-choice min-h-10 transition-colors"
+            :aria-pressed="isAssigned(tag.id)">
+            <span class="h-4 w-4 shrink-0 rounded-full border-2" :style="tagDotStyle(tag)"
+              aria-hidden="true"></span>
             <span class="min-w-0 flex-1 truncate text-left" :title="tag.name">{{ tag.name }}</span>
           </button>
         </li>
@@ -42,7 +63,7 @@ const handleToggle = (tagId: string) => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium"
+          class="ui-btn ui-btn-primary ui-btn-block min-h-11 text-[14px] font-medium"
           @click="close">
           {{ $t('app.action_done') }}
         </button>

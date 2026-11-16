@@ -35,8 +35,6 @@ const handleClickDeleteTag = () => {
           </button>
         </li>
 
-        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
-
         <li class="text-danger" @click="handleClickDeleteTag">
           <button type="button" class="text-danger">
             <Trash class="h-4 w-4 shrink-0" />
@@ -47,7 +45,7 @@ const handleClickDeleteTag = () => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium"
+          class="ui-btn ui-btn-primary ui-btn-block min-h-11 text-[14px] font-medium"
           @click="close">
           {{ $t('app.action_cancel') }}
         </button>

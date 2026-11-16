@@ -110,16 +110,12 @@ const handleCancel = () => {
           </button>
         </li>
 
-        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
-
         <li data-ga-event="note_lock_toggle" @click="handleClickLockNote(props.formNotes.isLocked)">
           <button type="button">
             <Lock class="h-4 w-4 shrink-0 opacity-80" />
             {{ props.formNotes.isLocked ? $t('app.modal_menu_note_unlock') : $t('app.modal_menu_note_lock') }}
           </button>
         </li>
-
-        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
 
         <li class="text-danger" data-ga-event="note_delete" @click="handleClickDeleteNote">
           <button type="button" class="text-danger">
@@ -152,8 +148,6 @@ const handleCancel = () => {
           </button>
         </li>
 
-        <li class="my-1 h-px bg-border" aria-hidden="true"></li>
-
         <li class="text-danger" data-ga-event="note_delete_forever" @click="handleClickDeleteNoteForever">
           <button type="button" class="text-danger">
             <Trash class="h-4 w-4 shrink-0" />
@@ -164,7 +158,7 @@ const handleCancel = () => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium text-foreground"
+          class="ui-btn ui-btn-primary ui-btn-block min-h-11 text-[14px] font-medium"
           @click="handleCancel">
           {{ $t('app.action_cancel') }}
         </button>
