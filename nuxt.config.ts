@@ -51,10 +51,7 @@ export default defineNuxtConfig({
         { name: "apple-mobile-web-app-title", content: "OpenNotas" },
         { name: "application-name", content: "OpenNotas" },
         { name: "format-detection", content: "telephone=no" },
-        { name: "color-scheme", content: "light dark" },
         { name: "msapplication-starturl", content: "/app" },
-        // app.vue keeps this in sync with --ui-card after hydration.
-        { name: "theme-color", content: "#ffffff", id: "theme-color" },
         {
           name: "description",
           content:

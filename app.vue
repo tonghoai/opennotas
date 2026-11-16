@@ -10,8 +10,17 @@ const htmlLang = computed(() => {
 });
 
 // Match browser/PWA chrome to the mobile titlebar surface (--ui-card).
+// color-scheme is updated as well: Android/Chrome uses it for UA surfaces
+// (form controls and, where supported, the system navigation bar) so the
+// app theme and the OS chrome do not end up on opposite sides.
 const syncThemeColor = () => {
   if (!import.meta.client) return;
+
+  const resolvedScheme = colorMode.value === 'dark' ? 'dark' : 'light';
+  document.documentElement.style.colorScheme = resolvedScheme;
+  document.querySelectorAll('meta[name="color-scheme"]').forEach((meta) => {
+    meta.setAttribute('content', resolvedScheme);
+  });
 
   const channels = getComputedStyle(document.documentElement)
     .getPropertyValue('--ui-card')
@@ -33,6 +42,16 @@ useHead(() => ({
   htmlAttrs: {
     lang: htmlLang.value,
   },
+  meta: [
+    {
+      name: 'color-scheme',
+      content: colorMode.value === 'dark' ? 'dark' : 'light',
+    },
+    {
+      name: 'theme-color',
+      content: colorMode.value === 'dark' ? '#171614' : '#ffffff',
+    },
+  ],
 }));
 
 onMounted(() => {
