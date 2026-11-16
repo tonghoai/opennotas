@@ -1,3 +1,5 @@
+import { getGestureAxis, getGestureOwner } from './gesture';
+
 function handleInteractCols(
   isMobile: boolean,
   navbarTopRef: any,
@@ -12,6 +14,13 @@ function handleInteractCols(
       });
       mc.add(new (window as any).Hammer.Swipe({ threshold: 10, direction: (window as any).Hammer.DIRECTION_HORIZONTAL }));
       mc.on("swipeleft swiperight", function (ev: any) {
+        // Note rows own horizontal gestures; otherwise a note swipe would
+        // also open the drawer when the same touch ends.
+        const target = (ev.input?.target || ev.target) as HTMLElement | null;
+        if (target?.closest?.('[data-note-id]')) return;
+        if (getGestureOwner() === 'note-swipe') return;
+        if (getGestureAxis() === 'vertical') return;
+
         switch (ev.type) {
           case 'swipeleft':
             if (isMobile) {
@@ -29,6 +38,7 @@ function handleInteractCols(
   }, 300);
 
   setTimeout(() => {
+    if (isMobile) return;
     if (document.querySelector('.cols-folders')) {
       const colsFolders = document.querySelector('.cols-folders');
       (window as any).interact(colsFolders)
@@ -59,6 +69,7 @@ function handleInteractCols(
   }, 350);
 
   setTimeout(() => {
+    if (isMobile) return;
     if (document.querySelector('.cols-notes')) {
       const colsNotes = document.querySelector('.cols-notes');
       (window as any).interact(colsNotes)

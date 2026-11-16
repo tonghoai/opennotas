@@ -1,85 +1,57 @@
 // Pull-to-refresh composable for the mobile notes list.
 //
-// Attaches native touchstart/touchmove/touchend listeners to a scroll container
-// and triggers an async `onRefresh` callback when the user pulls down past a
-// threshold. The indicator supports a real-world "gravity release" feel:
-//   - While dragging the indicator closely tracks the finger (~1:1 with a
-//     subtle resistance past `threshold`) and the inner icon rotates 0 -> 90deg
-//     based on pull progress for a tensed-spring feel.
-//   - When the user releases past the threshold, the indicator softly "parks"
-//     into its loading position and the icon begins spinning (handled by the
-//     caller via a `.spin` class on `iconEl` driven by `isSyncingAll`).
-//   - The icon keeps spinning until `onRefresh` resolves, then performs a
-//     brief confirmation pause + elastic slide-up exit (back-out easing).
-//   - If the user releases below the threshold (cancel), the indicator snaps
-//     back with the same back-out easing — gravity release feel.
-//
-// Implementation note: listeners are attached to `document` (capture phase) and
-// the scroll container is resolved lazily on every event. This sidesteps the
-// common problem where the container element is not yet mounted when the
-// composable's own onMounted hook runs (e.g. when the page is wrapped in
-// <Suspense> with async setup).
+// The gesture is intentionally coordinated with the note-row swipe and drawer
+// swipe through utils/gesture.ts: only one of them can own a touch sequence.
+// A pull has three phases: a short arm/dead-zone, progressive rubber-band
+// resistance, then a spring-like settle into the loading position.
 
 import { onMounted, onUnmounted } from 'vue';
+import { claimGesture, completeGesture, getGestureOwner, releaseGesture, resetGesture } from './gesture';
 
 type PullToRefreshOptions = {
   // Resolver for the scroll container element (e.g. document.getElementById).
   target: () => HTMLElement | null;
   // Resolver for the indicator element that will be translated while pulling.
   indicator: () => HTMLElement | null;
-  // Resolver for the inner icon element that gets rotated during drag and
-  // carries a `.spin` class during loading.
+  // Resolver for the inner icon that gets rotated during drag and carries a
+  // `.spin` class during loading.
   iconEl?: () => HTMLElement | null;
   // Async callback invoked when the pull distance passes the threshold.
-  // The icon keeps spinning until this promise resolves.
   onRefresh: () => Promise<void>;
-  // Returns true when a refresh is currently in flight (used to block a new
-  // gesture while the previous sync is still running).
+  // Returns true when a refresh is currently in flight.
   isRefreshing: () => boolean;
   // Whether the gesture should be active. Resolved on every touchstart.
   enabled?: () => boolean;
   // Minimum pull distance (px) required to trigger onRefresh. Default 70.
   threshold?: number;
-  // Maximum pull distance (px). Resistance is applied beyond `threshold` so
-  // the indicator feels heavier the further the user pulls. Default 100.
+  // Maximum pull distance (px). Default 100.
   maxPull?: number;
 }
 
-// Back-out easing: gentle overshoot on the way home, gives a "spring release"
-// feel for both the cancel snap-back and the post-refresh slide-up exit.
+const OWNER = 'pull-to-refresh';
+const ARM_DISTANCE = 10;
+const DRAG_KNEE = 42;
+const DRAG_RESISTANCE = 0.68;
 const EASING_BACK_OUT = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
-// Exponential-out easing: quick start, slow settle — used when the indicator
-// "parks" into its loading position after a successful release.
-const EASING_EXPO_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
-
-// Initial parked-above-viewport transform (matches the inline style seeded on
-// the indicator in pages/index/index.vue).
-const PARKED_TRANSFORM = 'translateY(-160%)';
-// Position the indicator parks at while loading. Just below the top edge so
-// the floating card peeks out from under the toolbar.
+const EASING_SETTLE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const PARKED_TRANSFORM = 'translateY(-160%) scale(0.96)';
 const LOADING_OFFSET = 28;
-// How far below the top edge the indicator sits at the threshold. Visually the
-// whole card should hang just below the upper boundary of the scroll area.
-// (Plain numeric, used directly in translateY(<n>px).)
 const PEEK_OFFSET = 8;
 
 function usePullToRefresh(options: PullToRefreshOptions) {
   const threshold = options.threshold ?? 70;
   const maxPull = options.maxPull ?? 100;
 
+  let startX = 0;
   let startY: number | null = null;
+  let axis: 'vertical' | 'horizontal' | null = null;
   let pulling = false;
   let triggered = false;
-  // Tracks the most recent pull distance so touchEnd can decide whether to
-  // refresh without parsing transform back out of the DOM (which would be
-  // unreliable once a CSS transition / spinning class kicks in).
   let currentPull = 0;
-  // Distinct timers used so we can cancel a pending snap-back / exit when a
-  // new gesture interrupts.
   let styleResetTimer: ReturnType<typeof setTimeout> | null = null;
   let exitTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const capStyleResetTimer = () => {
+  const clearStyleResetTimer = () => {
     if (styleResetTimer) {
       clearTimeout(styleResetTimer);
       styleResetTimer = null;
@@ -93,74 +65,73 @@ function usePullToRefresh(options: PullToRefreshOptions) {
     }
   };
 
-  // Reset the icon's inline transform (used by the drag-time rotation) so the
-  // CSS `.spin` animation (if any) can fully own the transform.
   const clearIconRotation = () => {
-    const ic = options.iconEl?.();
-    if (ic) ic.style.transform = '';
+    const icon = options.iconEl?.();
+    if (icon) icon.style.transform = '';
   };
 
-  // Apply live values during drag (no transition — must feel 1:1 with finger).
-  const applyLive = (offset: number, opacity: number, rotationDeg: number) => {
-    const el = options.indicator();
-    if (!el) return;
-    el.style.transition = '';
-    el.style.transform = `translateY(${offset}px)`;
-    el.style.opacity = String(opacity);
-    el.style.zIndex = '1';
-    el.style.top = '12px';
-    const ic = options.iconEl?.();
-    if (ic) ic.style.transform = `rotate(${rotationDeg}deg)`;
+  const applyLive = (offset: number, opacity: number, rotationDeg: number, progress: number) => {
+    const element = options.indicator();
+    if (!element) return;
+    element.style.transition = '';
+    element.style.transform = `translateY(${offset}px) scale(${0.9 + progress * 0.1})`;
+    element.style.opacity = String(opacity);
+    element.style.zIndex = '1';
+    element.style.top = '12px';
+    element.style.setProperty('--ptr-progress', progress.toFixed(3));
+    element.style.boxShadow = `0 ${6 + progress * 10}px ${18 + progress * 14}px rgb(var(--ui-overlay) / ${0.08 + progress * 0.1})`;
+
+    const icon = options.iconEl?.();
+    if (icon) icon.style.transform = `rotate(${rotationDeg}deg)`;
   };
 
-  // Animate the indicator back to its parked-above-viewport position with
-  // an elastic / gravity-release easing. Used both for cancel (below
-  // threshold) and as the tail of the post-refresh exit sequence.
   const snapBackToHidden = (durationMs: number) => {
-    const el = options.indicator();
-    if (!el) return;
-    capStyleResetTimer();
+    const element = options.indicator();
+    if (!element) return;
+    clearStyleResetTimer();
     clearExitTimer();
-    el.style.transition = `transform ${durationMs}ms ${EASING_BACK_OUT}, opacity ${durationMs}ms ${EASING_BACK_OUT}`;
-    el.style.transform = PARKED_TRANSFORM;
-    el.style.opacity = '0';
+    element.style.transition = `transform ${durationMs}ms ${EASING_BACK_OUT}, opacity ${durationMs}ms ${EASING_BACK_OUT}`;
+    element.style.transform = PARKED_TRANSFORM;
+    element.style.opacity = '0';
     styleResetTimer = setTimeout(() => {
-      if (el) el.style.transition = '';
+      if (element) {
+        element.style.transition = '';
+        element.style.boxShadow = '';
+      }
       clearIconRotation();
       styleResetTimer = null;
     }, durationMs + 20);
   };
 
-  // Park the indicator in its loading position after a successful release.
   const parkInLoadingPosition = () => {
-    const el = options.indicator();
-    if (!el) return;
-    capStyleResetTimer();
-    el.style.transition = `transform 260ms ${EASING_EXPO_OUT}, opacity 260ms ease`;
-    el.style.transform = `translateY(${LOADING_OFFSET}px)`;
-    el.style.opacity = '1';
+    const element = options.indicator();
+    if (!element) return;
+    clearStyleResetTimer();
+    // A longer settle for a bigger pull gives the card visual weight instead
+    // of snapping into place at a fixed speed.
+    const settleDistance = Math.abs(currentPull + PEEK_OFFSET - LOADING_OFFSET);
+    const settleDuration = 360 + Math.min(settleDistance * 1.4, 160);
+    element.style.transition = `transform ${settleDuration}ms ${EASING_SETTLE}, opacity 240ms ease`;
+    element.style.transform = `translateY(${LOADING_OFFSET}px) scale(1)`;
+    element.style.opacity = '1';
+    element.style.setProperty('--ptr-progress', '1');
+    element.style.boxShadow = '0 16px 34px rgb(var(--ui-overlay) / 0.18)';
     styleResetTimer = setTimeout(() => {
-      if (el) el.style.transition = '';
+      if (element) element.style.transition = '';
       styleResetTimer = null;
-    }, 280);
-    // The rotation accumulated during dragging is now handed off to the
-    // CSS .spin animation (caller adds `.spin` when isSyncingAll flips true).
+    }, settleDuration + 20);
     clearIconRotation();
   };
 
-  // Cancel-and-release sequence used after `onRefresh` settles: keep the
-  // icon spinning briefly for tactile confirmation, then slide the card up
-  // out of view with an elastic back-out easing.
   const playExitAnimation = () => {
     clearExitTimer();
     exitTimer = setTimeout(() => {
-      snapBackToHidden(420);
+      snapBackToHidden(520);
       exitTimer = null;
-    }, 50); // 200ms of continued spin as a tactile "ok" confirmation.
+    }, 120);
   };
 
-  // Returns true if the touch event happened inside (or on) the scroll target.
-  const isInsideTarget = (touchTarget: EventTarget | null, target: HTMLElement): boolean => {
+  const isInsideTarget = (touchTarget: EventTarget | null, target: HTMLElement) => {
     let node: Node | null = touchTarget as Node | null;
     while (node) {
       if (node === target) return true;
@@ -169,81 +140,96 @@ function usePullToRefresh(options: PullToRefreshOptions) {
     return false;
   };
 
-  const onTouchStart = (e: TouchEvent) => {
+  const onTouchStart = (event: TouchEvent) => {
     if (options.enabled && !options.enabled()) return;
     if (options.isRefreshing()) return;
+
     const target = options.target();
-    if (!target) return;
-    if (!isInsideTarget(e.target, target)) return;
-    if (target.scrollTop > 0) return;
-    if (e.touches.length !== 1) return;
-    startY = e.touches[0].clientY;
+    if (!target || !isInsideTarget(event.target, target)) return;
+    if (target.scrollTop > 0 || event.touches.length !== 1) return;
+
+    resetGesture();
+    const touch = event.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    axis = null;
     pulling = false;
     triggered = false;
     currentPull = 0;
-    // A new gesture should cancel any in-flight exit animation; the user is
-    // re-engaging and the card must track the finger again.
     clearExitTimer();
-    capStyleResetTimer();
+    clearStyleResetTimer();
   };
 
-  const onTouchMove = (e: TouchEvent) => {
+  const onTouchMove = (event: TouchEvent) => {
     if (startY === null) return;
-    const currentY = e.touches[0].clientY;
-    let deltaY = currentY - startY;
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
 
-    if (deltaY <= 0) {
-      if (pulling) {
-        pulling = false;
-        applyLive(0, 0, 0);
+    if (axis === null) {
+      if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < ARM_DISTANCE) return;
+      // Horizontal movement belongs to the note row or the drawer swipe.
+      if (Math.abs(deltaX) > Math.abs(deltaY) * 1.15) {
+        axis = 'horizontal';
+        return;
       }
-      return;
+      if (deltaY <= 0 || !claimGesture(OWNER, 'vertical')) return;
+      axis = 'vertical';
     }
+
+    if (axis !== 'vertical' || getGestureOwner() !== OWNER) return;
 
     const target = options.target();
-    if (!target) return;
-
-    if (target.scrollTop > 0) {
-      if (pulling) {
-        pulling = false;
-        applyLive(0, 0, 0);
-      }
+    if (!target || target.scrollTop > 0) {
+      releaseGesture(OWNER);
+      axis = null;
+      if (pulling) applyLive(0, 0, 0, 0);
+      pulling = false;
       return;
     }
 
-    // Resistance: first `threshold` px feel light, then heavy.
-    let pullDistance: number;
-    if (deltaY <= threshold) {
-      pullDistance = deltaY;
-    } else {
-      const excess = deltaY - threshold;
-      pullDistance = threshold + excess * 0.4;
+    if (deltaY <= 0) {
+      if (pulling) applyLive(0, 0, 0, 0);
+      pulling = false;
+      currentPull = 0;
+      return;
     }
-    pullDistance = Math.min(pullDistance, maxPull);
+
+    // A short 1:1 knee followed by resistance. The card gets heavier the
+    // further it travels, without becoming stuck at the threshold.
+    const resisted = deltaY <= DRAG_KNEE
+      ? deltaY
+      : DRAG_KNEE + (deltaY - DRAG_KNEE) * DRAG_RESISTANCE;
+    const pullDistance = Math.min(resisted, maxPull);
     currentPull = pullDistance;
     pulling = true;
-    if (e.cancelable) e.preventDefault();
+    if (event.cancelable) event.preventDefault();
 
-    // Indicator translateY relative to its parked position; provide a small
-    // peek at the very start of the pull so the card emerges from the top.
+    const progress = Math.min(pullDistance / threshold, 1);
     const offset = pullDistance >= threshold
       ? pullDistance + PEEK_OFFSET
-      : (pullDistance / threshold) * (threshold + PEEK_OFFSET);
-    const opacity = Math.min(pullDistance / threshold, 1);
-    const rotation = Math.min(pullDistance / threshold, 1) * 90;
-    applyLive(offset, opacity, rotation);
+      : progress * (threshold + PEEK_OFFSET);
+    applyLive(offset, Math.min(progress + 0.1, 1), progress * 90, progress);
   };
 
   const onTouchEnd = () => {
-    if (startY === null) return;
+    if (startY === null && axis === null) return;
     const wasPulling = pulling;
+    const releasedPull = currentPull;
+    const releasedAxis = axis;
     startY = null;
+    axis = null;
     pulling = false;
 
+    if (releasedAxis === 'vertical') {
+      releaseGesture(OWNER);
+      completeGesture(OWNER);
+    }
     if (!wasPulling) return;
 
-    if (currentPull >= threshold && !options.isRefreshing() && !triggered) {
+    if (releasedPull >= threshold && !options.isRefreshing() && !triggered) {
       triggered = true;
+      navigator.vibrate?.(12);
       parkInLoadingPosition();
       Promise.resolve(options.onRefresh())
         .catch(() => { /* errors are surfaced by the caller */ })
@@ -252,8 +238,7 @@ function usePullToRefresh(options: PullToRefreshOptions) {
           playExitAnimation();
         });
     } else {
-      // Cancel / not enough pull: gravity-release snap-back.
-      snapBackToHidden(450);
+      snapBackToHidden(480);
     }
   };
 
@@ -265,7 +250,7 @@ function usePullToRefresh(options: PullToRefreshOptions) {
   });
 
   onUnmounted(() => {
-    capStyleResetTimer();
+    clearStyleResetTimer();
     clearExitTimer();
     document.removeEventListener('touchstart', onTouchStart as EventListener, { capture: true } as EventListenerOptions);
     document.removeEventListener('touchmove', onTouchMove as EventListener, { capture: true } as EventListenerOptions);

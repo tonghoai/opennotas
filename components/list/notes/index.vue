@@ -7,6 +7,7 @@ import { Notes } from '~/utils/icons';
 import { Trash } from '~/utils/icons';
 import { Tag } from '~/utils/icons';
 import { Search } from '~/utils/icons';
+import { claimGesture, releaseGesture, resetGesture, wasGestureJustCompleted } from '~/utils/gesture';
 
 const { locale } = useI18n();
 const { $i18n } = useNuxtApp();
@@ -133,7 +134,11 @@ const closeSwipe = () => {
 };
 
 const handleTouchStart = (event: TouchEvent, note: any) => {
+  const target = event.target as HTMLElement;
+  if (target.closest('button, a, input, textarea, select')) return;
+
   const touch = event.touches[0];
+  resetGesture();
   longPressStart = { x: touch.clientX, y: touch.clientY };
   swipeStart = { x: touch.clientX, y: touch.clientY };
   swipeBaseOffset = swipedNoteId.value === note.id ? -SWIPE_WIDTH : 0;
@@ -158,6 +163,7 @@ const handleTouchMove = (event: TouchEvent, note: any) => {
   if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) clearLongPress();
 
   if (!trackingSwipe && Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (!claimGesture('note-swipe', 'horizontal')) return;
     trackingSwipe = true;
     isSwipeDragging.value = true;
   }
@@ -178,6 +184,7 @@ const handleTouchEnd = () => {
     if (!shouldOpen) swipedNoteId.value = null;
     isSwipeDragging.value = false;
     didSwipe = true;
+    releaseGesture('note-swipe');
     setTimeout(() => { didSwipe = false; }, 250);
   }
 
@@ -186,7 +193,7 @@ const handleTouchEnd = () => {
 };
 
 const handleClickNote = (noteId: string) => {
-  if (didLongPress || didSwipe) return;
+  if (didLongPress || didSwipe || wasGestureJustCompleted('pull-to-refresh')) return;
   if (swipedNoteId.value === noteId) {
     closeSwipe();
     return;
@@ -311,8 +318,8 @@ const rows = computed(() => {
         <div
           class="relative flex min-h-[58px] w-full touch-pan-y items-stretch text-foreground transition-colors"
           :class="[
-            activeNoteId === note.id ? 'bg-selected text-selected-foreground' : 'bg-card hover:bg-accent',
-            isSwipeDragging || swipedNoteId !== note.id ? '' : 'transition-transform duration-200'
+            activeNoteId === note.id ? 'bg-card text-foreground lg:bg-selected lg:text-selected-foreground' : 'bg-card hover:bg-accent',
+            isSwipeDragging ? '' : 'note-swipe-transition'
           ]"
           :style="{ transform: swipedNoteId === note.id ? `translateX(${swipeOffset}px)` : '' }"
           @touchstart.passive="handleTouchStart($event, note)"
@@ -323,16 +330,16 @@ const rows = computed(() => {
           <div class="flex min-w-0 items-center gap-1.5">
             <Pin v-if="note.isPinned" class="h-3 w-3 shrink-0 text-warning" />
             <Lock v-if="note.isLocked" class="h-3 w-3 shrink-0 text-warning" />
-            <span class="min-w-0 truncate text-[14px] font-medium leading-5 select-none"
+            <span class="min-w-0 truncate text-[15px] font-medium leading-5 select-none"
               :class="{ 'italic': note.isLocked, 'text-warning-sync': props.actionObjectKeys?.includes(note.id), 'text-info-sync': props.idPulled?.includes(note.id) }">
               {{ note.title?.trim() || $t('app.list_note_no_title') }}
             </span>
           </div>
 
-          <div class="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12px] leading-4 select-none"
-            :class="activeNoteId === note.id ? 'text-selected-foreground/65' : 'text-muted-foreground'">
+          <div class="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] leading-4 select-none"
+            :class="activeNoteId === note.id ? 'text-muted-foreground lg:text-selected-foreground/65' : 'text-muted-foreground'">
             <span v-if="!props.hideFolderChip && noteFolderName(note)"
-              class="max-w-24 shrink-0 truncate rounded border border-border bg-card px-1 py-0 text-[10px] leading-4">
+              class="max-w-24 shrink-0 truncate rounded border border-border bg-card px-1 py-0 text-[11px] leading-4">
               {{ noteFolderName(note) }}
             </span>
             <span v-if="note.highlight" class="search-highlight min-w-0 truncate">
@@ -346,8 +353,8 @@ const rows = computed(() => {
         </div>
 
         <div class="flex shrink-0 items-center gap-1 pr-1.5">
-          <span class="text-[11px] tabular-nums"
-            :class="activeNoteId === note.id ? 'text-selected-foreground/75' : 'text-muted-foreground'">{{ formatNoteTime(note) }}</span>
+          <span class="text-[12px] tabular-nums"
+            :class="activeNoteId === note.id ? 'text-muted-foreground lg:text-selected-foreground/75' : 'text-muted-foreground'">{{ formatNoteTime(note) }}</span>
           <button type="button"
             class="ui-btn ui-btn-ghost ui-btn-xs ui-btn-square opacity-40 group-hover:opacity-100 lg:opacity-0"
             :aria-label="$t('app.note_more')" aria-haspopup="menu" :title="$t('app.note_more')"
@@ -362,14 +369,18 @@ const rows = computed(() => {
 
   <div v-if="!props.listNotes.length" class="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
     <component :is="emptyView.icon" class="h-10 w-10 opacity-25" />
-    <p class="text-[14px] font-medium text-foreground/85">{{ emptyView.title }}</p>
-    <p class="max-w-60 text-[12px] leading-5 text-muted-foreground">{{ emptyView.description }}</p>
+    <p class="text-[15px] font-medium text-foreground/85">{{ emptyView.title }}</p>
+    <p class="max-w-60 text-[13px] leading-5 text-muted-foreground">{{ emptyView.description }}</p>
   </div>
 
   <div class="list-bottom-spacer" aria-hidden="true"></div>
 </template>
 
 <style scoped>
+.note-swipe-transition {
+  transition: transform 300ms cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
 .list-bottom-spacer {
   height: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
