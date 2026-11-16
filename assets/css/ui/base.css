@@ -89,6 +89,26 @@ select:focus:not(:focus-visible) {
 }
 
 @media (min-width: 1024px) {
+  /* Desktop app chrome is not a document: accidental drags should not select
+     labels, menu rows or modal text. Editable controls and the note editor
+     opt back into text selection. */
+  html,
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable],
+  .ProseMirror,
+  .cm-editor,
+  #crepe-editor,
+  .milkdown {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
   * {
     scrollbar-width: none;
     -ms-overflow-style: none;
