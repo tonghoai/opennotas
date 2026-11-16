@@ -68,6 +68,33 @@ const runtimeConfig = useRuntimeConfig();
 
 const isInEditor = ref<boolean>(false);
 
+// Note-level reading mode. It is off by default; mobile enters it once per
+// note and the first tap on the document switches that note to edit mode.
+const isNoteReadOnly = ref<boolean>(false);
+const isAutoReadOnlyEntry = ref<boolean>(false);
+const readOnlySeenNotes = new Set<string>();
+
+const setNoteReadOnly = (value: boolean, auto: boolean = false) => {
+  isNoteReadOnly.value = value;
+  isAutoReadOnlyEntry.value = value && auto;
+};
+
+const markNoteReadOnlyUnlocked = (noteId: string = activeNoteId.value) => {
+  if (noteId) readOnlySeenNotes.add(noteId);
+};
+
+const syncNoteReadOnlyForEntry = (noteId: string, markSeen: boolean = false) => {
+  if (!isMobile.value || !noteId || readOnlySeenNotes.has(noteId)) {
+    setNoteReadOnly(false);
+    return;
+  }
+
+  setNoteReadOnly(true, true);
+  // The automatic reading screen is only for the first entry into a note;
+  // subsequent entries open directly in edit mode.
+  if (markSeen) readOnlySeenNotes.add(noteId);
+};
+
 function updateViewportHeight() {
   const viewportHeight = globalThis.innerHeight;
   document.documentElement.style.setProperty(
@@ -850,6 +877,7 @@ const selectNoteById = async (noteId: string, focus = false) => {
 const handleClickAddNote = async () => {
   await discardPendingDraft();
   const newNote = await createNote(activeFolderId.value);
+  markNoteReadOnlyUnlocked(newNote.id);
   pendingDraftNoteId.value = newNote.id;
   setActionObject('note', newNote);
   listNotes.value = await loadNotes();
@@ -911,9 +939,12 @@ const activeNoteId = ref<string>("");
 const activeNoteBaseline = ref<{ noteId: string, content: string }>({ noteId: '', content: '' });
 watch(activeNoteId, async (newId) => {
   if (!newId) {
+    setNoteReadOnly(false);
     activeNoteBaseline.value = { noteId: '', content: '' };
     return;
   }
+  // Desktop notes start in edit mode; mobile is handled on editor entry below.
+  if (!isMobile.value) setNoteReadOnly(false);
   const note = await getNoteDetail(newId);
   activeNoteBaseline.value = { noteId: newId, content: note?.content ?? '' };
 });
@@ -939,6 +970,7 @@ const handleClickNote = async (noteId: string, inEditor: boolean = false, should
   }
   activeNoteId.value = noteId;
   setActiveNote(noteId);
+  if (inEditor) syncNoteReadOnlyForEntry(noteId, true);
   formNotes.value = await getNoteDetail(activeNoteId.value);
   if (!isMobile.value) {
     const editorElement = document.getElementById('form-editors');
@@ -1498,9 +1530,38 @@ const handleClickCollapseFolder = () => {
 }
 const isShowFormatToolbar = ref<boolean>(false);
 const handleClickFormatToolbar = () => {
+  if (isNoteReadOnly.value) return;
   isShowFormatToolbar.value = !isShowFormatToolbar.value;
   formNotesRef.value?.focusState();
 }
+
+const handleToggleNoteReadOnly = () => {
+  if (!formNotes.value?.id) return;
+
+  if (isNoteReadOnly.value) {
+    markNoteReadOnlyUnlocked();
+    setNoteReadOnly(false);
+    // Keep the first focus inside the user gesture so mobile keyboards open.
+    formNotesRef.value?.focus('end');
+    nextTick(() => formNotesRef.value?.focus('end'));
+    return;
+  }
+
+  setNoteReadOnly(true);
+  isShowFormatToolbar.value = false;
+  (document.activeElement as HTMLElement | null)?.blur();
+};
+
+const handleRequestEdit = () => {
+  // Manual read-only mode must be switched off from the toolbar; only the
+  // automatic first-entry mode is dismissed by tapping the document.
+  if (!isNoteReadOnly.value || !isAutoReadOnlyEntry.value) return;
+
+  markNoteReadOnlyUnlocked();
+  setNoteReadOnly(false);
+  formNotesRef.value?.focus('end');
+  nextTick(() => formNotesRef.value?.focus('end'));
+};
 watch(() => activeNoteId.value, () => {
   isShowFormatToolbar.value = false;
 });
@@ -2687,6 +2748,7 @@ watch(() => settings.value.general.editorFontFamily, (newVal) => {
       <NavbarTop ref="navbarTopRef" :isInEditor="isInEditor" :listFolders="listFoldersMenu"
         :activeFolderId="activeFolderId" :listTags="listTagsMenu" :activeTagId="activeTagId" :isSearchMode="isSearchMode" :formNotes="formNotes"
         :isSyncing="isSyncAll" :settings="settings" :isPasswordExist="isPasswordExist" :editorName="editorName"
+        :isReadOnly="isNoteReadOnly"
         :folderCounts="folderNoteCounts" :tagCounts="tagNoteCounts" :trashCount="trashCount" :actionObjectKeys="actionObjectKeys" :sortType="sortType"
         @clickFolderName="handleClickFolderName" @rightClickFolderName="handleRightClickFolderName"
         @renameFolderName="handleRenameFolderName" @reorderFolderName="handleReorderFolderName"
@@ -2701,7 +2763,8 @@ watch(() => settings.value.general.editorFontFamily, (newVal) => {
         @clickExportSettings="handleClickExportSettings" @triggerImportSettings="handleClickImportSettings"
         @clickMenuSidebar="handleClickMenuSidebar" @clickFormatToolbar="handleClickFormatToolbar"
         @clickPlainText="handleClickPlainText" @clickSearchInNote="handleClickSearchInNote"
-        @clickMenuNote="handleOpenNoteMenu" @openSearch="openCommandPalette" @clickSort="handleClickSort" />
+        @clickMenuNote="handleOpenNoteMenu" @openSearch="openCommandPalette" @clickSort="handleClickSort"
+        @clickToggleReadOnly="handleToggleNoteReadOnly" />
     </div>
 
     <div class="relative flex min-h-0 flex-1">
@@ -2764,12 +2827,12 @@ watch(() => settings.value.general.editorFontFamily, (newVal) => {
         <ToolbarFormNotes :noteId="formNotes.id" :editorName="editorName" :isLocked="formNotes.isLocked"
           :formNotes="formNotes" :folderId="formNotes.folderId" :folderName="activeNoteFolderName" :tags="activeNoteTags"
           :isPinned="!!formNotes.isPinned" :isDeleted="!!formNotes.deletedAt" :title="editorTitle"
-          :showTitle="isEditorScrolled" @clickInfo="handleClickFormNotesInfo"
+          :isReadOnly="isNoteReadOnly" :showTitle="isEditorScrolled" @clickInfo="handleClickFormNotesInfo"
           @copyNote="handleCopyToClipboard" @clickSwitchEditor="handleClickSwitchEditor"
           @clickCollapsePanel="handleClickCollapsePanel" @clickFormatToolbar="handleClickFormatToolbar"
           @clickPlainText="handleClickPlainText" @clickSearchInNote="handleClickSearchInNote"
           @clickPin="handleClickPinNote" @clickFolder="handleClickNoteFolder"
-          @clickTag="handleClickNoteTag" />
+          @clickTag="handleClickNoteTag" @clickToggleReadOnly="handleToggleNoteReadOnly" />
 
         <div id="form-editors" class="min-h-0 flex-1 cursor-text overflow-auto bg-card" :style="editorTypographyStyle"
           :class="{ 'overflow-x-hidden': isMobile }">
@@ -2784,8 +2847,8 @@ watch(() => settings.value.general.editorFontFamily, (newVal) => {
                 </svg>
               </span>
               <div class="min-w-0">
-                <p class="truncate text-[12px] font-medium">{{ $t('app.trash_banner_title') }}</p>
-                <p class="truncate text-[11px] text-muted-foreground">{{ $t('app.trash_banner_desc') }}</p>
+                <p class="truncate text-[13px] font-medium">{{ $t('app.trash_banner_title') }}</p>
+                <p class="truncate text-[12px] text-muted-foreground">{{ $t('app.trash_banner_desc') }}</p>
               </div>
             </div>
             <div class="flex shrink-0 items-center gap-2">
@@ -2801,11 +2864,11 @@ watch(() => settings.value.general.editorFontFamily, (newVal) => {
           <FormNotes ref="formNotesRef" :id="formNotes.id" :key="formNotes.id" :value="formNotes.content"
             :emptyMode="isTagsMode ? (activeTagId ? 'note' : 'tags') : activeFolderId === 'bottombar-trash' ? 'trash' : 'note'"
             :isLocked="formNotes.isLocked" :settings="settings" :editorName="editorName"
-            :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt"
+            :isShowFormatToolbar="isShowFormatToolbar" :isDeleted="!!formNotes.deletedAt" :isReadOnly="isNoteReadOnly"
             @confirmPassword="handleConfirmPassword" @changeContent="handleChangeContent"
             @clickInsertLink="handleClickInsertLink" @closeInsertLink="handleClickCloseModalInsertLink"
             @clickInsertImage="handleClickInsertImage" @closeInsertImage="handleClickCloseModalInsertImage"
-            @alertMessage="handleAlertMessage" />
+            @alertMessage="handleAlertMessage" @requestEdit="handleRequestEdit" />
         </div>
 
         <ToolbarFormNotesStatus v-if="!formNotes.isLocked" :noteId="formNotes.id" :formNotes="formNotes"

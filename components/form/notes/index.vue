@@ -12,6 +12,7 @@ const props = defineProps([
   'isDeleted',
   'isShowFormatToolbar',
   'emptyMode',
+  'isReadOnly',
 ]);
 
 const emit = defineEmits([
@@ -22,6 +23,7 @@ const emit = defineEmits([
   'clickInsertImage',
   'closeInsertImage',
   'alertMessage',
+  'requestEdit',
 ]);
 
 const passwordUnlockValue = ref<string>('');
@@ -78,6 +80,10 @@ const focus = (location: 'start' | 'end' = 'start') => {
 }
 const handleClickMarkdownBody = (e: MouseEvent) => {
   if ((e.target as HTMLElement).closest('input, textarea, .ui-dropdown, .milkdown-toolbar, .milkdown-link-edit, .milkdown-link-preview, .milkdown-slash-menu, .milkdown-block-handle')) return;
+  if (props.isReadOnly) {
+    emit('requestEdit');
+    return;
+  }
   focus('end');
 }
 const readonly = () => {
@@ -171,17 +177,18 @@ defineExpose({
     <Trash v-if="props.emptyMode === 'trash'" class="h-10 w-10 opacity-20" />
     <Tag v-else-if="props.emptyMode === 'tags'" class="h-10 w-10 opacity-20" />
     <Notes v-else class="h-10 w-10 opacity-20" />
-    <p class="text-[14px] font-medium text-foreground/80">
+    <p class="text-[15px] font-medium text-foreground/80">
       {{ props.emptyMode === 'trash' ? $t('app.list_empty_trash_title')
         : props.emptyMode === 'tags' ? $t('app.tags_overview_title') : $t('app.editor_empty_title') }}
     </p>
-    <p class="max-w-64 text-[12.5px] leading-5 text-muted-foreground">
+    <p class="max-w-64 text-[13.5px] leading-5 text-muted-foreground">
       {{ props.emptyMode === 'trash' ? $t('app.list_empty_trash_desc')
         : props.emptyMode === 'tags' ? $t('app.tags_overview_desc') : $t('app.editor_empty_desc') }}
     </p>
   </div>
 
-  <div class="markdown-body transition-all relative" v-if="id && !isLocked" @click="handleClickMarkdownBody">
+  <div class="markdown-body transition-all relative" :class="{ 'is-readonly': props.isReadOnly }" v-if="id && !isLocked"
+    @click="handleClickMarkdownBody">
     <ToolbarFormNotesSearch v-if="isSearchOpen" ref="formNotesSearchRef" v-model="searchQuery"
       :matchCurrent="matchInfo.current" :matchTotal="matchInfo.total"
       class="sticky top-0 z-[60] shadow-sm" @next="handleSearchNext"
@@ -189,15 +196,18 @@ defineExpose({
 
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :key="editorTiptapKey" :isShowFormatToolbar="props.isShowFormatToolbar"
+      :isReadOnly="props.isReadOnly"
       @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"
       @closeInsertLink="handleCloseInsertLink" @clickInsertImage="handleClickInsertImage"
       @closeInsertImage="handleCloseInsertImage" />
 
     <EditorCodemirror v-if="editorName === 'CodeMirror'" ref="editorRef" :value="props.value"
-      :isDeleted="props.isDeleted" :settings="settings" @changeContent="handleChangeContent" />
+      :isDeleted="props.isDeleted" :settings="settings" :isReadOnly="props.isReadOnly"
+      @changeContent="handleChangeContent" />
 
     <EditorCrepe v-if="editorName === 'Crepe'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :isShowFormatToolbar="props.isShowFormatToolbar" :noteId="props.id"
+      :isReadOnly="props.isReadOnly"
       @changeContent="handleChangeContent" @alertMessage="handleAlertMessage"
       @insertImage="emit('clickInsertImage', { url: '', alt: '' })" />
   </div>
@@ -210,6 +220,19 @@ defineExpose({
 </template>
 
 <style lang="scss">
+.markdown-body.is-readonly {
+  cursor: default;
+}
+
+/* Read-only mode must not focus/caret the document. The wrapper still catches
+   the tap so mobile can promote the note to edit mode on first interaction. */
+.markdown-body.is-readonly :deep(.ProseMirror),
+.markdown-body.is-readonly :deep(.cm-editor),
+.markdown-body.is-readonly :deep(#crepe-editor) {
+  pointer-events: none;
+  caret-color: transparent;
+}
+
 .content {
   padding: 1rem 0 0;
 

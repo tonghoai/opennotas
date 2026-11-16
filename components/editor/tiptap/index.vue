@@ -23,6 +23,7 @@ const props = defineProps([
   'isDeleted',
   'settings',
   'isShowFormatToolbar',
+  'isReadOnly',
 ]);
 
 const emit = defineEmits([
@@ -51,7 +52,7 @@ onMounted(() => {
   const value = props.value;
   editor = new Editor({
     content: value,
-    editable: !props.isDeleted,
+    editable: !props.isDeleted && !props.isReadOnly,
     extensions: [
       StarterKit,
       Italic,
@@ -92,6 +93,8 @@ onMounted(() => {
         class: `mx-auto w-full px-5 py-6 lg:px-8 lg:py-8 min-h-[calc(100vh_/_2)] ${props.settings?.general.editorView === 'compact' ? 'max-w-[720px]' : ''}`,
       },
       handleClickOn(view, pos, node, nodePos, event) {
+        if (!editor || !editor.isEditable) return false;
+
         editor.commands.focus(pos, { scrollIntoView: true });
 
         setTimeout(() => {
@@ -164,6 +167,11 @@ const focus = (location: 'start' | 'end' = 'start') => {
 const readonly = () => {
   editor.setEditable(false);
 }
+
+watch(() => [props.isReadOnly, props.isDeleted], () => {
+  if (!editor) return;
+  editor.setEditable(!props.isReadOnly && !props.isDeleted);
+});
 
 const undo = () => {
   editor.commands.undo();

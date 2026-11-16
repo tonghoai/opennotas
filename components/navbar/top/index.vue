@@ -20,6 +20,7 @@ import { ToolCase } from '~/utils/icons';
 import { MenuVertical } from '~/utils/icons';
 import { Type } from '~/utils/icons';
 import { Pencil } from '~/utils/icons';
+import { Eye } from '~/utils/icons';
 import { toggleModalSortNote } from '~/utils/modal';
 
 const props = defineProps([
@@ -33,6 +34,7 @@ const props = defineProps([
   'settings',
   'isPasswordExist',
   'editorName',
+  'isReadOnly',
   'folderCounts',
   'tagCounts',
   'trashCount',
@@ -80,6 +82,7 @@ const emit = defineEmits([
   'clickSearchInNote',
   'clickMenuNote',
   'clickSort',
+  'clickToggleReadOnly',
 ]);
 
 const { $i18n } = useNuxtApp();
@@ -530,7 +533,7 @@ defineExpose({
         </button>
 
         <div v-if="!isShowSearchInput" class="min-w-0 flex-1 px-2">
-          <h1 class="truncate text-[17px] font-semibold tracking-tight">{{ activeFolderName }}</h1>
+          <h1 class="truncate text-[18px] font-semibold tracking-tight">{{ activeFolderName }}</h1>
         </div>
 
         <div v-else class="flex min-w-0 flex-1 items-center gap-2 px-2">
@@ -578,11 +581,19 @@ defineExpose({
       </button>
 
       <div class="min-w-0 flex-1 px-2">
-        <h1 class="truncate text-[15px] font-medium">{{ editorTitle }}</h1>
+        <h1 class="truncate text-[16px] font-medium">{{ editorTitle }}</h1>
       </div>
 
       <template v-if="!props.formNotes.isLocked">
-        <button v-if="['Tiptap', 'Crepe'].includes(props.editorName)" type="button"
+        <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square"
+          :aria-label="props.isReadOnly ? $t('app.note_readonly_disable') : $t('app.note_readonly_enable')"
+          :title="props.isReadOnly ? $t('app.note_readonly_disable') : $t('app.note_readonly_enable')"
+          :aria-pressed="props.isReadOnly" @click="emit('clickToggleReadOnly')">
+          <Pencil v-if="props.isReadOnly" class="h-4 w-4" />
+          <Eye v-else class="h-4 w-4" />
+        </button>
+
+        <button v-if="!props.isReadOnly && ['Tiptap', 'Crepe'].includes(props.editorName)" type="button"
           class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square" :aria-label="$t('app.note_format')"
           :title="$t('app.note_format')" @click="handleClickFormatToolbar">
           <ToolCase class="h-4 w-4" />
@@ -634,7 +645,7 @@ defineExpose({
             @click="isDrawerSettingOpen = false">
             <ArrowLeft class="h-4 w-4" />
           </button>
-          <h2 class="min-w-0 flex-1 truncate text-[16px] font-semibold">{{ $t('app.setting_title') }}</h2>
+          <h2 class="min-w-0 flex-1 truncate text-[17px] font-semibold">{{ $t('app.setting_title') }}</h2>
         </div>
         <div class="settings-drawer w-full flex-1 overflow-y-auto overscroll-y-contain">
           <div class="p-4">
@@ -677,7 +688,7 @@ defineExpose({
 
               <SettingRow :label="$t('app.setting_general_editor_typography_title')">
                 <button type="button"
-                  class="flex min-h-8 max-w-44 items-center gap-2 rounded-md border border-border bg-card px-2.5 text-[12px] font-medium"
+                  class="flex min-h-8 max-w-44 items-center gap-2 rounded-md border border-border bg-card px-2.5 text-[13px] font-medium"
                   @click="handleOpenEditorFontDialog">
                   <span class="min-w-0 truncate">{{ editorFontDisplayName }}</span>
                   <Pencil class="h-3.5 w-3.5 shrink-0 opacity-55" />
@@ -686,7 +697,7 @@ defineExpose({
 
               <SettingRow :label="$t('app.setting_general_font_title')">
                 <button type="button"
-                  class="flex min-h-8 max-w-44 items-center gap-2 rounded-md border border-border bg-card px-2.5 text-[12px] font-medium"
+                  class="flex min-h-8 max-w-44 items-center gap-2 rounded-md border border-border bg-card px-2.5 text-[13px] font-medium"
                   @click="handleOpenFontDialog">
                   <span class="min-w-0 truncate">{{ fontDisplayName }}</span>
                   <Pencil class="h-3.5 w-3.5 shrink-0 opacity-55" />
@@ -856,10 +867,10 @@ defineExpose({
             <div class="flex flex-col items-center py-4">
               <img :src="'/logo-icon.png'" height="48" width="48" class="h-12 w-12" alt="OpenNotas Logo" />
               <a class="underline" href="https://opennotas.io">
-                <h1 class="mt-2 text-[15px] font-semibold">{{ $t('app_name') }}</h1>
+                <h1 class="mt-2 text-[16px] font-semibold">{{ $t('app_name') }}</h1>
               </a>
-              <p class="mt-1 max-w-72 text-center text-[12px] leading-5 text-muted-foreground">{{ $t('app.slogan') }}</p>
-              <p class="mt-3 text-[11px] tabular-nums text-muted-foreground">
+              <p class="mt-1 max-w-72 text-center text-[13px] leading-5 text-muted-foreground">{{ $t('app.slogan') }}</p>
+              <p class="mt-3 text-[12px] tabular-nums text-muted-foreground">
                 {{ $t('app.version') }} {{ runtimeConfig.public.version }}
               </p>
             </div>
@@ -886,7 +897,7 @@ defineExpose({
   <UiDialog v-model:open="isShowFontDialog" :title="$t('app.setting_general_edit_font_title')"
     :description="$t('app.setting_general_edit_font_description')" width="26rem" @ok="handleSaveFontDialog">
     <label class="flex flex-col gap-1.5">
-      <span class="text-[12px] font-medium">{{ $t('app.setting_general_font_title') }}</span>
+      <span class="text-[13px] font-medium">{{ $t('app.setting_general_font_title') }}</span>
       <input v-model="fontDialogValue" type="text" autofocus class="ui-input"
         :placeholder="$t('app.setting_general_font_placeholder')" autocomplete="off"
         @keydown.enter.prevent="handleSaveFontDialog" />
@@ -898,7 +909,7 @@ defineExpose({
     @ok="handleSaveEditorFontDialog">
     <div class="flex flex-col gap-4">
       <label class="flex flex-col gap-1.5">
-        <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_font_title') }}</span>
+        <span class="text-[13px] font-medium">{{ $t('app.setting_general_editor_font_title') }}</span>
         <input v-model="editorFontDialogValue" type="text" autofocus class="ui-input"
           :placeholder="$t('app.setting_general_editor_font_placeholder')" autocomplete="off"
           @keydown.enter.prevent="handleSaveEditorFontDialog" />
@@ -906,27 +917,27 @@ defineExpose({
 
       <div class="grid grid-cols-2 gap-3">
         <label class="flex flex-col gap-1.5">
-          <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_font_size_title') }}</span>
+          <span class="text-[13px] font-medium">{{ $t('app.setting_general_editor_font_size_title') }}</span>
           <div class="relative">
             <input v-model.number="editorFontSizeDraft" type="number" min="12" max="32" step="1"
               class="ui-input pr-9" @keydown.enter.prevent="handleSaveEditorFontDialog" />
-            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] text-muted-foreground">px</span>
+            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[12px] text-muted-foreground">px</span>
           </div>
         </label>
 
         <label class="flex flex-col gap-1.5">
-          <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_line_height_title') }}</span>
+          <span class="text-[13px] font-medium">{{ $t('app.setting_general_editor_line_height_title') }}</span>
           <input v-model.number="editorLineHeightDraft" type="number" min="1.2" max="2.4" step="0.05"
             class="ui-input" @keydown.enter.prevent="handleSaveEditorFontDialog" />
         </label>
       </div>
 
       <label class="flex flex-col gap-1.5">
-        <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_block_spacing_title') }}</span>
+        <span class="text-[13px] font-medium">{{ $t('app.setting_general_editor_block_spacing_title') }}</span>
         <div class="relative">
           <input v-model.number="editorBlockSpacingDraft" type="number" min="0" max="3" step="0.125"
             class="ui-input pr-10" @keydown.enter.prevent="handleSaveEditorFontDialog" />
-          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] text-muted-foreground">em</span>
+          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[12px] text-muted-foreground">em</span>
         </div>
       </label>
     </div>
@@ -959,17 +970,19 @@ html:has(.ui-drawer-toggle:checked) {
   /* 100vh fallback; bottom inset keeps the save bar above the iOS home indicator. */
   height: 100vh;
   height: 100dvh;
+  gap: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .settings-drawer {
-  background-color: rgb(var(--ui-background));
+  /* Match the header surface so no 1px seam is visible at the boundary. */
+  background-color: rgb(var(--ui-card));
 }
 
 .settings-drawer h2 {
   padding: 0 4px 10px;
   color: rgb(var(--ui-muted-foreground)) !important;
-  font-size: 11px !important;
+  font-size: 12px !important;
   font-weight: 500 !important;
   line-height: 1.4 !important;
   letter-spacing: 0.04em;

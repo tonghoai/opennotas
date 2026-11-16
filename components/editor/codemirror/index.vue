@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EditorState, StateField, StateEffect } from "@codemirror/state";
+import { Compartment, EditorState, StateField, StateEffect } from "@codemirror/state";
 import { EditorView } from "codemirror";
 import { redo as _redo, undo as _undo, defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { drawSelection, dropCursor, rectangularSelection, keymap, Decoration, type DecorationSet } from "@codemirror/view";
@@ -49,7 +49,10 @@ const props = defineProps([
   'value',
   'isDeleted',
   'settings',
+  'isReadOnly',
 ]);
+
+const editableCompartment = new Compartment();
 
 const emit = defineEmits([
   'changeContent',
@@ -72,7 +75,7 @@ const state = EditorState.create({
       ...historyKeymap,
     ]),
     EditorView.lineWrapping,
-    ...(props.isDeleted && [EditorView.editable.of(false)] || []),
+    editableCompartment.of(EditorView.editable.of(!props.isDeleted && !props.isReadOnly)),
     EditorView.updateListener.of((v: any) => {
       if (silent.value) return;
       if (v.docChanged) {
@@ -98,6 +101,15 @@ const focus = () => {
 }
 const readonly = () => {
 }
+
+watch(() => [props.isReadOnly, props.isDeleted], () => {
+  if (!editor) return;
+  editor.dispatch({
+    effects: editableCompartment.reconfigure(
+      EditorView.editable.of(!props.isReadOnly && !props.isDeleted),
+    ),
+  });
+});
 const undo = () => {
   _undo({
     state: editor.state,

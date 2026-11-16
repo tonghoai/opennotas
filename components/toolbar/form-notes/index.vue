@@ -9,6 +9,8 @@ import { Copy } from '~/utils/icons';
 import { Article } from '~/utils/icons';
 import { Pin } from '~/utils/icons';
 import { Folder } from '~/utils/icons';
+import { Eye } from '~/utils/icons';
+import { Pencil } from '~/utils/icons';
 
 const props = defineProps([
   'noteId',
@@ -22,6 +24,7 @@ const props = defineProps([
   'title',
   'showTitle',
   'isDeleted',
+  'isReadOnly',
 ]);
 
 const emit = defineEmits([
@@ -35,6 +38,7 @@ const emit = defineEmits([
   'clickPin',
   'clickFolder',
   'clickTag',
+  'clickToggleReadOnly',
 ]);
 
 const handleClickInfo = () => {
@@ -77,19 +81,19 @@ const extraTagCount = computed(() => extraTags.value.length);
 
     <div v-if="props.noteId" class="form-toolbar-meta-wrap flex min-w-0 flex-1 items-center gap-2 pl-2">
       <span v-if="props.showTitle || (!props.folderName && !(props.tags || []).length)"
-        class="truncate text-[13px] font-medium">{{ props.title }}</span>
+        class="truncate text-[14px] font-medium">{{ props.title }}</span>
 
       <template v-else>
         <div class="form-toolbar-meta flex min-w-0 items-center gap-2 overflow-hidden">
           <button v-if="props.folderName" type="button"
-            class="form-toolbar-folder flex min-w-0 max-w-[9rem] shrink items-center gap-1.5 rounded border border-border bg-background px-2 py-1 text-[10.5px] leading-4 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            class="form-toolbar-folder flex min-w-0 max-w-[9rem] shrink items-center gap-1.5 rounded border border-border bg-background px-2 py-1 text-[11.5px] leading-4 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             :title="props.folderName" :aria-label="props.folderName" @click="emit('clickFolder', props.folderId)">
             <Folder class="h-3 w-3 shrink-0" />
             <span class="truncate">{{ props.folderName }}</span>
           </button>
 
           <button v-if="firstTag" type="button"
-            class="flex min-w-0 max-w-[10rem] shrink items-center gap-1.5 rounded border border-border bg-background px-2 py-1 text-[10.5px] leading-4 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            class="flex min-w-0 max-w-[10rem] shrink items-center gap-1.5 rounded border border-border bg-background px-2 py-1 text-[11.5px] leading-4 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             :title="firstTag.name" :aria-label="firstTag.name" @click="emit('clickTag', firstTag.id)">
             <span class="h-1.5 w-1.5 shrink-0 rounded-full" :style="{ backgroundColor: firstTag.color || '#94a3b8' }"></span>
             <span class="truncate">{{ firstTag.name }}</span>
@@ -98,7 +102,7 @@ const extraTagCount = computed(() => extraTags.value.length);
 
         <div v-if="extraTagCount" class="ui-dropdown ui-dropdown-bottom ui-dropdown-end shrink-0">
           <button type="button" tabindex="0"
-            class="flex h-[22px] items-center rounded border border-border bg-background px-2 text-[10.5px] leading-4 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            class="flex h-[22px] items-center rounded border border-border bg-background px-2 text-[11.5px] leading-4 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             :aria-label="`${$t('app.tab_tags')} +${extraTagCount}`" :title="extraTags.map(tag => tag.name).join(', ')"
             aria-haspopup="menu">
             +{{ extraTagCount }}
@@ -123,7 +127,15 @@ const extraTagCount = computed(() => extraTags.value.length);
         <Pin class="h-4 w-4" />
       </button>
 
-      <button v-if="!props.isDeleted && ['Tiptap', 'Crepe'].includes(props.editorName)" type="button"
+      <button type="button" class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square"
+        :aria-label="props.isReadOnly ? $t('app.note_readonly_disable') : $t('app.note_readonly_enable')"
+        :title="props.isReadOnly ? $t('app.note_readonly_disable') : $t('app.note_readonly_enable')"
+        :aria-pressed="props.isReadOnly" @click="emit('clickToggleReadOnly')">
+        <Pencil v-if="props.isReadOnly" class="h-4 w-4" />
+        <Eye v-else class="h-4 w-4" />
+      </button>
+
+      <button v-if="!props.isReadOnly && !props.isDeleted && ['Tiptap', 'Crepe'].includes(props.editorName)" type="button"
         class="ui-btn ui-btn-ghost ui-btn-sm ui-btn-square" :aria-label="$t('app.note_format')"
         :title="$t('app.note_format')" @click="handleClickFormatToolbar">
         <ToolCase class="h-4 w-4" />

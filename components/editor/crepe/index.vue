@@ -35,6 +35,7 @@ const props = defineProps([
   'settings',
   'isShowFormatToolbar',
   'noteId',
+  'isReadOnly',
 ]);
 
 const emit = defineEmits([
@@ -440,7 +441,7 @@ onMounted(() => {
   });
 
   setTimeout(async () => {
-    if (props.isDeleted) {
+    if (props.isDeleted || props.isReadOnly) {
       editor.setReadonly(true);
     }
 
@@ -535,6 +536,7 @@ onMounted(() => {
     editor.editor.use($prose(() => createSearchPlugin()));
 
     await editor.create();
+    editor.setReadonly(!!(props.isDeleted || props.isReadOnly));
 
     // Intercept image paste before ProseMirror (capture phase runs first)
     imagePasteHandler = (e: Event) => {
@@ -691,7 +693,7 @@ onMounted(() => {
     setupDomObserver();
     setupLinkEditFocusObserver();
     setTimeout(() => {
-      focus();
+      if (!props.isReadOnly && !props.isDeleted) focus();
     }, 100);
     isLoading.value = false;
 
@@ -728,6 +730,11 @@ const focus = () => {
 const readonly = () => {
   editor.setReadonly(true);
 }
+
+watch(() => [props.isReadOnly, props.isDeleted], () => {
+  if (!editor) return;
+  editor.setReadonly(!!(props.isReadOnly || props.isDeleted));
+});
 const undo = () => {
   undoCommand.run();
 }
