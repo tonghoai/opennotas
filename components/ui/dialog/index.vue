@@ -164,7 +164,7 @@ defineExpose({ close });
 </script>
 
 <template>
-  <dialog ref="dialogRef" v-bind="$attrs" :id="id" class="ui-modal" :class="{ 'ui-modal-top': top, 'is-closing': isClosing }"
+  <dialog ref="dialogRef" v-bind="$attrs" :id="id" data-ui-dialog class="ui-modal" :class="{ 'ui-modal-top': top, 'is-closing': isClosing }"
     :aria-labelledby="title ? titleId : undefined" :aria-describedby="description ? descriptionId : undefined"
     :aria-busy="loading ? 'true' : undefined" @close="handleNativeClose" @cancel="handleNativeCancel"
     @toggle="handleToggle" @click="handleDialogClick">

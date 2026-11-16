@@ -13,7 +13,7 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <UiDialog id="modal-sync-config" top width="24rem" :show-cancel="false" :show-ok="false"
+  <UiDialog id="modal-sync-config" :open="true" top width="24rem" :show-cancel="false" :show-ok="false"
     :title="$t('app.setting_sync_config_title')" @close="handleClickClose">
     <UiTextarea v-model="draft" :rows="8" class="font-mono text-sm" />
 

@@ -11,6 +11,7 @@ import S3ProxyAdapter from '~/adapter/s3';
 import { resetSyncedImages } from '~/services/image';
 import { hasNewVersion } from '~/utils/check-app-version';
 import { isDirectorySyncSupported } from '~/utils/directory-fs';
+import { closeDialogStateAnimated } from '~/utils/dialog-motion';
 
 const { setLocale } = useI18n();
 const { $i18n } = useNuxtApp();
@@ -339,9 +340,6 @@ const handleTestImageSyncConnection = async () => {
 const handleSaveImageSyncSettings = () => {
   if (hasCriticalS3Changed()) {
     isShowModalConfirmImageSyncChange.value = true;
-    setTimeout(() => {
-      (document.getElementById('modal-confirm-image-sync-change') as any)?.showModal();
-    }, 100);
     return;
   }
   applyDraftToSettings();
@@ -349,33 +347,40 @@ const handleSaveImageSyncSettings = () => {
 };
 
 const handleConfirmImageSyncChange = async () => {
-  (document.getElementById('modal-confirm-image-sync-change') as any)?.close();
-  isShowModalConfirmImageSyncChange.value = false;
+  closeDialogStateAnimated(
+    document.getElementById('modal-confirm-image-sync-change') as HTMLDialogElement | null,
+    isShowModalConfirmImageSyncChange,
+  );
   applyDraftToSettings();
   handleSaveSettings();
   await resetSyncedImages();
 };
 
 const handleCancelImageSyncChange = () => {
-  (document.getElementById('modal-confirm-image-sync-change') as any)?.close();
-  isShowModalConfirmImageSyncChange.value = false;
+  closeDialogStateAnimated(
+    document.getElementById('modal-confirm-image-sync-change') as HTMLDialogElement | null,
+    isShowModalConfirmImageSyncChange,
+  );
   draftS3Config.value = buildDraft(props.settings?.imageSync);
 };
 
 const isShowModalSyncConfig = ref(false);
 const handleOpenSyncConfigModal = () => {
   isShowModalSyncConfig.value = true;
-  setTimeout(() => (document.getElementById('modal-sync-config') as any)?.showModal(), 100);
 };
 const handleConfirmSyncConfig = (value: string) => {
   settings.value.sync.configuration = value;
-  (document.getElementById('modal-sync-config') as any)?.close();
-  isShowModalSyncConfig.value = false;
+  closeDialogStateAnimated(
+    document.getElementById('modal-sync-config') as HTMLDialogElement | null,
+    isShowModalSyncConfig,
+  );
   handleSaveSettings();
 };
 const handleCloseSyncConfigModal = () => {
-  (document.getElementById('modal-sync-config') as any)?.close();
-  isShowModalSyncConfig.value = false;
+  closeDialogStateAnimated(
+    document.getElementById('modal-sync-config') as HTMLDialogElement | null,
+    isShowModalSyncConfig,
+  );
 };
 
 const isShowModalImageSyncConfig = ref(false);
@@ -384,11 +389,16 @@ const handleOpenImageSyncConfigModal = () => {
   setTimeout(() => (document.getElementById('modal-image-sync-config') as any)?.showModal(), 100);
 };
 const handleCloseImageSyncConfigModal = () => {
-  (document.getElementById('modal-image-sync-config') as any)?.close();
-  isShowModalImageSyncConfig.value = false;
+  closeDialogStateAnimated(
+    document.getElementById('modal-image-sync-config') as HTMLDialogElement | null,
+    isShowModalImageSyncConfig,
+  );
 };
 const handleSaveImageSyncConfigModal = () => {
-  isShowModalImageSyncConfig.value = false;
+  closeDialogStateAnimated(
+    document.getElementById('modal-image-sync-config') as HTMLDialogElement | null,
+    isShowModalImageSyncConfig,
+  );
   handleSaveImageSyncSettings();
 };
 </script>

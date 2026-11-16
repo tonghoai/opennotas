@@ -1,9 +1,22 @@
+import { closeDialogAnimated, getDialogCloseDuration } from '~/utils/dialog-motion';
+
+const closeTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function clearCloseTimer(modalId: string) {
+  const timer = closeTimers.get(modalId);
+  if (!timer) return;
+  clearTimeout(timer);
+  closeTimers.delete(modalId);
+}
+
 function _toggleModal(modalId: string, isOpen: boolean, state: Ref<boolean>) {
   if (isOpen) {
+    clearCloseTimer(modalId);
     if (state) state.value = true;
     requestAnimationFrame(() => {
-      const dialog = document.getElementById(modalId) as any;
+      const dialog = document.getElementById(modalId) as HTMLDialogElement | null;
       if (!dialog?.showModal) return;
+      dialog.classList.remove('is-closing');
       if (!dialog.open) dialog.showModal();
       if (!dialog.querySelector('[autofocus]')) {
         if (!dialog.hasAttribute('tabindex')) dialog.setAttribute('tabindex', '-1');
@@ -13,8 +26,22 @@ function _toggleModal(modalId: string, isOpen: boolean, state: Ref<boolean>) {
     return;
   }
 
-  const dialog = document.getElementById(modalId) as any;
-  if (dialog?.open) dialog.close();
+  const dialog = document.getElementById(modalId) as HTMLDialogElement | null;
+  if (dialog?.open) {
+    closeDialogAnimated(dialog);
+    if (state) {
+      clearCloseTimer(modalId);
+      const delay = getDialogCloseDuration();
+      const timer = setTimeout(() => {
+        closeTimers.delete(modalId);
+        if (state) state.value = false;
+      }, delay);
+      closeTimers.set(modalId, timer);
+    }
+    return;
+  }
+
+  clearCloseTimer(modalId);
   if (state) state.value = false;
 }
 

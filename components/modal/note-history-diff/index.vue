@@ -53,7 +53,7 @@ const handleClickClose = () => {
 </script>
 
 <template>
-  <dialog id="modal-note-history-diff" class="ui-modal">
+  <dialog id="modal-note-history-diff" class="ui-modal" @close="handleClickClose">
     <div class="ui-modal-box w-5/6 lg:w-[36rem] border border-border">
       <form method="dialog">
         <button class="ui-btn ui-btn-sm ui-btn-circle ui-btn-ghost absolute right-3 top-3" @click="handleClickClose"><X class="h-4 w-4" /></button>
