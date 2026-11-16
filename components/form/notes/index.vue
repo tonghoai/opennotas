@@ -189,10 +189,14 @@ defineExpose({
 
   <div class="markdown-body transition-all relative" :class="{ 'is-readonly': props.isReadOnly }" v-if="id && !isLocked"
     @click="handleClickMarkdownBody">
-    <ToolbarFormNotesSearch v-if="isSearchOpen" ref="formNotesSearchRef" v-model="searchQuery"
-      :matchCurrent="matchInfo.current" :matchTotal="matchInfo.total"
-      class="sticky top-0 z-[60] shadow-sm" @next="handleSearchNext"
-      @prev="handleSearchPrev" @close="closeSearch" @click.stop />
+    <Transition name="note-search">
+      <div v-if="isSearchOpen" class="note-search-shell sticky top-0 z-[60] shadow-sm"
+        @click.stop>
+        <ToolbarFormNotesSearch ref="formNotesSearchRef" v-model="searchQuery"
+          :matchCurrent="matchInfo.current" :matchTotal="matchInfo.total"
+          @next="handleSearchNext" @prev="handleSearchPrev" @close="closeSearch" />
+      </div>
+    </Transition>
 
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :key="editorTiptapKey" :isShowFormatToolbar="props.isShowFormatToolbar"
@@ -222,6 +226,26 @@ defineExpose({
 <style lang="scss">
 .markdown-body.is-readonly {
   cursor: default;
+}
+
+/* In-note search slides open instead of reflowing the document in one frame. */
+.note-search-shell {
+  max-height: 4rem;
+  overflow: hidden;
+  will-change: max-height, opacity, transform;
+}
+
+.note-search-enter-active,
+.note-search-leave-active {
+  transition: max-height 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease-out, transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.note-search-enter-from,
+.note-search-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 /* Read-only mode must not focus/caret the document. The wrapper still catches

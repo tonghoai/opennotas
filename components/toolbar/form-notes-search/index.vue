@@ -24,12 +24,12 @@ const query = computed({
 const inputRef = ref<HTMLInputElement | null>(null);
 onMounted(() => {
   setTimeout(() => {
-    inputRef.value?.focus();
+    inputRef.value?.focus({ preventScroll: true });
   }, 100);
 });
 
 defineExpose({
-  focusInput: () => inputRef.value?.focus(),
+  focusInput: () => inputRef.value?.focus({ preventScroll: true }),
 });
 </script>
 

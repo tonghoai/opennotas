@@ -712,7 +712,7 @@ onMounted(() => {
         if (view) ensureCursorBottomMargin(() => view.coordsAtPos(view.state.selection.head));
       });
     });
-  }, 250);
+  }, 0);
 });
 
 const focus = () => {
@@ -952,7 +952,7 @@ defineExpose({
 
 <template>
   <div v-show="isLoading"
-    class="mx-auto flex w-full min-h-[calc(100vh_/_2)] flex-col items-center justify-center px-4 py-4 outline-none lg:px-8"
+    class="mx-auto flex w-full min-h-[calc(100vh_-_160px)] flex-col items-center justify-center px-4 pb-40 pt-4 outline-none lg:px-8"
     :class="{ 'max-w-[720px]': props.settings?.general.editorView === 'compact' }">
     <UiSpinner size="lg" :label="$t('app.loading')" />
   </div>

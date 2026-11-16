@@ -1615,6 +1615,12 @@ dialog.ui-modal.ui-modal-top.is-closing .ui-modal-box {
 /* =====================================================================
  * Editor typography
  * ===================================================================== */
+/* Keep the scrollbar gutter reserved while the editor swaps its loading and
+   content states; otherwise the gutter blink reads as a scrollbar flash. */
+#form-editors {
+  scrollbar-gutter: stable;
+  overflow-anchor: none;
+}
 /*
  * The note editor has its own font family, applied through a CSS variable
  * on #form-editors. When the variable is absent (the default), all three
@@ -1685,4 +1691,37 @@ dialog.ui-modal.ui-modal-top.is-closing .ui-modal-box {
 #form-editors .tiptap > * + *,
 #form-editors .milkdown .ProseMirror > * + * {
   margin-top: var(--ui-editor-block-spacing, 0.75em);
+}
+
+/* Mobile note navigation: the editor is a pushed screen, not a display:none
+ * swap. Keeping both panes mounted lets the list dim behind the incoming note
+ * and lets the editor slide away on back instead of snapping. */
+@media (max-width: 1023.98px) {
+  .note-list-pane {
+    transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 240ms ease-out;
+  }
+
+  .note-list-pane.is-behind {
+    pointer-events: none;
+    opacity: 0.45;
+    transform: translateX(-10px) scale(0.985);
+  }
+
+  .note-editor-pane {
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate3d(100%, 0, 0);
+    transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 340ms;
+    will-change: transform;
+  }
+
+  .note-editor-pane.is-open {
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0);
+    transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s;
+  }
 }

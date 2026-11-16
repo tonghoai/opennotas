@@ -58,6 +58,7 @@ import Mutex from "~/utils/mutex";
 import { removeMarkdownEscape } from "~/utils/string";
 import { pushMobileBackState, closeMobileBackState, initMobileBackHandler } from "~/utils/mobile-back";
 import { checkAppVersion } from "~/utils/check-app-version";
+import { closeDialogStateAnimated } from "~/utils/dialog-motion";
 import { resetSyncedImages } from "~/services/image";
 import { usePullToRefresh } from "~/utils/pull-to-refresh";
 import { Refresh } from '~/utils/icons';
@@ -359,15 +360,17 @@ const handleWorkspaceKeydown = (event: KeyboardEvent) => {
 };
 
 onMounted(async () => {
-  reloadFolder(true);
-
-  setTimeout(() => {
+  // Keep the launch loader up until the first folder/notes pass has populated
+  // the list; otherwise the empty state flashes for one frame before data lands.
+  try {
+    await reloadFolder(true);
+  } finally {
     initedApp.value = true;
 
     if (isMobile.value) {
       formNotes.value = {};
     }
-  }, 100);
+  }
 });
 const isSyncAll = ref<boolean>(false);
 const isSyncingAll = ref<boolean>(false);
@@ -1864,7 +1867,8 @@ const prepareDirectorySelection = async () => {
 };
 
 const handleDirectoryChooseAgain = async () => {
-  isShowDirectorySetup.value = false;
+  // Keep the setup sheet open while the native picker is visible; a cancelled
+  // picker should leave the user exactly where they were.
   await prepareDirectorySelection();
 };
 
@@ -1882,23 +1886,38 @@ const handleCompactDirectory = async () => {
   }
 };
 
+const isDirectorySetupContinuing = ref(false);
+
+const closeDirectorySetup = () => {
+  closeDialogStateAnimated(
+    document.getElementById('modal-directory-sync-setup') as HTMLDialogElement | null,
+    isShowDirectorySetup,
+  );
+};
+
 const handleDirectorySetupClose = () => {
-  isShowDirectorySetup.value = false;
-  directorySetupInfo.value = null;
-  pendingDirectoryHandle.value = null;
+  closeDirectorySetup();
+  if (isDirectorySetupContinuing.value) return;
+
+  setTimeout(() => {
+    directorySetupInfo.value = null;
+    pendingDirectoryHandle.value = null;
+  }, 220);
 };
 
 const handleDirectorySetupSeed = () => {
+  isDirectorySetupContinuing.value = true;
   directorySetupMode.value = 'seed';
   allowE2eeGenerate.value = true;
-  isShowDirectorySetup.value = false;
+  closeDirectorySetup();
   toggleModalConfirmE2eeKey(true, isShowModalConfirmE2eeKey);
 };
 
 const handleDirectorySetupRestore = () => {
+  isDirectorySetupContinuing.value = true;
   directorySetupMode.value = 'restore';
   allowE2eeGenerate.value = false;
-  isShowDirectorySetup.value = false;
+  closeDirectorySetup();
   toggleModalConfirmE2eeKey(true, isShowModalConfirmE2eeKey);
 };
 
@@ -1966,6 +1985,7 @@ const finishDirectorySetup = async (e2eeKey: string) => {
     await reloadFolder(false, false);
   }
 
+  isDirectorySetupContinuing.value = false;
   handleDirectorySetupClose();
   toggleModalConfirmE2eeKey(false, isShowModalConfirmE2eeKey);
   showSuccess($i18n.t('app.message_setting_sync_adapter_saved'));
@@ -2048,6 +2068,7 @@ const handleClickCloseModalConfirmE2eeKey = () => {
   pendingImportedSettings.value = null;
   directorySetupInfo.value = null;
   pendingDirectoryHandle.value = null;
+  isDirectorySetupContinuing.value = false;
   toggleModalConfirmE2eeKey(false, isShowModalConfirmE2eeKey);
 }
 const handleConfirmChangeAdapterOnline = async () => {
@@ -2779,8 +2800,9 @@ watch(() => settings.value.general.editorFontFamily, (newVal) => {
         @clickSettings="handleClickSetting" @clickSync="handleClickUpdateData"
         @openSearch="openCommandPalette" />
 
-      <div class="cols-notes flex flex-col overflow-hidden bg-card transition-[width,opacity] duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] lg:h-full lg:shrink-0 lg:border-r lg:border-border"
-         :class="[isMobile ? 'absolute inset-0 w-full mobile-under-nav' : '', isMobile && isInEditor ? 'hidden' : '', !isMobile && isCollapsePanel ? 'pointer-events-none !w-0 !border-r-0 opacity-0' : 'opacity-100']"
+      <div class="cols-notes note-list-pane flex flex-col overflow-hidden bg-card transition-[width,opacity] duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] lg:h-full lg:shrink-0 lg:border-r lg:border-border"
+         :class="[isMobile ? 'absolute inset-0 w-full mobile-under-nav' : '', isMobile && isInEditor ? 'is-behind' : '', !isMobile && isCollapsePanel ? 'pointer-events-none !w-0 !border-r-0 opacity-0' : 'opacity-100']"
+        :inert="isMobile && isInEditor ? true : undefined"
         :style="!isMobile ? { width: colsNotesWidth + 'px' } : {}">
         <div class="hidden lg:block">
           <ToolbarNotes v-if="isShowToolbarNotes" ref="toolbarNotesRef" :title="activeListTitle"
@@ -2822,8 +2844,9 @@ watch(() => settings.value.general.editorFontFamily, (newVal) => {
         </div>
       </div>
 
-      <div class="flex min-h-0 min-w-0 flex-1 flex-col bg-card"
-         :class="isMobile ? (isInEditor ? 'absolute inset-0 z-20 flex mobile-under-nav' : 'hidden') : ''">
+      <div class="note-editor-pane flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card"
+         :class="isMobile ? ['absolute inset-0 z-20 flex mobile-under-nav', isInEditor ? 'is-open' : 'is-closed'] : ''"
+         :inert="isMobile && !isInEditor ? true : undefined">
         <ToolbarFormNotes :noteId="formNotes.id" :editorName="editorName" :isLocked="formNotes.isLocked"
           :formNotes="formNotes" :folderId="formNotes.folderId" :folderName="activeNoteFolderName" :tags="activeNoteTags"
           :isPinned="!!formNotes.isPinned" :isDeleted="!!formNotes.deletedAt" :title="editorTitle"

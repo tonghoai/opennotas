@@ -233,6 +233,10 @@ const handleKeydownNote = (event: KeyboardEvent, noteId: string) => {
 const listRef = ref<HTMLElement | null>(null);
 const scrollElement = ref<HTMLElement | null>(null);
 const scrollMargin = ref(0);
+// The virtualizer discovers its scroll element after mount. Until then it
+// returns zero rows, which would briefly show the empty state even when notes
+// are already loaded.
+const isListReady = ref(false);
 const measureScrollMargin = () => {
   if (!scrollElement.value || !listRef.value) return;
   const scrollRect = scrollElement.value.getBoundingClientRect();
@@ -241,7 +245,7 @@ const measureScrollMargin = () => {
 };
 
 let resizeObserver: ResizeObserver | null = null;
-onMounted(() => {
+onMounted(async () => {
   scrollElement.value = document.getElementById('notes-instance');
   measureScrollMargin();
 
@@ -251,6 +255,11 @@ onMounted(() => {
       if (child !== listRef.value) resizeObserver!.observe(child);
     });
   }
+
+  await nextTick();
+  requestAnimationFrame(() => {
+    isListReady.value = true;
+  });
 });
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
@@ -367,7 +376,7 @@ const rows = computed(() => {
     </li>
   </ul>
 
-  <div v-if="!props.listNotes.length" class="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
+  <div v-if="!props.listNotes.length && isListReady" class="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
     <component :is="emptyView.icon" class="h-10 w-10 opacity-25" />
     <p class="text-[15px] font-medium text-foreground/85">{{ emptyView.title }}</p>
     <p class="max-w-60 text-[13px] leading-5 text-muted-foreground">{{ emptyView.description }}</p>
