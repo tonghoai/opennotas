@@ -47,7 +47,7 @@ const handleClickDeleteTag = () => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[13px] font-medium"
+          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium"
           @click="close">
           {{ $t('app.action_cancel') }}
         </button>

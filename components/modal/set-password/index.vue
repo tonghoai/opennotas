@@ -95,7 +95,7 @@ onMounted(() => {
         <button class="ui-btn ui-btn-sm ui-btn-circle ui-btn-ghost absolute right-3 top-3" :disabled="props.isLoading"
           @click="handleClickClose"><X class="h-4 w-4" /></button>
       </form>
-      <h3 class="text-[14px] font-semibold pr-8">
+      <h3 class="text-[15px] font-semibold pr-8">
         {{ props.type === 'set' ? $t('app.modal_set_password_title') : $t('app.modal_set_password_change_title') }}
       </h3>
       <div class="py-5">

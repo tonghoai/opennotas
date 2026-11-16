@@ -164,7 +164,7 @@ const handleCancel = () => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[13px] font-medium text-foreground"
+          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium text-foreground"
           @click="handleCancel">
           {{ $t('app.action_cancel') }}
         </button>

@@ -11,6 +11,6 @@ const handleConfirm = () => {
     :ok-text="$t('app.modal_confirm_sample_data_ok')" :cancel-text="$t('app.modal_confirm_sample_data_cancel')"
     @ok="handleConfirm" @close="emit('close')">
     <p class="text-sm text-foreground/80">{{ $t('app.modal_confirm_sample_data_content') }}</p>
-    <p class="mt-2 text-[12px] leading-5 text-muted-foreground">{{ $t('app.modal_confirm_sample_data_privacy') }}</p>
+    <p class="mt-2 text-[13px] leading-5 text-muted-foreground">{{ $t('app.modal_confirm_sample_data_privacy') }}</p>
   </UiDialog>
 </template>

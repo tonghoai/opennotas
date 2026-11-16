@@ -26,7 +26,7 @@ const formatSize = (bytes: number) => {
           <Folder class="h-4 w-4 shrink-0 opacity-70" />
           <span class="min-w-0 truncate font-medium text-foreground">{{ props.folderName }}</span>
         </div>
-        <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+        <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
           <span>{{ $t('app.modal_directory_setup_snapshot') }}: {{ formatSize(props.baseSize) }}</span>
           <span>{{ $t('app.modal_directory_setup_oplog') }}: {{ formatSize(props.oplogSize) }}</span>
         </div>
@@ -34,11 +34,11 @@ const formatSize = (bytes: number) => {
 
       <template v-if="props.hasExistingData">
         <p>{{ $t('app.modal_directory_setup_existing') }}</p>
-        <p class="text-[12px] text-muted-foreground">{{ $t('app.modal_directory_setup_existing_hint') }}</p>
+        <p class="text-[13px] text-muted-foreground">{{ $t('app.modal_directory_setup_existing_hint') }}</p>
       </template>
       <template v-else>
         <p>{{ $t('app.modal_directory_setup_new') }}</p>
-        <p class="text-[12px] text-muted-foreground">{{ $t('app.modal_directory_setup_new_hint') }}</p>
+        <p class="text-[13px] text-muted-foreground">{{ $t('app.modal_directory_setup_new_hint') }}</p>
       </template>
     </div>
 

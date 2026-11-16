@@ -18,7 +18,7 @@ const handleClickSort = (type: 'createdAt' | 'updatedAt') => {
 <template>
   <dialog id="modal-sort-note" class="ui-modal ui-modal-bottom" @cancel.prevent="close">
     <div class="ui-modal-box p-0">
-      <div class="px-3.5 pb-2 pt-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div class="px-3.5 pb-2 pt-3 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
         {{ $t('app.toolbar_note_sort_by_title') }}
       </div>
 
@@ -41,7 +41,7 @@ const handleClickSort = (type: 'createdAt' | 'updatedAt') => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[13px] font-medium"
+          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium"
           @click="close">
           {{ $t('app.action_cancel') }}
         </button>

@@ -23,7 +23,7 @@ const formattedUpdatedAt = computed(() => {
 <template>
   <div v-if="props.noteId"
     class="ui-status-bar flex min-h-7 shrink-0 select-none items-center justify-between gap-5
-      overflow-hidden border-t border-border bg-card px-4 text-[10.5px] text-muted-foreground">
+      overflow-hidden border-t border-border bg-card px-4 text-[11.5px] text-muted-foreground">
     <div class="flex min-w-0 items-center gap-2.5">
       <span class="truncate whitespace-nowrap" :title="formattedUpdatedAt">
         {{ $t('app.status_bar_last_modified') }} {{ formattedUpdatedAt }}

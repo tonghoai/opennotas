@@ -39,17 +39,17 @@ defineExpose({ sortLabel });
 <template>
   <div class="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-card px-4">
     <div class="flex min-w-0 flex-1 items-baseline gap-2">
-      <h1 class="truncate text-[15px] font-semibold leading-5 tracking-tight">{{ props.title }}</h1>
-      <span class="shrink-0 text-[11px] tabular-nums text-muted-foreground">{{ props.count }}</span>
+      <h1 class="truncate text-[16px] font-semibold leading-5 tracking-tight">{{ props.title }}</h1>
+      <span class="shrink-0 text-[12px] tabular-nums text-muted-foreground">{{ props.count }}</span>
       <span v-if="props.searchQuery"
-        class="min-w-0 truncate rounded border border-border bg-background px-2 py-0.5 text-[10px] leading-4 text-muted-foreground">
+        class="min-w-0 truncate rounded border border-border bg-background px-2 py-0.5 text-[11px] leading-4 text-muted-foreground">
         “{{ props.searchQuery }}”
       </span>
     </div>
 
     <div v-if="!props.hideSort" class="ui-dropdown ui-dropdown-bottom ui-dropdown-end hidden shrink-0 lg:block">
       <button type="button" tabindex="0"
-        class="ui-btn ui-btn-ghost ui-btn-sm text-[12px] text-muted-foreground">
+        class="ui-btn ui-btn-ghost ui-btn-sm text-[13px] text-muted-foreground">
         {{ sortLabel }}
         <Sort class="h-3.5 w-3.5" />
       </button>

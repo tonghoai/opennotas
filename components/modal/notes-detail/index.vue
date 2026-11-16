@@ -32,7 +32,7 @@ const handleClickClose = () => {
         <button class="ui-btn ui-btn-sm ui-btn-circle ui-btn-ghost absolute right-3 top-3" @click="handleClickClose"><X class="h-4 w-4" /></button>
       </form>
 
-      <h3 class="text-[14px] font-semibold pr-8">{{ $t('app.modal_notes_detail_title') }}</h3>
+      <h3 class="text-[15px] font-semibold pr-8">{{ $t('app.modal_notes_detail_title') }}</h3>
       <div class="pt-4 grid grid-cols-3 gap-4">
         <div class="col-span-1 text-left">
           <p class="mb-1.5 truncate overflow-hidden opacity-65">{{ $t('app.modal_notes_detail_last_sync') }}</p>

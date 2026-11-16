@@ -50,7 +50,7 @@ const label = computed(() => props.dismissLabel || t('app.action_close'));
     <span class="flex-1 text-sm leading-snug text-neutral-foreground">{{ message }}</span>
 
     <button v-if="actionLabel" type="button"
-      class="shrink-0 rounded-md px-2 py-1 text-[12px] font-semibold text-neutral-foreground hover:bg-neutral-foreground/10"
+      class="shrink-0 rounded-md px-2 py-1 text-[13px] font-semibold text-neutral-foreground hover:bg-neutral-foreground/10"
       @click="emit('action')">
       {{ actionLabel }}
     </button>

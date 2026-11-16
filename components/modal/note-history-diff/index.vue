@@ -58,7 +58,7 @@ const handleClickClose = () => {
       <form method="dialog">
         <button class="ui-btn ui-btn-sm ui-btn-circle ui-btn-ghost absolute right-3 top-3" @click="handleClickClose"><X class="h-4 w-4" /></button>
       </form>
-      <h3 class="text-[14px] font-semibold pr-8">{{ $t('app.modal_note_history_diff_title') }}</h3>
+      <h3 class="text-[15px] font-semibold pr-8">{{ $t('app.modal_note_history_diff_title') }}</h3>
 
       <div class="py-5">
         <p v-if="!hasChanges" class="text-center opacity-65 py-4">

@@ -658,7 +658,7 @@ const handleSaveImageSyncConfigModal = () => {
     :description="$t('app.setting_general_edit_font_description')" width="26rem" @ok="handleSaveFontDialog"
     @cancel="handleCloseFontDialog">
     <label class="flex flex-col gap-1.5">
-      <span class="text-[12px] font-medium">{{ $t('app.setting_general_font_title') }}</span>
+      <span class="text-[13px] font-medium">{{ $t('app.setting_general_font_title') }}</span>
       <input v-model="fontDialogValue" type="text" autofocus class="ui-input"
         :placeholder="$t('app.setting_general_font_placeholder')" autocomplete="off"
         @keydown.enter.prevent="handleSaveFontDialog" />
@@ -670,7 +670,7 @@ const handleSaveImageSyncConfigModal = () => {
     @ok="handleSaveEditorFontDialog" @cancel="handleCloseEditorFontDialog">
     <div class="flex flex-col gap-4">
       <label class="flex flex-col gap-1.5">
-        <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_font_title') }}</span>
+        <span class="text-[13px] font-medium">{{ $t('app.setting_general_editor_font_title') }}</span>
         <input v-model="editorFontDialogValue" type="text" autofocus class="ui-input"
           :placeholder="$t('app.setting_general_editor_font_placeholder')" autocomplete="off"
           @keydown.enter.prevent="handleSaveEditorFontDialog" />
@@ -678,27 +678,27 @@ const handleSaveImageSyncConfigModal = () => {
 
       <div class="grid grid-cols-2 gap-3">
         <label class="flex flex-col gap-1.5">
-          <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_font_size_title') }}</span>
+          <span class="text-[13px] font-medium">{{ $t('app.setting_general_editor_font_size_title') }}</span>
           <div class="relative">
             <input v-model.number="editorFontSizeDraft" type="number" min="12" max="32" step="1"
               class="ui-input pr-9" @keydown.enter.prevent="handleSaveEditorFontDialog" />
-            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] text-muted-foreground">px</span>
+            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[12px] text-muted-foreground">px</span>
           </div>
         </label>
 
         <label class="flex flex-col gap-1.5">
-          <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_line_height_title') }}</span>
+          <span class="text-[13px] font-medium">{{ $t('app.setting_general_editor_line_height_title') }}</span>
           <input v-model.number="editorLineHeightDraft" type="number" min="1.2" max="2.4" step="0.05"
             class="ui-input" @keydown.enter.prevent="handleSaveEditorFontDialog" />
         </label>
       </div>
 
       <label class="flex flex-col gap-1.5">
-        <span class="text-[12px] font-medium">{{ $t('app.setting_general_editor_block_spacing_title') }}</span>
+        <span class="text-[13px] font-medium">{{ $t('app.setting_general_editor_block_spacing_title') }}</span>
         <div class="relative">
           <input v-model.number="editorBlockSpacingDraft" type="number" min="0" max="3" step="0.125"
             class="ui-input pr-10" @keydown.enter.prevent="handleSaveEditorFontDialog" />
-          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] text-muted-foreground">em</span>
+          <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[12px] text-muted-foreground">em</span>
         </div>
       </label>
     </div>

@@ -19,12 +19,12 @@ const handleToggle = (tagId: string) => {
 <template>
   <dialog id="modal-menu-note-tags" class="ui-modal ui-modal-bottom" @cancel.prevent="close">
     <div class="ui-modal-box p-0">
-      <div class="px-3.5 pb-2 pt-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div class="px-3.5 pb-2 pt-3 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
         {{ $t('app.menu_note_add_to_tag') }}
       </div>
 
       <ul class="ui-menu max-h-[52vh] w-full overflow-y-auto">
-        <li v-if="!props.listTags.length" class="px-3 py-2 text-[13px] text-muted-foreground">
+        <li v-if="!props.listTags.length" class="px-3 py-2 text-[14px] text-muted-foreground">
           {{ $t('app.menu_note_tags_empty') }}
         </li>
 
@@ -42,7 +42,7 @@ const handleToggle = (tagId: string) => {
 
       <form class="mt-2">
         <button type="button"
-          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[13px] font-medium"
+          class="flex min-h-11 w-full items-center justify-center rounded-ui border border-border bg-card text-[14px] font-medium"
           @click="close">
           {{ $t('app.action_done') }}
         </button>

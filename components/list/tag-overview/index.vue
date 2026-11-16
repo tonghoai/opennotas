@@ -30,9 +30,9 @@ const count = (tagId: string) => props.tagCounts?.[tagId] ?? 0;
       class="flex w-full flex-col items-center justify-center gap-2 rounded-ui border border-dashed border-border px-5 py-12 text-center transition-colors hover:bg-accent"
       @click="emit('clickAddTag')">
       <Tag class="h-8 w-8 text-muted-foreground opacity-40" />
-      <span class="text-[13px] font-medium">{{ $t('app.tags_overview_empty') }}</span>
-      <span class="max-w-56 text-[12px] leading-5 text-muted-foreground">{{ $t('app.tags_overview_empty_desc') }}</span>
-      <span class="mt-1 inline-flex items-center gap-1 text-[12px] font-medium">
+      <span class="text-[14px] font-medium">{{ $t('app.tags_overview_empty') }}</span>
+      <span class="max-w-56 text-[13px] leading-5 text-muted-foreground">{{ $t('app.tags_overview_empty_desc') }}</span>
+      <span class="mt-1 inline-flex items-center gap-1 text-[13px] font-medium">
         <Plus class="h-3.5 w-3.5" />
         {{ $t('app.sidebar_new') }}
       </span>
@@ -53,9 +53,9 @@ const count = (tagId: string) => props.tagCounts?.[tagId] ?? 0;
           </span>
 
           <div class="min-w-0 flex-1">
-            <p class="line-clamp-2 min-w-0 break-words text-[13px] font-medium leading-4 [overflow-wrap:anywhere]"
+            <p class="line-clamp-2 min-w-0 break-words text-[14px] font-medium leading-4 [overflow-wrap:anywhere]"
               :title="tag.name">{{ tag.name }}</p>
-            <p class="mt-0.5 text-[11px] text-muted-foreground">
+            <p class="mt-0.5 text-[12px] text-muted-foreground">
               {{ count(tag.id) }}
               {{ count(tag.id) === 1 ? $t('app.tags_overview_note_one') : $t('app.tags_overview_note_count') }}
             </p>

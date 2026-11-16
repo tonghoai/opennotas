@@ -17,7 +17,7 @@ const handleClickRetrySync = () => {
 <template>
   <div v-if="props.isSyncError" class="flex min-h-11 items-center border-b border-border bg-card px-3">
     <button type="button"
-      class="flex min-h-8 w-full items-center justify-center rounded-ui px-3 text-center text-[12px]"
+      class="flex min-h-8 w-full items-center justify-center rounded-ui px-3 text-center text-[13px]"
       :class="{ 'bg-warning text-warning-foreground': props.syncErrorClass === 'warning', 'bg-danger text-danger-foreground': props.syncErrorClass === 'error' }"
       @click="handleClickRetrySync">
       {{ props.syncErrorMessage }}

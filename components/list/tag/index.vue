@@ -41,7 +41,7 @@ const handleKeydownTag = (event: KeyboardEvent, tagId: string) => {
   <ul class="flex flex-col gap-0.5">
     <li v-if="!props.listTags.length" class="group">
       <button type="button"
-        class="flex h-9 w-full items-center gap-2.5 rounded-ui px-2.5 text-[13.5px] text-muted-foreground hover:bg-sidebar-accent"
+        class="flex h-9 w-full items-center gap-2.5 rounded-ui px-2.5 text-[14.5px] text-muted-foreground hover:bg-sidebar-accent"
         @click="emit('clickAddTag')">
         <span
           class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-dashed border-input">
@@ -55,7 +55,7 @@ const handleKeydownTag = (event: KeyboardEvent, tagId: string) => {
       @contextmenu="handleRightClickTagName($event, tag.id)">
       <div
         role="button" tabindex="0" :aria-current="activeTagId === tag.id ? 'page' : undefined"
-        class="flex h-9 w-full min-w-0 cursor-pointer items-center gap-2.5 overflow-hidden rounded-ui px-2.5 text-[13.5px] transition-colors active:bg-sidebar-active"
+        class="flex h-9 w-full min-w-0 cursor-pointer items-center gap-2.5 overflow-hidden rounded-ui px-2.5 text-[14.5px] transition-colors active:bg-sidebar-active"
         :class="{
           'bg-sidebar-active font-medium text-sidebar-active-foreground': activeTagId === tag.id,
           'hover:bg-sidebar-accent': activeTagId !== tag.id,
@@ -69,7 +69,7 @@ const handleKeydownTag = (event: KeyboardEvent, tagId: string) => {
           :class="{ 'text-warning-sync': props.actionObjectKeys?.includes(tag.id) }">
           {{ tag.name }}
         </span>
-        <span v-if="!props.collapsed" class="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+        <span v-if="!props.collapsed" class="shrink-0 text-[12px] tabular-nums text-muted-foreground">
           {{ props.tagCounts?.[tag.id] ?? 0 }}
         </span>
         <button v-if="!props.collapsed" type="button"

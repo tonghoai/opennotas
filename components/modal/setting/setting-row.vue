@@ -5,8 +5,8 @@ defineProps<{ label: string; description?: string }>();
 <template>
   <div class="setting-row grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-2 lg:flex lg:justify-between lg:gap-8">
     <div class="min-w-0">
-      <p class="text-[13.5px] font-medium">{{ label }}</p>
-      <p v-if="description" class="mt-1 text-[12px] leading-[1.5] text-muted-foreground">{{ description }}</p>
+      <p class="text-[14.5px] font-medium">{{ label }}</p>
+      <p v-if="description" class="mt-1 text-[13px] leading-[1.5] text-muted-foreground">{{ description }}</p>
     </div>
     <div class="flex min-w-0 shrink-0 justify-end">
       <slot />

@@ -71,11 +71,11 @@
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --ui-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
     Consolas, "Liberation Mono", "Courier New", monospace;
-  --ui-font-size: 15px;
-  --ui-text-xs: 0.6875rem; /* 11px */
-  --ui-text-sm: 0.75rem; /* 12px */
-  --ui-text-md: 0.8125rem; /* 13px */
-  --ui-text-lg: 0.9375rem; /* 15px */
+  --ui-font-size: 16px;
+  --ui-text-xs: 0.75rem; /* 12px */
+  --ui-text-sm: 0.8125rem; /* 13px */
+  --ui-text-md: 0.875rem; /* 14px */
+  --ui-text-lg: 1rem; /* 16px */
 
   /* Shape --------------------------------------------------------------- */
   --ui-radius: 8px;
