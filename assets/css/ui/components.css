@@ -1698,14 +1698,12 @@ dialog.ui-modal.ui-modal-top.is-closing .ui-modal-box {
  * and lets the editor slide away on back instead of snapping. */
 @media (max-width: 1023.98px) {
   .note-list-pane {
-    transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 240ms ease-out;
+    transition: opacity 240ms ease-out;
   }
 
   .note-list-pane.is-behind {
     pointer-events: none;
     opacity: 0.45;
-    transform: translateX(-10px) scale(0.985);
   }
 
   .note-editor-pane {

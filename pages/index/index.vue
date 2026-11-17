@@ -296,6 +296,9 @@ const activeNoteFolderName = computed(() => {
 });
 
 const editorTitle = computed(() => {
+  if (formNotes.value?.isLocked) {
+    return formNotes.value.title || $i18n.t('app.list_note_locked_title');
+  }
   return substrTitle(formNotes.value?.content) || $i18n.t('app.navbar_top_note_title');
 });
 
@@ -1733,8 +1736,8 @@ const handleSetPassword = async (data: any) => {
   setActionObject('settings', { 'id': 'settings' });
 
   isPasswordExist.value = true;
-  modalSettingRef.value?.closeSetPasswordModal();
   modalSetPasswordRef.value?.reset();
+  toggleModalSetPassword(false, isShowModalSetPassword);
   showSuccess($i18n.t('app.message_password_set'));
 }
 const isChangingPassword = ref<boolean>(false);

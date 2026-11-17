@@ -13,12 +13,14 @@ const emit = defineEmits([
   'close',
 ]);
 
+const modalType = props.type;
+
 const oldPassword = ref<string>('');
 const newPassword = ref<string>('');
 const confirmPassword = ref<string>('');
 
 const isValidate = computed(() => {
-  switch (props.type) {
+  switch (modalType) {
     case 'set':
       return newPassword.value && confirmPassword.value && newPassword.value === confirmPassword.value;
     case 'change':
@@ -33,7 +35,7 @@ const handleConfirmPassword = () => {
     return;
   }
 
-  switch (props.type) {
+  switch (modalType) {
     case 'set':
       emit('confirm', { newPassword: newPassword.value });
       break;
@@ -96,10 +98,10 @@ onMounted(() => {
           @click="handleClickClose"><X class="h-4 w-4" /></button>
       </form>
       <h3 class="text-[15px] font-semibold pr-8">
-        {{ props.type === 'set' ? $t('app.modal_set_password_title') : $t('app.modal_set_password_change_title') }}
+        {{ modalType === 'set' ? $t('app.modal_set_password_title') : $t('app.modal_set_password_change_title') }}
       </h3>
       <div class="py-5">
-        <div v-if="props.type !== 'set'" class="ui-form-control w-full">
+        <div v-if="modalType !== 'set'" class="ui-form-control w-full">
           <div class="ui-label">
             <span class="font-semibold ui-label-text">{{ $t('app.modal_set_password_old_password_input_title') }}</span>
           </div>

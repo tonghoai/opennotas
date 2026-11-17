@@ -128,6 +128,10 @@ const handleClickSort = (type: 'createdAt' | 'updatedAt') => {
 };
 
 const editorTitle = computed(() => {
+  if (props.formNotes?.isLocked) {
+    return props.formNotes.title || $i18n.t('app.list_note_locked_title');
+  }
+
   const firstLine = (props.formNotes?.content || '')
     .split('\n')
     .map((line: string) => line.trim())
