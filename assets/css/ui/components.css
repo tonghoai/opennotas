@@ -1317,6 +1317,7 @@ dialog.ui-modal.ui-modal-top.is-closing .ui-modal-box {
 .ui-drawer-overlay {
   position: absolute;
   inset: 0;
+  border: 0;
   background-color: rgb(var(--ui-overlay) / 0.28);
   cursor: pointer;
   opacity: 0;

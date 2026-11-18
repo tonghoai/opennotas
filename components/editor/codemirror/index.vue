@@ -50,6 +50,7 @@ const props = defineProps([
   'isDeleted',
   'settings',
   'isReadOnly',
+  'contentLabel',
 ]);
 
 const editableCompartment = new Compartment();
@@ -75,6 +76,7 @@ const state = EditorState.create({
       ...historyKeymap,
     ]),
     EditorView.lineWrapping,
+    EditorView.contentAttributes.of({ 'aria-label': props.contentLabel || 'Note content' }),
     editableCompartment.of(EditorView.editable.of(!props.isDeleted && !props.isReadOnly)),
     EditorView.updateListener.of((v: any) => {
       if (silent.value) return;

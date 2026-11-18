@@ -74,23 +74,27 @@ const folderCount = (folderId: string) => props.folderCounts?.[folderId] ?? 0;
         :class="{ 'folder-drop-settle': settlingFolderId === folder.id }"
         @contextmenu="handleRightClickFolderName($event, folder.id)">
         <div
-          role="button" tabindex="0" :aria-current="activeFolderId === folder.id ? 'page' : undefined"
-          class="flex h-9 w-full min-w-0 cursor-pointer items-center gap-2.5 overflow-hidden rounded-ui px-2.5 text-[14.5px] transition-colors active:bg-sidebar-active"
+          class="flex h-9 w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-ui px-2.5 text-[14.5px] transition-colors active:bg-sidebar-active"
           :class="{
             'bg-sidebar-active font-medium text-sidebar-active-foreground': activeFolderId === folder.id,
             'hover:bg-sidebar-accent': activeFolderId !== folder.id,
             'justify-center !px-0': props.collapsed,
             'cursor-grabbing': props.isReorderMode,
-          }"
-          :aria-label="props.collapsed ? folder.name : undefined" :title="folder.name"
-          data-ga-event="folder_select" @click="handleClickFolderName($event, folder.id)"
-          @keydown="handleKeydownFolder($event, folder.id)">
-          <Folder class="h-4 w-4 shrink-0 opacity-70" />
-          <span v-if="!props.collapsed" class="min-w-0 flex-1 truncate"
-            :class="{ 'text-warning-sync': props.actionObjectKeys?.includes(folder.id) }">
-            {{ folder.name }}
-          </span>
-          <span v-if="!props.collapsed && !props.isReorderMode" class="shrink-0 text-[12px] tabular-nums text-muted-foreground">{{ folderCount(folder.id) }}</span>
+          }">
+          <div
+            role="button" tabindex="0" :aria-current="activeFolderId === folder.id ? 'page' : undefined"
+            class="flex min-w-0 flex-1 items-center gap-2.5 rounded-ui text-left"
+            :class="{ 'justify-center': props.collapsed, 'cursor-pointer': !props.isReorderMode }"
+            :aria-label="props.collapsed ? folder.name : undefined" :title="folder.name"
+            data-ga-event="folder_select" @click="handleClickFolderName($event, folder.id)"
+            @keydown="handleKeydownFolder($event, folder.id)">
+            <Folder class="h-4 w-4 shrink-0 opacity-70" />
+            <span v-if="!props.collapsed" class="min-w-0 flex-1 truncate"
+              :class="{ 'text-warning-sync': props.actionObjectKeys?.includes(folder.id) }">
+              {{ folder.name }}
+            </span>
+            <span v-if="!props.collapsed && !props.isReorderMode" class="shrink-0 text-[12px] tabular-nums text-muted-foreground">{{ folderCount(folder.id) }}</span>
+          </div>
           <button v-if="!props.collapsed && !props.isReorderMode" type="button"
             class="ui-btn ui-btn-ghost ui-btn-xs ui-btn-square -mr-1 opacity-40 group-hover:opacity-100 lg:opacity-0"
             :aria-label="$t('app.note_more')" aria-haspopup="menu" :title="$t('app.note_more')"

@@ -567,7 +567,7 @@ const handleSaveImageSyncConfigModal = () => {
 
               <div class="setting-card">
                 <SettingRow :label="$t('app.setting_image_sync_enable')">
-                  <UiSwitch v-model="settings.imageSync.enabled" data-ga-event="settings_image_sync_toggle"
+                  <UiSwitch v-model="settings.imageSync.enabled" :aria-label="$t('app.setting_image_sync_enable')" data-ga-event="settings_image_sync_toggle"
                     @change="handleSaveSettings" />
                 </SettingRow>
 

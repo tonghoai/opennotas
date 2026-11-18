@@ -24,6 +24,7 @@ const props = defineProps([
   'settings',
   'isShowFormatToolbar',
   'isReadOnly',
+  'contentLabel',
 ]);
 
 const emit = defineEmits([
@@ -91,6 +92,7 @@ onMounted(() => {
     editorProps: {
       attributes: {
         class: `mx-auto w-full px-5 py-6 lg:px-8 lg:py-8 min-h-[calc(100vh_/_2)] ${props.settings?.general.editorView === 'compact' ? 'max-w-[720px]' : ''}`,
+        'aria-label': props.contentLabel || 'Note content',
       },
       handleClickOn(view, pos, node, nodePos, event) {
         if (!editor || !editor.isEditable) return false;

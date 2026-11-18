@@ -19,7 +19,7 @@ const handleIgnorePassword = () => {
 
 const inputPasswordRef = ref<any>(null);
 const showFailedPassword = () => {
-  showError($i18n.t('app.message_note_unlocked_failed'));
+  showErrorToast($i18n.t('app.message_note_unlocked_failed'));
 
   inputPasswordRef.value.classList.add('animate-shake', 'animate-duration-100', 'ui-input-error');
   setTimeout(() => {

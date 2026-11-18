@@ -126,7 +126,7 @@
   --ui-secondary-active: 222 222 219; /* #dededb */
 
   --ui-muted: 246 246 244; /* #f6f6f4 */
-  --ui-muted-foreground: 104 104 98; /* #686862 */
+  --ui-muted-foreground: 95 95 89; /* #5f5f59 */
 
   --ui-accent: 243 243 241; /* #f3f3f1 */
   --ui-accent-foreground: 37 34 30; /* #25221e */
@@ -137,13 +137,13 @@
   --ui-input: 224 224 220; /* #e0e0dc */
   --ui-ring: 125 159 201; /* #7d9fc9 */
 
-  --ui-danger: 217 92 74; /* #d95c4a */
+  --ui-danger: 185 61 47; /* #b93d2f */
   --ui-danger-foreground: 255 248 246; /* #fff8f6 */
-  --ui-success: 79 138 99; /* #4f8a63 */
+  --ui-success: 63 115 80; /* #3f7350 */
   --ui-success-foreground: 247 251 248; /* #f7fbf8 */
-  --ui-warning: 211 162 63; /* #d3a23f */
-  --ui-warning-foreground: 43 30 8; /* #2b1e08 */
-  --ui-info: 79 127 168; /* #4f7fa8 */
+  --ui-warning: 122 87 8; /* #7a5708 */
+  --ui-warning-foreground: 255 248 246; /* #fff8f6 */
+  --ui-info: 63 106 144; /* #3f6a90 */
   --ui-info-foreground: 247 250 252; /* #f7fafc */
 
   --ui-neutral: 95 91 84; /* #5f5b54 */

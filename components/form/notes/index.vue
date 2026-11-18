@@ -200,18 +200,19 @@ defineExpose({
 
     <EditorTiptap v-if="editorName === 'Tiptap'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :key="editorTiptapKey" :isShowFormatToolbar="props.isShowFormatToolbar"
-      :isReadOnly="props.isReadOnly"
+      :isReadOnly="props.isReadOnly" :content-label="$t('app.editor_content_label')"
       @changeContent="handleChangeContent" @clickInsertLink="handleClickInsertLink"
       @closeInsertLink="handleCloseInsertLink" @clickInsertImage="handleClickInsertImage"
       @closeInsertImage="handleCloseInsertImage" />
 
     <EditorCodemirror v-if="editorName === 'CodeMirror'" ref="editorRef" :value="props.value"
       :isDeleted="props.isDeleted" :settings="settings" :isReadOnly="props.isReadOnly"
+      :content-label="$t('app.editor_content_label')"
       @changeContent="handleChangeContent" />
 
     <EditorCrepe v-if="editorName === 'Crepe'" ref="editorRef" :value="props.value" :isDeleted="props.isDeleted"
       :settings="settings" :isShowFormatToolbar="props.isShowFormatToolbar" :noteId="props.id"
-      :isReadOnly="props.isReadOnly"
+      :isReadOnly="props.isReadOnly" :content-label="$t('app.editor_content_label')"
       @changeContent="handleChangeContent" @alertMessage="handleAlertMessage"
       @insertImage="emit('clickInsertImage', { url: '', alt: '' })" />
   </div>

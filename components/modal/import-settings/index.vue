@@ -33,7 +33,7 @@ const handleChooseFile = (e: Event) => {
     try {
       const json = JSON.parse(data);
       if (!json.settings || typeof json.settings !== 'object') {
-        showError($i18n.t('app.modal_import_settings_data_not_invalid'));
+        showErrorToast($i18n.t('app.modal_import_settings_data_not_invalid'));
         isValidate.value = false;
         target.value = '';
         return;
@@ -44,7 +44,7 @@ const handleChooseFile = (e: Event) => {
       isValidate.value = true;
     } catch (error) {
       console.error(error);
-      showError($i18n.t('app.modal_import_settings_data_not_invalid'));
+      showErrorToast($i18n.t('app.modal_import_settings_data_not_invalid'));
       isValidate.value = false;
       target.value = '';
     }
@@ -70,7 +70,7 @@ const handleClickSubmit = async (e: Event) => {
   }
 
   if (!password.value) {
-    showError($i18n.t('app.modal_import_settings_password_required'));
+    showErrorToast($i18n.t('app.modal_import_settings_password_required'));
     shakePasswordInput();
     return;
   }
@@ -80,7 +80,7 @@ const handleClickSubmit = async (e: Event) => {
   try {
     settingsToImport = await decryptSensitiveSettings(parsedSettings.value, encryptedFields.value, enteredHash);
   } catch (_) {
-    showError($i18n.t('app.modal_import_settings_wrong_password'));
+    showErrorToast($i18n.t('app.modal_import_settings_wrong_password'));
     shakePasswordInput();
     return;
   }

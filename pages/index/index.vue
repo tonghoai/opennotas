@@ -403,7 +403,7 @@ const handleClickUpdateData = async (forcedLevelIndex?: number) => {
     showSuccess($i18n.t(level.labelKey));
   } catch (error) {
     if (!showDirectorySyncError(error)) {
-      showError($i18n.t(error instanceof NetworkError
+      showErrorToast($i18n.t(error instanceof NetworkError
         ? 'app.message_sync_network_offline_error'
         : 'app.message_sync_internal_error'));
     }
@@ -1865,7 +1865,7 @@ const prepareDirectorySelection = async () => {
     isShowDirectorySetup.value = true;
   } catch (error: any) {
     if (error?.name === 'AbortError') return;
-    showError($i18n.t('app.message_directory_folder_error'));
+    showErrorToast($i18n.t('app.message_directory_folder_error'));
   }
 };
 
@@ -1884,7 +1884,7 @@ const handleCompactDirectory = async () => {
     showSuccess($i18n.t('app.message_directory_compacted'));
   } catch (error) {
     if (!showDirectorySyncError(error)) {
-      showError($i18n.t('app.message_sync_internal_error'));
+      showErrorToast($i18n.t('app.message_sync_internal_error'));
     }
   }
 };
@@ -2023,7 +2023,7 @@ const handleConfirmChangeAdapter = async (e2eeKey: string) => {
     try {
       await finishDirectorySetup(e2eeKey);
     } catch (error: any) {
-      showError($i18n.t(error?.message === 'E2EE_KEY_MISSING'
+      showErrorToast($i18n.t(error?.message === 'E2EE_KEY_MISSING'
         ? 'app.message_directory_key_required'
         : 'app.message_directory_setup_error'));
     } finally {
@@ -2377,12 +2377,12 @@ const handleConfirmImportSettings = async (importedSettings: any) => {
   const prospectiveConfig = importedSettings.sync?.configuration ?? settings.value.sync.configuration;
   if (prospectiveAdapter === 'Turso' && !isValidTursoConfig(prospectiveConfig)) {
     delete importedSettings.sync;
-    showError($i18n.t('app.message_import_settings_sync_skipped_invalid_config'));
+    showErrorToast($i18n.t('app.message_import_settings_sync_skipped_invalid_config'));
   }
   if (prospectiveAdapter === 'SqliteDirectory') {
     // Folder handles are device-local; reconnect instead of importing a broken target.
     delete importedSettings.sync;
-    showError($i18n.t('app.message_directory_import_needs_folder'));
+    showErrorToast($i18n.t('app.message_directory_import_needs_folder'));
   }
 
   const syncConflict = detectSyncConflict(importedSettings);
@@ -2550,7 +2550,7 @@ const directoryErrorMessageKey = (error: any) => {
 const showDirectorySyncError = (error: any) => {
   const key = directoryErrorMessageKey(error);
   if (key) {
-    showError($i18n.t(key));
+    showErrorToast($i18n.t(key));
     return true;
   }
   return false;
@@ -2594,12 +2594,12 @@ const idleSync = async (immediate = false, initedApp = false) => {
           isSyncError.value = true;
           syncErrorMessage.value = $i18n.t('app.message_sync_internal_error');
           syncErrorClass.value = 'error';
-          showError(syncErrorMessage.value);
+          showErrorToast(syncErrorMessage.value);
         } else {
           isSyncError.value = true;
           syncErrorMessage.value = $i18n.t('app.message_sync_internal_error');
           syncErrorClass.value = 'error';
-          showError(syncErrorMessage.value);
+          showErrorToast(syncErrorMessage.value);
         }
       });
     isSyncing.value = false;

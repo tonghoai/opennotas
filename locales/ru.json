@@ -450,6 +450,7 @@
     "list_empty_tags_title": "Выберите тег",
     "list_empty_tags_desc": "Выберите тег, чтобы увидеть заметки.",
     "editor_empty_title": "Заметка не выбрана",
+    "editor_content_label": "Содержимое заметки",
     "editor_empty_desc": "Выберите заметку в списке или создайте новую.",
     "sidebar_folders": "Папки",
     "sidebar_reorder_folders": "Изменить порядок папок",

@@ -75,3 +75,7 @@ const handleExportNotes = async (includeLock: boolean) => {
     saveJsonFile(data, 'opennotas-export-notes.json');
 }
 </script>
+
+<template>
+  <div class="hidden" aria-hidden="true"></div>
+</template>

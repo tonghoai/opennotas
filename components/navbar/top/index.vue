@@ -627,7 +627,7 @@ defineExpose({
     </div>
 
     <div class="ui-drawer-side z-1000" :inert="!isDrawerOpen || undefined">
-      <label for="my-drawer-3" :aria-label="$t('app.action_close')" class="ui-drawer-overlay"></label>
+      <button type="button" :aria-label="$t('app.action_close')" class="ui-drawer-overlay" @click="isDrawerOpen = false"></button>
 
       <AppSidebar :listFolders="props.listFolders" :listTags="props.listTags"
         :activeFolderId="props.isSearchMode ? '__search__' : props.activeFolderId"
@@ -650,7 +650,7 @@ defineExpose({
       :aria-label="$t('app.setting_title')" />
 
     <div class="ui-drawer-side z-1000" :inert="!isDrawerSettingOpen || undefined">
-      <label for="my-drawer-4" :aria-label="$t('app.action_close')" class="ui-drawer-overlay"></label>
+      <button type="button" :aria-label="$t('app.action_close')" class="ui-drawer-overlay" @click="isDrawerSettingOpen = false"></button>
 
       <div class="settings-drawer-shell ui-menu flex w-full flex-col bg-card p-0">
         <div class="mobile-safe-top flex shrink-0 items-center gap-2 border-b border-border bg-card px-3">
@@ -784,7 +784,7 @@ defineExpose({
 
               <div class="">
                 <SettingRow :label="$t('app.setting_image_sync_enable')">
-                  <UiSwitch v-model="settings.imageSync.enabled" data-ga-event="settings_image_sync_toggle"
+                  <UiSwitch v-model="settings.imageSync.enabled" :aria-label="$t('app.setting_image_sync_enable')" data-ga-event="settings_image_sync_toggle"
                     @change="handleSaveSettings" />
                 </SettingRow>
 

@@ -450,6 +450,7 @@
     "list_empty_tags_title": "Select a Tag",
     "list_empty_tags_desc": "Choose a tag to see its notes.",
     "editor_empty_title": "No Note Selected",
+    "editor_content_label": "Note content",
     "editor_empty_desc": "Pick a note from the list, or create a new one.",
     "sidebar_folders": "Folders",
     "sidebar_reorder_folders": "Reorder folders",

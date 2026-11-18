@@ -450,6 +450,7 @@
         "list_empty_tags_title": "選擇標籤",
         "list_empty_tags_desc": "選擇標籤以查看備忘錄。",
         "editor_empty_title": "尚未選擇備忘錄",
+        "editor_content_label": "筆記內容",
         "editor_empty_desc": "從列表中選擇一則備忘錄，或建立新的備忘錄。",
         "sidebar_folders": "資料夾",
         "sidebar_reorder_folders": "重新排序資料夾",

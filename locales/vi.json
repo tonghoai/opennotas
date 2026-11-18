@@ -450,6 +450,7 @@
     "list_empty_tags_title": "Chọn một tag",
     "list_empty_tags_desc": "Chọn tag để xem các ghi chú.",
     "editor_empty_title": "Chưa chọn ghi chú",
+    "editor_content_label": "Nội dung ghi chú",
     "editor_empty_desc": "Chọn một ghi chú trong danh sách hoặc tạo mới.",
     "sidebar_folders": "Thư mục",
     "sidebar_reorder_folders": "Sắp xếp thư mục",

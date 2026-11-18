@@ -223,7 +223,7 @@ const handleRightClickNote = (e: any, noteId: string) => {
   });
 };
 const handleKeydownNote = (event: KeyboardEvent, noteId: string) => {
-  if (event.key !== 'Enter') return;
+  if (event.key !== 'Enter' && event.key !== ' ') return;
   event.preventDefault();
   event.stopPropagation();
   handleClickNote(noteId);
@@ -302,12 +302,10 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <ul ref="listRef" class="relative px-2" role="listbox" :aria-label="props.listLabel || $t('app.list_folder_all')"
+  <ul ref="listRef" class="relative px-2" role="list" :aria-label="props.listLabel || $t('app.list_folder_all')"
     :style="{ height: listHeight + 'px' }">
     <li v-for="{ row, note } in rows" :key="row.key" :data-index="row.index"
       :ref="(el) => el && virtualizer.measureElement(el as Element)" class="absolute left-0 top-0 w-full px-2 py-0.5"
-      role="option" :aria-selected="activeNoteId === note.id" :tabindex="activeNoteId === note.id ? 0 : -1"
-      @keydown="handleKeydownNote($event, note.id)"
       :style="{ transform: `translateY(${row.start - virtualizer.options.scrollMargin + listTopPadding}px)` }">
       <div :data-note-id="note.id" class="group relative overflow-hidden rounded-ui">
         <div class="absolute inset-y-0 right-0 flex items-center gap-1 pr-1 lg:hidden">
@@ -334,7 +332,10 @@ const rows = computed(() => {
           @touchstart.passive="handleTouchStart($event, note)"
           @touchmove.passive="handleTouchMove($event, note)"
           @touchend.passive="handleTouchEnd" @touchcancel.passive="handleTouchEnd">
-        <div class="min-w-0 flex-1 cursor-pointer px-2 py-2" data-ga-event="note_select"
+        <div role="button" :aria-current="activeNoteId === note.id ? 'true' : undefined"
+          :aria-label="note.title?.trim() || $t('app.list_note_no_title')"
+          :tabindex="activeNoteId === note.id ? 0 : -1" class="min-w-0 flex-1 cursor-pointer px-2 py-2"
+          data-ga-event="note_select" @keydown="handleKeydownNote($event, note.id)"
           @click="handleClickNote(note.id)" @contextmenu="handleRightClickNote($event, note.id)">
           <div class="flex min-w-0 items-center gap-1.5">
             <Pin v-if="note.isPinned" class="h-3 w-3 shrink-0 text-warning" />

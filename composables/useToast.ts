@@ -75,7 +75,7 @@ function showActionToast(
 const showInfo = (msg: string) => showToast(msg, 'info');
 const showSuccess = (msg: string) => showToast(msg, 'success');
 const showWarning = (msg: string) => showToast(msg, 'warning');
-const showError = (msg: string) => showToast(msg, 'error');
+const showErrorToast = (msg: string) => showToast(msg, 'error');
 
 function useToast() {
   return {
@@ -85,7 +85,7 @@ function useToast() {
     showInfo,
     showSuccess,
     showWarning,
-    showError,
+    showError: showErrorToast,
     showActionToast,
     runToastAction,
   };
@@ -100,6 +100,6 @@ export {
   showInfo,
   showSuccess,
   showWarning,
-  showError,
+  showErrorToast,
   useToast,
 };

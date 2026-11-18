@@ -9,7 +9,11 @@ function registerServiceWorker() {
           scope: "./"
         })
         .then(function (reg) {
-          console.log("Service worker has been registered for scope: " + reg.scope);
+          console.log("Service worker has been registered for scope: " + (reg?.scope || "/"));
+        })
+        .catch(() => {
+          // Registration can be blocked by the host (for example in tests) or by
+          // browser policy; the app still works without offline caching.
         });
     }
   }

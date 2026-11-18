@@ -36,6 +36,7 @@ const props = defineProps([
   'isShowFormatToolbar',
   'noteId',
   'isReadOnly',
+  'contentLabel',
 ]);
 
 const emit = defineEmits([
@@ -198,11 +199,11 @@ const handleManualSync = async () => {
     if (result.synced > 0) {
       showSuccess($i18n.t('app.message_image_sync_success') as string);
     } else if (result.failed > 0) {
-      showError($i18n.t('app.message_image_sync_failed') as string);
+      showErrorToast($i18n.t('app.message_image_sync_failed') as string);
     }
   } catch {
     await refreshSyncBadges();
-    showError($i18n.t('app.message_image_sync_retry') as string);
+    showErrorToast($i18n.t('app.message_image_sync_retry') as string);
   }
 };
 
@@ -537,6 +538,17 @@ onMounted(() => {
 
     await editor.create();
     editor.setReadonly(!!(props.isDeleted || props.isReadOnly));
+
+    const applyContentLabel = () => {
+      if (!editor) return;
+      try {
+        editor.editor.action((ctx) => {
+          ctx.get(editorViewCtx).dom.setAttribute('aria-label', props.contentLabel || 'Note content');
+        });
+      } catch (_) { }
+    };
+    applyContentLabel();
+    watch(() => props.contentLabel, applyContentLabel);
 
     // Intercept image paste before ProseMirror (capture phase runs first)
     imagePasteHandler = (e: Event) => {

@@ -1,4 +1,4 @@
-import { showInfo, showError } from '~/composables/useToast';
+import { showInfo, showErrorToast } from '~/composables/useToast';
 
 // Legacy wrappers kept for backward compatibility.
 // The `elm` parameter (modal-scoped positioning) is intentionally ignored —
@@ -8,7 +8,7 @@ function showInfoSnackbar(message: string, _elm?: HTMLElement) {
 }
 
 function showErrorSnackbar(message: string, _elm?: HTMLElement) {
-  showError(message);
+  showErrorToast(message);
 }
 
 export {
