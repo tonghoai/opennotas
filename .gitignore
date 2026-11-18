@@ -25,3 +25,9 @@ logs
 
 # Browser tool output
 .playwright-mcp/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+blob-report/
